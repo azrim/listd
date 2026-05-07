@@ -260,7 +260,8 @@ class SupabaseTasksProvider implements ITaskProvider {
     RepeatConfig? repeat;
     if (row['repeat_config'] != null) {
       try {
-        final json = jsonDecode(row['repeat_config'] as String) as Map<String, dynamic>;
+        final json =
+            jsonDecode(row['repeat_config'] as String) as Map<String, dynamic>;
         repeat = RepeatConfig.fromJson(json);
       } catch (_) {
         repeat = null;
@@ -282,10 +283,7 @@ class SupabaseTasksProvider implements ITaskProvider {
         if (s is Map) {
           return TaskStep.fromJson(s as Map<String, dynamic>);
         }
-        return TaskStep(
-          id: s.toString(),
-          title: s.toString(),
-        );
+        return TaskStep(id: s.toString(), title: s.toString());
       }).toList();
     }
 

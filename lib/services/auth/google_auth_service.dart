@@ -1,35 +1,40 @@
+import 'dart:developer' as developer;
+
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Google OAuth service using Supabase Auth.
-///
-/// This replaces the manual OAuth2 PKCE flow with Supabase's built-in
-/// Google OAuth integration. Supabase handles all token management,
-/// refresh, and secure storage automatically.
+/// 
+/// Works on all platforms: web, mobile, and desktop.
 class GoogleAuthService {
   GoogleAuthService(this._client);
 
   final SupabaseClient _client;
 
   /// Initiates Google OAuth flow via Supabase.
-  ///
-  /// Opens browser for authentication and handles the callback
-  /// via deep link. Supabase manages all token operations.
+  /// 
+  /// For web: Supabase handles redirect in URL params.
+  /// For desktop: Supabase opens browser and handles callback internally.
   Future<void> authorize() async {
+    developer.log(
+      'GoogleAuthService.authorize() called for ${defaultTargetPlatform.name}',
+      name: 'GoogleAuthService',
+    );
+
     await _client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: 'io.listd://login-callback',
+      // Don't set redirectTo - let Supabase handle it
+      // For web: uses URL params
+      // For desktop: uses platform-specific callback handling
       authScreenLaunchMode: LaunchMode.externalApplication,
     );
   }
 
-  /// Signs out the current user via Supabase.
   Future<void> signOut() async {
     await _client.auth.signOut();
   }
 
-  /// Check if user is currently authenticated.
   bool get isAuthenticated => _client.auth.currentSession != null;
 
-  /// Get the current access token (managed by Supabase).
   String? get accessToken => _client.auth.currentSession?.accessToken;
 }

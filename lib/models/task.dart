@@ -127,7 +127,9 @@ class TaskStep {
   /// Deserialize from JSON map.
   factory TaskStep.fromJson(Map<String, dynamic> json) {
     return TaskStep(
-      id: json['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id:
+          json['id'] as String? ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       title: json['title'] as String? ?? '',
       isCompleted: json['isCompleted'] as bool? ?? false,
       position: json['position'] as int? ?? 0,

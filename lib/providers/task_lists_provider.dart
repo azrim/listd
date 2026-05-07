@@ -26,11 +26,31 @@ final supabaseTasksProviderProvider = Provider<SupabaseTasksProvider>((ref) {
 });
 
 /// Stream provider that watches all task lists from the local database.
-final taskListsStreamProvider = StreamProvider<List<TaskList>>((ref) {
+/// Also triggers sync from Supabase when auth changes to authenticated.
+final taskListsStreamProvider = StreamProvider<List<TaskList>>((ref) async* {
   final dao = ref.watch(taskListDaoProvider);
-  return dao.watchAllTaskLists().map(
-    (entries) => entries.map((e) => e.toDomain()).toList(),
-  );
+
+  // Watch the local database stream
+  await for (final entries in dao.watchAllTaskLists()) {
+    final lists = entries.map((e) => e.toDomain()).toList();
+
+    // If local is empty and user is authenticated, sync from remote
+    if (lists.isEmpty) {
+      final authState = ref.read(authNotifierProvider);
+      if (authState is AuthAuthenticated) {
+        try {
+          final provider = ref.read(supabaseTasksProviderProvider);
+          final remoteLists = await provider.getTaskLists();
+          await dao.upsertTaskLists(remoteLists);
+          continue; // Let the stream emit the updated data
+        } catch (_) {
+          // Ignore sync errors, emit local data
+        }
+      }
+    }
+
+    yield lists;
+  }
 });
 
 /// Future provider that fetches task lists from Supabase with auth.
