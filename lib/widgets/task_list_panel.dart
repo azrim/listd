@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../models/task.dart';
 import '../providers/tasks_provider.dart';
@@ -27,13 +26,12 @@ class TaskListPanel extends ConsumerWidget {
       children: [
         // Header
         _buildHeader(context, ref),
-        // Task list
+        // Task list with pull-to-refresh
         Expanded(
           child: tasksAsync.when(
-            data: (tasks) =>
-                _buildTaskList(context, ref, tasks, viewMode, selectedTaskId),
+            data: (tasks) => _buildTaskList(context, ref, tasks, viewMode, selectedTaskId),
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
+            error: (e, _) => _buildError(context, ref, e),
           ),
         ),
       ],
@@ -79,8 +77,7 @@ class TaskListPanel extends ConsumerWidget {
                 ],
                 selected: {viewMode},
                 onSelectionChanged: (selection) {
-                  ref.read(taskViewModeProvider.notifier).state =
-                      selection.first;
+                  ref.read(taskViewModeProvider.notifier).state = selection.first;
                 },
                 showSelectedIcon: false,
                 style: const ButtonStyle(
@@ -89,42 +86,68 @@ class TaskListPanel extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // Sort button
+              // Refresh button
               IconButton(
-                icon: const Icon(Icons.sort, size: 20),
-                onPressed: () {},
-                tooltip: 'Sort',
-                visualDensity: VisualDensity.compact,
-              ),
-              // Group button
-              IconButton(
-                icon: const Icon(Icons.group_work_outlined, size: 20),
-                onPressed: () {},
-                tooltip: 'Group',
-                visualDensity: VisualDensity.compact,
-              ),
-              // Share button
-              IconButton(
-                icon: const Icon(Icons.share_outlined, size: 20),
-                onPressed: () {},
-                tooltip: 'Share',
+                icon: const Icon(Icons.refresh, size: 20),
+                onPressed: () => ref.read(tasksNotifierProvider(listId).notifier).syncFromRemote(),
+                tooltip: 'Refresh',
                 visualDensity: VisualDensity.compact,
               ),
               // More options
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, size: 20),
-                onSelected: (value) {},
+                onSelected: (value) => _handleMenuAction(context, ref, value),
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'select', child: Text('Select')),
-                  const PopupMenuItem(
-                    value: 'clear',
-                    child: Text('Clear completed'),
-                  ),
+                  const PopupMenuItem(value: 'clear', child: Text('Clear completed')),
                 ],
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _handleMenuAction(BuildContext context, WidgetRef ref, String action) {
+    if (action == 'clear') {
+      // Clear completed tasks
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Clear completed (not implemented)')),
+      );
+    }
+  }
+
+  Widget _buildError(BuildContext context, WidgetRef ref, Object error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load tasks',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error.toString(),
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => ref.read(tasksNotifierProvider(listId).notifier).syncFromRemote(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -137,81 +160,115 @@ class TaskListPanel extends ConsumerWidget {
     String? selectedTaskId,
   ) {
     if (tasks.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.task_alt,
-              size: 64,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No tasks yet',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add a task to get started',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
-            ),
-          ],
-        ),
-      );
+      return _buildEmptyState(context);
     }
 
     // Filter for main tasks (not subtasks)
     final mainTasks = tasks.where((t) => t.parentId == null).toList();
 
-    return Stack(
-      children: [
-        viewMode == TaskViewMode.grid
-            ? GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 300,
-                  childAspectRatio: 2.5,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
+    return RefreshIndicator(
+      onRefresh: () => ref.read(tasksNotifierProvider(listId).notifier).syncFromRemote(),
+      child: Stack(
+        children: [
+          viewMode == TaskViewMode.grid
+              ? GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 300,
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: mainTasks.length,
+                  itemBuilder: (context, index) {
+                    final task = mainTasks[index];
+                    return _TaskCard(
+                      task: task,
+                      isSelected: selectedTaskId == task.id,
+                      onTap: () => ref.read(selectedTaskIdProvider.notifier).state = task.id,
+                    );
+                  },
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
+                  itemCount: mainTasks.length,
+                  itemBuilder: (context, index) {
+                    final task = mainTasks[index];
+                    return _TaskRow(
+                      task: task,
+                      isSelected: selectedTaskId == task.id,
+                      onTap: () => ref.read(selectedTaskIdProvider.notifier).state = task.id,
+                      onToggle: () => ref.read(tasksNotifierProvider(listId).notifier).toggleComplete(task),
+                      onDelete: () => _confirmDelete(context, ref, task),
+                    );
+                  },
                 ),
-                itemCount: mainTasks.length,
-                itemBuilder: (context, index) => _TaskCard(
-                  task: mainTasks[index],
-                  isSelected: selectedTaskId == mainTasks[index].id,
-                  onTap: () => ref.read(selectedTaskIdProvider.notifier).state =
-                      mainTasks[index].id,
-                ),
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.only(bottom: 80),
-                itemCount: mainTasks.length,
-                itemBuilder: (context, index) => _TaskRow(
-                  task: mainTasks[index],
-                  isSelected: selectedTaskId == mainTasks[index].id,
-                  onTap: () => ref.read(selectedTaskIdProvider.notifier).state =
-                      mainTasks[index].id,
-                  onToggle: () => _toggleTask(ref, mainTasks[index]),
-                ),
-              ),
-        // Add task input at bottom
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: _AddTaskInput(listId: listId),
-        ),
-      ],
+          // Add task input at bottom
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _AddTaskInput(listId: listId),
+          ),
+        ],
+      ),
     );
   }
 
-  void _toggleTask(WidgetRef ref, Task task) {
-    final notifier = ref.read(tasksNotifierProvider(listId).notifier);
-    notifier.toggleComplete(task);
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref, Task task) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete task'),
+        content: Text('Are you sure you want to delete "${task.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await ref.read(tasksNotifierProvider(listId).notifier).deleteTask(task.id);
+    }
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.task_alt,
+            size: 64,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No tasks yet',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add a task below to get started',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -222,112 +279,113 @@ class _TaskRow extends StatelessWidget {
     required this.isSelected,
     this.onTap,
     this.onToggle,
+    this.onDelete,
   });
 
   final Task task;
   final bool isSelected;
   final VoidCallback? onTap;
   final VoidCallback? onToggle;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Material(
-      color: isSelected
-          ? colorScheme.primaryContainer.withAlpha(77)
-          : Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              // Checkbox circle
-              InkWell(
-                onTap: onToggle,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
+    return Dismissible(
+      key: Key(task.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 16),
+        color: colorScheme.error,
+        child: Icon(Icons.delete, color: colorScheme.onError),
+      ),
+      confirmDismiss: (direction) async {
+        onDelete?.call();
+        return false; // Don't actually dismiss, let the callback handle it
+      },
+      child: Material(
+        color: isSelected
+            ? colorScheme.primaryContainer.withAlpha(77)
+            : Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                // Checkbox circle
+                InkWell(
+                  onTap: onToggle,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: task.isCompleted
+                            ? colorScheme.primary
+                            : colorScheme.outline,
+                        width: 2,
+                      ),
                       color: task.isCompleted
                           ? colorScheme.primary
-                          : colorScheme.outline,
-                      width: 2,
+                          : Colors.transparent,
                     ),
-                    color: task.isCompleted
-                        ? colorScheme.primary
-                        : Colors.transparent,
+                    child: task.isCompleted
+                        ? Icon(Icons.check, size: 16, color: colorScheme.onPrimary)
+                        : null,
                   ),
-                  child: task.isCompleted
-                      ? Icon(
-                          Icons.check,
-                          size: 16,
-                          color: colorScheme.onPrimary,
-                        )
-                      : null,
                 ),
-              ),
-              const SizedBox(width: 12),
-              // Task content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      task.title,
-                      style: TextStyle(
-                        fontSize: 14,
-                        decoration: task.isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
-                        color: task.isCompleted
-                            ? colorScheme.outline
-                            : colorScheme.onSurface,
-                      ),
-                    ),
-                    if (task.subtaskCount > 0)
+                const SizedBox(width: 12),
+                // Task content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        '0 of ${task.subtaskCount}',
+                        task.title,
                         style: TextStyle(
-                          fontSize: 12,
-                          color: colorScheme.outline,
+                          fontSize: 14,
+                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                          color: task.isCompleted ? colorScheme.outline : colorScheme.onSurface,
                         ),
                       ),
-                  ],
+                      if (task.notes.isNotEmpty)
+                        Text(
+                          task.notes,
+                          style: TextStyle(fontSize: 12, color: colorScheme.outline),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              // Due date chip
-              if (task.due != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getDueDateColor(context, task.due!),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _formatDueDate(task.due!),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: colorScheme.onSurface,
+                // Due date chip
+                if (task.due != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getDueDateColor(context, task.due!),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _formatDueDate(task.due!),
+                      style: TextStyle(fontSize: 11, color: colorScheme.onSurface),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                ],
+                // Star/favorite icon
+                Icon(
+                  task.isStarred ? Icons.star : Icons.star_border,
+                  size: 20,
+                  color: task.isStarred ? Colors.amber : colorScheme.outline,
                 ),
-                const SizedBox(width: 8),
               ],
-              // Star/favorite icon
-              Icon(
-                task.isStarred ? Icons.star : Icons.star_border,
-                size: 20,
-                color: task.isStarred ? Colors.amber : colorScheme.outline,
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -345,7 +403,7 @@ class _TaskRow extends StatelessWidget {
     if (diff == -1) return 'Yesterday';
     if (diff > 0 && diff < 7) return 'In $diff days';
     if (diff < 0) return '${-diff} days ago';
-    return DateFormat.MMMd().format(date);
+    return '${date.month}/${date.day}';
   }
 
   Color _getDueDateColor(BuildContext context, DateTime date) {
@@ -365,7 +423,11 @@ class _TaskRow extends StatelessWidget {
 
 /// Task card widget for grid view
 class _TaskCard extends StatelessWidget {
-  const _TaskCard({required this.task, required this.isSelected, this.onTap});
+  const _TaskCard({
+    required this.task,
+    required this.isSelected,
+    this.onTap,
+  });
 
   final Task task;
   final bool isSelected;
@@ -377,9 +439,7 @@ class _TaskCard extends StatelessWidget {
 
     return Card(
       elevation: isSelected ? 2 : 0,
-      color: isSelected
-          ? colorScheme.primaryContainer
-          : colorScheme.surfaceContainerLow,
+      color: isSelected ? colorScheme.primaryContainer : colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(
@@ -398,13 +458,9 @@ class _TaskCard extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    task.isCompleted
-                        ? Icons.check_circle
-                        : Icons.circle_outlined,
+                    task.isCompleted ? Icons.check_circle : Icons.circle_outlined,
                     size: 18,
-                    color: task.isCompleted
-                        ? colorScheme.primary
-                        : colorScheme.outline,
+                    color: task.isCompleted ? colorScheme.primary : colorScheme.outline,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -412,29 +468,21 @@ class _TaskCard extends StatelessWidget {
                       task.title,
                       style: TextStyle(
                         fontSize: 14,
-                        decoration: task.isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
-                        color: task.isCompleted
-                            ? colorScheme.outline
-                            : colorScheme.onSurface,
+                        decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                        color: task.isCompleted ? colorScheme.outline : colorScheme.onSurface,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (task.isStarred)
-                    const Icon(Icons.star, size: 16, color: Colors.amber),
+                  if (task.isStarred) const Icon(Icons.star, size: 16, color: Colors.amber),
                 ],
               ),
               if (task.due != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   _formatDueDate(task.due!),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
                 ),
               ],
             ],
@@ -445,7 +493,7 @@ class _TaskCard extends StatelessWidget {
   }
 
   String _formatDueDate(DateTime date) {
-    return DateFormat.MMMd().format(date);
+    return '${date.month}/${date.day}';
   }
 }
 
@@ -462,6 +510,7 @@ class _AddTaskInput extends ConsumerStatefulWidget {
 class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -472,21 +521,34 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
 
   Future<void> _addTask() async {
     final title = _controller.text.trim();
-    if (title.isEmpty) return;
+    if (title.isEmpty || _isLoading) return;
 
-    final newTask = Task(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      status: 'needsAction',
-      updated: DateTime.now(),
-      taskListId: widget.listId,
-    );
+    setState(() => _isLoading = true);
 
-    final notifier = ref.read(tasksNotifierProvider(widget.listId).notifier);
-    await notifier.createTask(newTask);
+    try {
+      final newTask = Task(
+        id: '', // Empty ID for new tasks
+        title: title,
+        status: 'needsAction',
+        updated: DateTime.now(),
+        taskListId: widget.listId,
+      );
 
-    _controller.clear();
-    _focusNode.requestFocus();
+      await ref.read(tasksNotifierProvider(widget.listId).notifier).createTask(newTask);
+
+      _controller.clear();
+      _focusNode.requestFocus();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create task: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -503,11 +565,20 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
       ),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline, size: 24),
-            onPressed: _addTask,
-            visualDensity: VisualDensity.compact,
-          ),
+          _isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Padding(
+                    padding: EdgeInsets.all(4),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.add_circle_outline, size: 24),
+                  onPressed: _addTask,
+                  visualDensity: VisualDensity.compact,
+                ),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -517,8 +588,11 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
                 hintText: 'Add a task',
                 border: InputBorder.none,
                 hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
               ),
               onSubmitted: (_) => _addTask(),
+              enabled: !_isLoading,
             ),
           ),
         ],

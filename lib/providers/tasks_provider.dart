@@ -15,21 +15,15 @@ final taskDaoProvider = Provider<TaskDao>((ref) {
 });
 
 /// Stream provider that watches tasks for a specific task list from local database.
-final tasksStreamProvider = StreamProvider.family<List<Task>, String>((
-  ref,
-  taskListId,
-) {
+final tasksStreamProvider = StreamProvider.family<List<Task>, String>((ref, taskListId) {
   final dao = ref.watch(taskDaoProvider);
-  return dao
-      .watchTasksByListId(taskListId)
-      .map((entries) => entries.map((e) => e.toDomain()).toList());
+  return dao.watchTasksByListId(taskListId).map(
+    (entries) => entries.map((e) => e.toDomain()).toList(),
+  );
 });
 
 /// Future provider that fetches tasks from Google API for a specific task list.
-final remoteTasksProvider = FutureProvider.family<List<Task>, String>((
-  ref,
-  taskListId,
-) async {
+final remoteTasksProvider = FutureProvider.family<List<Task>, String>((ref, taskListId) async {
   // Wait for auth state to be ready
   final authState = ref.watch(authNotifierProvider);
   if (authState is! AuthAuthenticated) {
@@ -64,9 +58,9 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     required TaskDao dao,
     required this.taskListId,
     required Ref ref,
-  }) : _dao = dao,
-       _ref = ref,
-       super(const AsyncValue.loading()) {
+  })  : _dao = dao,
+        _ref = ref,
+        super(const AsyncValue.loading()) {
     _init();
   }
 
@@ -91,28 +85,85 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     }
   }
 
-  /// Creates a new task and saves to local database.
+  /// Creates a new task via Google API and saves to local database.
   Future<void> createTask(Task task) async {
     try {
-      final newTask = task.copyWith(
-        id: task.id.isEmpty ? const Uuid().v4() : task.id,
-        updated: DateTime.now(),
-        syncStatus: SyncStatus.created,
-      );
-      await _dao.upsertTask(newTask);
+      // Get auth state
+      final authState = _ref.read(authNotifierProvider);
+      if (authState is! AuthAuthenticated) {
+        // Save locally if not authenticated
+        final newTask = task.copyWith(
+          id: task.id.isEmpty ? const Uuid().v4() : task.id,
+          updated: DateTime.now(),
+          syncStatus: SyncStatus.created,
+        );
+        await _dao.upsertTask(newTask);
+        await refresh();
+        return;
+      }
+
+      // Get valid access token
+      final tokenManager = _ref.read(tokenManagerProvider);
+      final accessToken = await tokenManager.getValidAccessToken();
+      if (accessToken == null) {
+        // Save locally if no token
+        final newTask = task.copyWith(
+          id: task.id.isEmpty ? const Uuid().v4() : task.id,
+          updated: DateTime.now(),
+          syncStatus: SyncStatus.created,
+        );
+        await _dao.upsertTask(newTask);
+        await refresh();
+        return;
+      }
+
+      // Call Google API
+      final api = GoogleTasksApi(accessToken: accessToken);
+      final createdTask = await api.createTask(taskListId, task);
+      
+      // Save to local database
+      await _dao.upsertTask(createdTask);
       await refresh();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
   }
 
-  /// Updates an existing task.
+  /// Updates an existing task via Google API.
   Future<void> updateTask(Task task) async {
     try {
-      final updatedTask = task.copyWith(
-        updated: DateTime.now(),
-        syncStatus: SyncStatus.updated,
-      );
+      // Get auth state
+      final authState = _ref.read(authNotifierProvider);
+      if (authState is! AuthAuthenticated) {
+        // Save locally if not authenticated
+        final updatedTask = task.copyWith(
+          updated: DateTime.now(),
+          syncStatus: SyncStatus.updated,
+        );
+        await _dao.upsertTask(updatedTask);
+        await refresh();
+        return;
+      }
+
+      // Get valid access token
+      final tokenManager = _ref.read(tokenManagerProvider);
+      final accessToken = await tokenManager.getValidAccessToken();
+      if (accessToken == null) {
+        // Save locally if no token
+        final updatedTask = task.copyWith(
+          updated: DateTime.now(),
+          syncStatus: SyncStatus.updated,
+        );
+        await _dao.upsertTask(updatedTask);
+        await refresh();
+        return;
+      }
+
+      // Call Google API
+      final api = GoogleTasksApi(accessToken: accessToken);
+      final updatedTask = await api.updateTask(taskListId, task);
+      
+      // Save to local database
       await _dao.upsertTask(updatedTask);
       await refresh();
     } catch (e, st) {
@@ -122,24 +173,33 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
 
   /// Toggles task completion status.
   Future<void> toggleComplete(Task task) async {
-    try {
-      final newStatus = task.isCompleted ? 'needsAction' : 'completed';
-      final updatedTask = task.copyWith(
-        status: newStatus,
-        updated: DateTime.now(),
-        syncStatus: SyncStatus.updated,
-      );
-      await _dao.upsertTask(updatedTask);
-      await refresh();
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
+    final newStatus = task.isCompleted ? 'needsAction' : 'completed';
+    final updatedTask = task.copyWith(status: newStatus);
+    await updateTask(updatedTask);
   }
 
-  /// Marks a task as deleted (soft delete).
+  /// Deletes a task via Google API.
   Future<void> deleteTask(String taskId) async {
     try {
-      await _dao.markDeletedLocally(taskId);
+      // Get auth state
+      final authState = _ref.read(authNotifierProvider);
+      
+      if (authState is AuthAuthenticated) {
+        // Try to delete from Google API
+        try {
+          final tokenManager = _ref.read(tokenManagerProvider);
+          final accessToken = await tokenManager.getValidAccessToken();
+          if (accessToken != null) {
+            final api = GoogleTasksApi(accessToken: accessToken);
+            await api.deleteTask(taskListId, taskId);
+          }
+        } catch (_) {
+          // If API fails, continue with local delete
+        }
+      }
+
+      // Delete from local database
+      await _dao.deleteTask(taskId);
       await refresh();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -181,30 +241,21 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
 }
 
 /// Family provider for TasksNotifier.
-final tasksNotifierProvider =
-    StateNotifierProvider.family<TasksNotifier, AsyncValue<List<Task>>, String>(
-      (ref, taskListId) {
-        final dao = ref.watch(taskDaoProvider);
-        return TasksNotifier(dao: dao, taskListId: taskListId, ref: ref);
-      },
-    );
+final tasksNotifierProvider = StateNotifierProvider.family<TasksNotifier, AsyncValue<List<Task>>, String>((ref, taskListId) {
+  final dao = ref.watch(taskDaoProvider);
+  return TasksNotifier(dao: dao, taskListId: taskListId, ref: ref);
+});
 
 /// Convenience provider that combines local and remote tasks.
-/// Prefers local data, falls back to remote if local is empty.
-final tasksProvider = FutureProvider.family<List<Task>, String>((
-  ref,
-  taskListId,
-) async {
+final tasksProvider = FutureProvider.family<List<Task>, String>((ref, taskListId) async {
   final localAsync = ref.watch(tasksStreamProvider(taskListId));
   final remoteAsync = ref.watch(remoteTasksProvider(taskListId));
 
-  // Return local data if available
   return localAsync.when(
     data: (localTasks) async {
       if (localTasks.isNotEmpty) {
         return localTasks;
       }
-      // Try remote if local is empty
       return remoteAsync.when(
         data: (remoteTasks) => remoteTasks,
         loading: () => localTasks,
@@ -213,13 +264,13 @@ final tasksProvider = FutureProvider.family<List<Task>, String>((
     },
     loading: () => remoteAsync.when(
       data: (remoteTasks) => remoteTasks,
-      loading: () => [],
-      error: (_, _) => [],
+      loading: () => <Task>[],
+      error: (_, _) => <Task>[],
     ),
     error: (_, _) => remoteAsync.when(
       data: (remoteTasks) => remoteTasks,
-      loading: () => [],
-      error: (_, _) => [],
+      loading: () => <Task>[],
+      error: (_, _) => <Task>[],
     ),
   );
 });

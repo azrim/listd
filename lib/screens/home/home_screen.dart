@@ -48,22 +48,20 @@ class HomeScreen extends ConsumerWidget {
       );
     }
 
-    return Scaffold(
-      body: Row(
-        children: [
-          // Left sidebar - 220px fixed
-          const SizedBox(width: 220, child: SidebarPanel()),
-          // Vertical divider
-          const VerticalDivider(width: 1),
-          // Main task list panel (flexible)
-          Expanded(
-            child: TaskListPanel(
-              listId: selectedListId ?? SpecialListIds.tasks,
-              listName: listName,
-            ),
+    return Row(
+      children: [
+        // Left sidebar - 220px fixed
+        const SizedBox(width: 220, child: SidebarPanel()),
+        // Vertical divider
+        const VerticalDivider(width: 1),
+        // Main task list panel (flexible)
+        Expanded(
+          child: TaskListPanel(
+            listId: selectedListId ?? SpecialListIds.tasks,
+            listName: listName,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
