@@ -90,7 +90,7 @@ lib/
 
 ## Privacy
 
-See [PRIVACY.md](PRIVACY.md) for information about data handling.
+See [PRIVACY.html](PRIVACY.html) for information about data handling.
 
 ## License
 
