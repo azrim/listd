@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../providers/task_lists_provider.dart';
 import '../../widgets/sidebar_panel.dart';
 import '../../widgets/task_list_panel.dart';
 
@@ -11,27 +12,38 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedListId = ref.watch(selectedTaskListIdProvider);
+    final taskListsAsync = ref.watch(taskListsStreamProvider);
 
-    // Get the list name
+    // Get the list name based on selection
     String listName;
-    switch (selectedListId) {
-      case 'myday':
-        listName = 'My Day';
-        break;
-      case 'important':
-        listName = 'Important';
-        break;
-      case 'planned':
-        listName = 'Planned';
-        break;
-      case 'shopping':
-        listName = 'Shopping';
-        break;
-      case 'work':
-        listName = 'Work';
-        break;
-      default:
-        listName = 'Tasks';
+    if (selectedListId == null) {
+      listName = 'Tasks';
+    } else if (selectedListId.startsWith('@')) {
+      // Special list
+      switch (selectedListId) {
+        case SpecialListIds.myDay:
+          listName = 'My Day';
+          break;
+        case SpecialListIds.important:
+          listName = 'Important';
+          break;
+        case SpecialListIds.planned:
+          listName = 'Planned';
+          break;
+        case SpecialListIds.tasks:
+        default:
+          listName = 'Tasks';
+      }
+    } else {
+      // Google Task list - find the title from task lists
+      listName = taskListsAsync.when(
+        data: (taskLists) {
+          final found = taskLists.where((tl) => tl.id == selectedListId).firstOrNull;
+          return found?.title ?? 'Tasks';
+        },
+        loading: () => 'Loading...',
+        error: (_, _) => 'Tasks',
+      );
     }
 
     return Scaffold(
@@ -44,7 +56,7 @@ class HomeScreen extends ConsumerWidget {
           // Main task list panel (flexible)
           Expanded(
             child: TaskListPanel(
-              listId: selectedListId ?? 'default',
+              listId: selectedListId ?? SpecialListIds.tasks,
               listName: listName,
             ),
           ),

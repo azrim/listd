@@ -133,6 +133,66 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
       await refresh();
     }
   }
+  /// Creates a new task list and syncs to Google Tasks API.
+  Future<void> createTaskList(String title) async {
+    try {
+      // Get auth state
+      final authState = _ref.read(authNotifierProvider);
+      if (authState is! AuthAuthenticated) {
+        return;
+      }
+
+      // Get valid access token
+      final tokenManager = _ref.read(tokenManagerProvider);
+      final accessToken = await tokenManager.getValidAccessToken();
+      if (accessToken == null) {
+        return;
+      }
+
+      // Create via API
+      final api = GoogleTasksApi(accessToken: accessToken);
+      final newList = await api.createTaskList(title);
+
+      // Save to local database
+      await _dao.upsertTaskLists([newList]);
+
+      // Refresh the list
+      await refresh();
+    } catch (e) {
+      // Ignore errors, just refresh local data
+      await refresh();
+    }
+  }
+
+  /// Deletes a task list.
+  Future<void> deleteTaskList(String id) async {
+    try {
+      // Get auth state
+      final authState = _ref.read(authNotifierProvider);
+      if (authState is! AuthAuthenticated) {
+        return;
+      }
+
+      // Get valid access token
+      final tokenManager = _ref.read(tokenManagerProvider);
+      final accessToken = await tokenManager.getValidAccessToken();
+      if (accessToken == null) {
+        return;
+      }
+
+      // Delete via API
+      final api = GoogleTasksApi(accessToken: accessToken);
+      await api.deleteTaskList(id);
+
+      // Remove from local database
+      await _dao.deleteTaskList(id);
+
+      // Refresh
+      await refresh();
+    } catch (e) {
+      // Ignore errors
+    }
+  }
 }
 
 /// Provider for the TaskListsNotifier.

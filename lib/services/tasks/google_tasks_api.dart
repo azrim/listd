@@ -62,6 +62,9 @@ class GoogleTasksApi {
 
   Uri _tasklistsUri() => Uri.parse('$_baseUrl$_tasklistsPath');
 
+  Uri _tasklistUri(String taskListId) =>
+      Uri.parse('$_baseUrl$_tasklistsPath/$taskListId');
+
   /// Handles HTTP response and throws appropriate exceptions.
   dynamic _handleResponse(http.Response response) {
     if (response.statusCode == 401) {
@@ -98,7 +101,7 @@ class GoogleTasksApi {
     return jsonDecode(response.body);
   }
 
-  /// Fetches all task lists for the authenticated user.
+  /// Lists all task lists for the authenticated user.
   Future<List<TaskList>> getTaskLists() async {
     final response = await http.get(_tasklistsUri(), headers: _headers);
 
@@ -108,6 +111,44 @@ class GoogleTasksApi {
     return items
         .map((item) => _parseTaskList(item as Map<String, dynamic>))
         .toList();
+  }
+
+  /// Creates a new task list.
+  Future<TaskList> createTaskList(String title) async {
+    final body = jsonEncode({'title': title});
+
+    final response = await http.post(
+      _tasklistsUri(),
+      headers: _headers,
+      body: body,
+    );
+
+    final data = _handleResponse(response) as Map<String, dynamic>;
+    return _parseTaskList(data);
+  }
+
+  /// Updates an existing task list.
+  Future<TaskList> updateTaskList(String taskListId, String title) async {
+    final body = jsonEncode({'title': title});
+
+    final response = await http.put(
+      _tasklistUri(taskListId),
+      headers: _headers,
+      body: body,
+    );
+
+    final data = _handleResponse(response) as Map<String, dynamic>;
+    return _parseTaskList(data);
+  }
+
+  /// Deletes a task list.
+  Future<void> deleteTaskList(String taskListId) async {
+    final response = await http.delete(
+      _tasklistUri(taskListId),
+      headers: _headers,
+    );
+
+    _handleResponse(response);
   }
 
   /// Fetches all tasks from a specific task list.
@@ -122,7 +163,7 @@ class GoogleTasksApi {
     final items = data['items'] as List<dynamic>? ?? [];
 
     return items
-        .map((item) => _parseTask(item as Map<String, dynamic>))
+        .map((item) => _parseTask(item as Map<String, dynamic>, taskListId))
         .toList();
   }
 
@@ -137,7 +178,7 @@ class GoogleTasksApi {
     );
 
     final data = _handleResponse(response) as Map<String, dynamic>;
-    return _parseTask(data);
+    return _parseTask(data, taskListId);
   }
 
   /// Updates an existing task.
@@ -151,7 +192,7 @@ class GoogleTasksApi {
     );
 
     final data = _handleResponse(response) as Map<String, dynamic>;
-    return _parseTask(data);
+    return _parseTask(data, taskListId);
   }
 
   /// Deletes a task.
@@ -176,7 +217,7 @@ class GoogleTasksApi {
   }
 
   /// Parses a task from JSON response.
-  Task _parseTask(Map<String, dynamic> json) {
+  Task _parseTask(Map<String, dynamic> json, String taskListId) {
     return Task(
       id: json['id'] as String,
       title: json['title'] as String? ?? '',
@@ -187,9 +228,9 @@ class GoogleTasksApi {
       status: json['status'] as String? ?? 'needsAction',
       updated:
           DateTime.tryParse(json['updated'] as String? ?? '') ?? DateTime.now(),
-      taskListId: '', // Will be set by caller
+      taskListId: taskListId,
       parentId: json['parent'] as String?,
-      position: 0, // Will be set by caller
+      position: 0,
     );
   }
 
