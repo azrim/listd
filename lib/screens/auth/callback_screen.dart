@@ -4,9 +4,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../services/auth/token_manager.dart';
 import '../../theme/app_colors.dart';
 
 /// OAuth callback handler screen with glassmorphism loading animation.
+///
+/// With Supabase, this screen just needs to listen for auth state changes.
+/// Supabase handles the OAuth callback via deep link automatically.
 class CallbackScreen extends ConsumerStatefulWidget {
   const CallbackScreen({super.key});
 
@@ -18,6 +22,7 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  bool _hasNavigated = false;
 
   @override
   void initState() {
@@ -30,8 +35,26 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen>
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+  }
 
-    _handleCallback();
+  void _checkAndNavigate(AuthState authState) {
+    if (_hasNavigated) return;
+
+    switch (authState) {
+      case AuthAuthenticated():
+        if (mounted) {
+          _hasNavigated = true;
+          context.go('/');
+        }
+      case AuthUnauthenticated():
+      case AuthError():
+        if (mounted) {
+          _hasNavigated = true;
+          context.go('/auth');
+        }
+      case AuthLoading():
+        break;
+    }
   }
 
   @override
@@ -40,53 +63,16 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen>
     super.dispose();
   }
 
-  Future<void> _handleCallback() async {
-    final uri = Uri.base;
-    final code = uri.queryParameters['code'];
-    final error = uri.queryParameters['error'];
-
-    if (error != null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Authentication failed: $error'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-        context.go('/auth');
-      }
-      return;
-    }
-
-    if (code == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No authorization code received')),
-        );
-        context.go('/auth');
-      }
-      return;
-    }
-
-    try {
-      if (mounted) {
-        context.go('/');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Token exchange failed: ${e.toString()}'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-        context.go('/auth');
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Watch auth state and navigate when it changes
+    final authState = ref.watch(authNotifierProvider);
+    
+    // Check initial state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndNavigate(authState);
+    });
+
     return Scaffold(
       body: Stack(
         children: [
@@ -103,29 +89,29 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen>
               children: [
                 // Pulsing circle
                 AnimatedBuilder(
-                      animation: _pulseAnimation,
-                      builder: (context, child) {
-                        return Container(
-                          width: 80 + (_pulseAnimation.value * 20),
-                          height: 80 + (_pulseAnimation.value * 20),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
+                  animation: _pulseAnimation,
+                  builder: (context, child) {
+                    return Container(
+                      width: 80 + (_pulseAnimation.value * 20),
+                      height: 80 + (_pulseAnimation.value * 20),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withAlpha(
+                          (76 + (_pulseAnimation.value * 50)).round(),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
                             color: AppColors.primary.withAlpha(
-                              (76 + (_pulseAnimation.value * 50)).round(),
+                              (102 * _pulseAnimation.value).round(),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withAlpha(
-                                  (102 * _pulseAnimation.value).round(),
-                                ),
-                                blurRadius: 30,
-                                spreadRadius: 10,
-                              ),
-                            ],
+                            blurRadius: 30,
+                            spreadRadius: 10,
                           ),
-                        );
-                      },
-                    )
+                        ],
+                      ),
+                    );
+                  },
+                )
                     .animate(onPlay: (c) => c.repeat())
                     .shimmer(duration: 1500.ms)
                     .then()
@@ -133,7 +119,7 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen>
                 const SizedBox(height: 32),
                 // Loading text
                 Text(
-                  'Connecting to Google...',
+                  'Connecting to Supabase...',
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 16,
                     color: AppColors.textSecondary,

@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/auth/google_auth_service.dart';
-import '../../services/auth/token_manager.dart';
+import '../../services/supabase/supabase_client_service.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/gradient_button.dart';
@@ -48,13 +48,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     setState(() => _isLoading = true);
 
     try {
-      final secureStorage = ref.read(secureStorageServiceProvider);
-      final authService = GoogleAuthService(secureStorage: secureStorage);
-
-      final result = await authService.authorize();
-
-      final authNotifier = ref.read(authNotifierProvider.notifier);
-      authNotifier.setAuthenticated(result.accessToken, result.expiresAt);
+      final client = ref.read(supabaseClientProvider);
+      final authService = GoogleAuthService(client);
+      await authService.authorize();
+      
+      // Supabase handles the rest - auth state will update automatically
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

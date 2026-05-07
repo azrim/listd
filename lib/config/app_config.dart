@@ -2,19 +2,30 @@
 class AppConfig {
   AppConfig._();
 
+  // ── Supabase ──
+  /// TODO: Replace with your Supabase project URL
+  /// Get this from: Supabase Dashboard → Settings → API → Project URL
+  static const String supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'YOUR_SUPABASE_URL',
+  );
+
+  /// TODO: Replace with your Supabase anon key
+  /// Get this from: Supabase Dashboard → Settings → API → anon public key
+  static const String supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: 'YOUR_SUPABASE_ANON_KEY',
+  );
+
+  // ── Deep Link ──
+  /// Deep link URL for OAuth callback (must match Supabase redirect URL)
+  static const String redirectUrl = 'io.listd://login-callback';
+
   // ── Google OAuth (identity only) ──
   /// Google OAuth Client ID (from Google Cloud Console)
   static const String googleClientId = String.fromEnvironment(
     'GOOGLE_CLIENT_ID',
     defaultValue: '',
-  );
-
-  // ── MongoDB Atlas App Services ──
-  /// TODO: Replace with your actual Atlas App Services App ID
-  /// Get this from: MongoDB Atlas → App Services → Your App → Settings → App ID
-  static const String atlasAppId = String.fromEnvironment(
-    'ATLAS_APP_ID',
-    defaultValue: 'YOUR_ATLAS_APP_ID',
   );
 
   // ── App Info ──

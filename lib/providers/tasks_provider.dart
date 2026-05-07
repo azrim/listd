@@ -5,8 +5,7 @@ import '../data/database/daos/task_dao.dart';
 import '../models/task.dart';
 import '../models/sync_status.dart';
 import '../services/auth/token_manager.dart';
-import '../services/atlas/mongo_realm_provider.dart';
-import 'task_lists_provider.dart' show databaseProvider;
+import 'task_lists_provider.dart' show databaseProvider, supabaseTasksProviderProvider;
 
 /// Provider for the TaskDao.
 final taskDaoProvider = Provider<TaskDao>((ref) {
@@ -25,7 +24,7 @@ final tasksStreamProvider = StreamProvider.family<List<Task>, String>((
       .map((entries) => entries.map((e) => e.toDomain()).toList());
 });
 
-/// Future provider that fetches tasks from MongoDB Atlas for a specific task list.
+/// Future provider that fetches tasks from Supabase for a specific task list.
 final remoteTasksProvider = FutureProvider.family<List<Task>, String>((
   ref,
   taskListId,
@@ -36,13 +35,8 @@ final remoteTasksProvider = FutureProvider.family<List<Task>, String>((
     return [];
   }
 
-  // Use MongoRealmProvider to fetch tasks
-  final app = ref.watch(realmAppProvider);
-  if (!app.isLoggedIn) {
-    return [];
-  }
-
-  final provider = MongoRealmProvider(app);
+  // Use SupabaseTasksProvider to fetch tasks
+  final provider = ref.watch(supabaseTasksProviderProvider);
   final tasks = await provider.getTasks(taskListId);
 
   // Save to local database for offline access
@@ -89,7 +83,7 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     }
   }
 
-  /// Creates a new task via MongoDB Atlas and saves to local database.
+  /// Creates a new task via Supabase and saves to local database.
   Future<void> createTask(Task task) async {
     try {
       // Get auth state
@@ -106,22 +100,8 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         return;
       }
 
-      // Use MongoRealmProvider
-      final app = _ref.read(realmAppProvider);
-      if (!app.isLoggedIn) {
-        // Save locally if not logged in to Realm
-        final newTask = task.copyWith(
-          id: task.id.isEmpty ? const Uuid().v4() : task.id,
-          updated: DateTime.now(),
-          syncStatus: SyncStatus.created,
-        );
-        await _dao.upsertTask(newTask);
-        await refresh();
-        return;
-      }
-
-      // Create via Realm
-      final provider = MongoRealmProvider(app);
+      // Create via Supabase
+      final provider = _ref.read(supabaseTasksProviderProvider);
       final createdTask = await provider.createTask(taskListId, task);
 
       // Save to local database
@@ -132,7 +112,7 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     }
   }
 
-  /// Updates an existing task via MongoDB Atlas.
+  /// Updates an existing task via Supabase.
   Future<void> updateTask(Task task) async {
     try {
       // Get auth state
@@ -148,21 +128,8 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         return;
       }
 
-      // Use MongoRealmProvider
-      final app = _ref.read(realmAppProvider);
-      if (!app.isLoggedIn) {
-        // Save locally if not logged in to Realm
-        final updatedTask = task.copyWith(
-          updated: DateTime.now(),
-          syncStatus: SyncStatus.updated,
-        );
-        await _dao.upsertTask(updatedTask);
-        await refresh();
-        return;
-      }
-
-      // Update via Realm
-      final provider = MongoRealmProvider(app);
+      // Update via Supabase
+      final provider = _ref.read(supabaseTasksProviderProvider);
       final updatedTask = await provider.updateTask(taskListId, task);
 
       // Save to local database
@@ -180,22 +147,19 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     await updateTask(updatedTask);
   }
 
-  /// Deletes a task via MongoDB Atlas.
+  /// Deletes a task via Supabase.
   Future<void> deleteTask(String taskId) async {
     try {
       // Get auth state
       final authState = _ref.read(authNotifierProvider);
 
       if (authState is AuthAuthenticated) {
-        // Try to delete from Realm
+        // Delete from Supabase
         try {
-          final app = _ref.read(realmAppProvider);
-          if (app.isLoggedIn) {
-            final provider = MongoRealmProvider(app);
-            await provider.deleteTask(taskListId, taskId);
-          }
+          final provider = _ref.read(supabaseTasksProviderProvider);
+          await provider.deleteTask(taskListId, taskId);
         } catch (_) {
-          // If Realm fails, continue with local delete
+          // If Supabase fails, continue with local delete
         }
       }
 
@@ -207,7 +171,7 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     }
   }
 
-  /// Syncs tasks from MongoDB Atlas and saves to local database.
+  /// Syncs tasks from Supabase and saves to local database.
   Future<void> syncFromRemote() async {
     state = const AsyncValue.loading();
     try {
@@ -218,14 +182,8 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         return;
       }
 
-      // Use MongoRealmProvider
-      final app = _ref.read(realmAppProvider);
-      if (!app.isLoggedIn) {
-        await refresh();
-        return;
-      }
-
-      final provider = MongoRealmProvider(app);
+      // Use SupabaseTasksProvider
+      final provider = _ref.read(supabaseTasksProviderProvider);
       final remoteTasks = await provider.getTasks(taskListId);
 
       // Save to local database

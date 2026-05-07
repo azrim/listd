@@ -22,8 +22,8 @@ dependencies:
   drift_flutter: ^0.2.4
   sqlite3_flutter_libs: ^0.5.28
 
-  # Atlas / Realm
-  realm: ^20.0.0
+  # Supabase
+  supabase_flutter: ^2.3.0
 
   # Navigation
   go_router: ^14.6.2

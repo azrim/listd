@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'secure_storage_service.dart';
-import 'google_auth_service.dart';
-import '../atlas/mongo_realm_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../supabase/supabase_client_service.dart';
 
 /// Represents the authentication state of the application.
 sealed class AuthState {
@@ -14,21 +14,17 @@ class AuthUnauthenticated extends AuthState {
   const AuthUnauthenticated();
 }
 
-/// User is authenticated and has valid tokens.
+/// User is authenticated with a Supabase session.
 class AuthAuthenticated extends AuthState {
-  final String accessToken;
-  final int expiresAt;
-  final User? realmUser;
+  final Session session;
 
-  const AuthAuthenticated({
-    required this.accessToken,
-    required this.expiresAt,
-    this.realmUser,
-  });
+  const AuthAuthenticated(this.session);
 
   /// Check if token will expire within the specified minutes.
   bool willExpireWithin(Duration duration) {
-    final expiryTime = DateTime.fromMillisecondsSinceEpoch(expiresAt);
+    final expiresAt = session.expiresAt;
+    if (expiresAt == null) return false;
+    final expiryTime = DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000);
     return expiryTime.difference(DateTime.now()) < duration;
   }
 }
@@ -45,156 +41,76 @@ class AuthError extends AuthState {
   const AuthError(this.message);
 }
 
-/// Manages OAuth token storage and refresh logic.
-class TokenManager {
-  final SecureStorageService _secureStorage;
-  final GoogleAuthService _authService;
-
-  TokenManager({
-    required SecureStorageService secureStorage,
-    required GoogleAuthService authService,
-  }) : _secureStorage = secureStorage,
-       _authService = authService;
-
-  /// Returns a valid access token, refreshing if necessary.
-  /// Returns null if not authenticated or refresh fails.
-  Future<String?> getValidAccessToken() async {
-    final accessToken = await _secureStorage.getAccessToken();
-    final refreshToken = await _secureStorage.getRefreshToken();
-    final expiresAt = await _secureStorage.getTokenExpiresAt();
-
-    if (accessToken == null || refreshToken == null || expiresAt == null) {
-      return null;
-    }
-
-    // Auto-refresh if token will expire within 5 minutes
-    final expiryTime = DateTime.fromMillisecondsSinceEpoch(expiresAt);
-    final fiveMinutesFromNow = DateTime.now().add(const Duration(minutes: 5));
-
-    if (expiryTime.isBefore(fiveMinutesFromNow)) {
-      try {
-        final newToken = await _authService.refreshAccessToken(refreshToken);
-        if (newToken != null) {
-          await _secureStorage.setAccessToken(newToken.accessToken);
-          await _secureStorage.setTokenExpiresAt(newToken.expiresAt);
-          return newToken.accessToken;
-        }
-      } catch (e) {
-        // Refresh failed, tokens are invalid
-        await _secureStorage.clearAll();
-        return null;
-      }
-    }
-
-    return accessToken;
-  }
-
-  /// Checks if user is currently authenticated.
-  Future<bool> isAuthenticated() async {
-    final accessToken = await getValidAccessToken();
-    return accessToken != null;
-  }
-
-  /// Clears all stored tokens (logout).
-  Future<void> logout() async {
-    await _secureStorage.clearAll();
-  }
-}
-
-/// Notifier for managing authentication state.
+/// Notifier for managing authentication state via Supabase.
+///
+/// Supabase handles all token management, refresh, and storage automatically.
+/// This notifier just bridges Supabase's auth state to our app's AuthState.
 class AuthNotifier extends StateNotifier<AuthState> {
-  final TokenManager _tokenManager;
-
-  AuthNotifier({required TokenManager tokenManager})
-    : _tokenManager = tokenManager,
-      super(const AuthLoading()) {
+  AuthNotifier(this._client) : super(const AuthLoading()) {
     _init();
   }
 
-  Future<void> _init() async {
-    try {
-      final token = await _tokenManager.getValidAccessToken();
-      if (token != null) {
-        final expiresAt = await _secureStorage.getTokenExpiresAt();
-        state = AuthAuthenticated(
-          accessToken: token,
-          expiresAt: expiresAt ?? DateTime.now().millisecondsSinceEpoch,
-        );
-      } else {
-        state = const AuthUnauthenticated();
+  final SupabaseClient _client;
+
+  void _init() {
+    // Listen to Supabase auth state changes
+    _client.auth.onAuthStateChange.listen((event) {
+      switch (event) {
+        case AuthChangeEvent.signedIn:
+          final session = event.session;
+          if (session != null) {
+            state = AuthAuthenticated(session);
+          } else {
+            state = const AuthUnauthenticated();
+          }
+        case AuthChangeEvent.signedOut:
+          state = const AuthUnauthenticated();
+        case AuthChangeEvent.tokenRefreshed:
+          final session = event.session;
+          if (session != null) {
+            state = AuthAuthenticated(session);
+          }
+        case AuthChangeEvent.userUpdated:
+          final session = _client.auth.currentSession;
+          if (session != null) {
+            state = AuthAuthenticated(session);
+          }
+        case AuthChangeEvent.passwordRecovery:
+          // Password recovery - don't change auth state
+          break;
+        case AuthChangeEvent.mfaChallengeVerified:
+          final session = _client.auth.currentSession;
+          if (session != null) {
+            state = AuthAuthenticated(session);
+          }
       }
-    } catch (e) {
-      state = AuthError(e.toString());
-    }
-  }
+    });
 
-  SecureStorageService get _secureStorage => _tokenManager._secureStorage;
-
-  /// Refreshes the access token.
-  Future<void> refreshToken() async {
-    final token = await _tokenManager.getValidAccessToken();
-    if (token != null) {
-      final expiresAt = await _secureStorage.getTokenExpiresAt();
-      state = AuthAuthenticated(
-        accessToken: token,
-        expiresAt: expiresAt ?? DateTime.now().millisecondsSinceEpoch,
-      );
+    // Set initial state based on current session
+    final session = _client.auth.currentSession;
+    if (session != null) {
+      state = AuthAuthenticated(session);
     } else {
       state = const AuthUnauthenticated();
     }
   }
 
-  /// Logs out the user.
+  /// Returns a valid access token from Supabase.
+  String? get validAccessToken => _client.auth.currentSession?.accessToken;
+
+  /// Checks if user is currently authenticated.
+  bool get isAuthenticated => _client.auth.currentSession != null;
+
+  /// Logs out the user via Supabase.
   Future<void> logout() async {
-    // TODO: Log out from Realm if connected
-    await _tokenManager.logout();
-    state = const AuthUnauthenticated();
-  }
-
-  /// Updates state after successful authentication.
-  void setAuthenticated(String accessToken, int expiresAt, {User? realmUser}) {
-    state = AuthAuthenticated(
-      accessToken: accessToken,
-      expiresAt: expiresAt,
-      realmUser: realmUser,
-    );
-  }
-
-  /// Updates state with Realm user after login.
-  void setRealmUser(User realmUser) {
-    if (state is AuthAuthenticated) {
-      final current = state as AuthAuthenticated;
-      state = AuthAuthenticated(
-        accessToken: current.accessToken,
-        expiresAt: current.expiresAt,
-        realmUser: realmUser,
-      );
-    }
+    await _client.auth.signOut();
   }
 }
-
-/// Provider for SecureStorageService.
-final secureStorageServiceProvider = Provider<SecureStorageService>((ref) {
-  return SecureStorageService();
-});
-
-/// Provider for GoogleAuthService.
-final googleAuthServiceProvider = Provider<GoogleAuthService>((ref) {
-  final storage = ref.watch(secureStorageServiceProvider);
-  return GoogleAuthService(secureStorage: storage);
-});
-
-/// Provider for TokenManager.
-final tokenManagerProvider = Provider<TokenManager>((ref) {
-  final storage = ref.watch(secureStorageServiceProvider);
-  final authService = ref.watch(googleAuthServiceProvider);
-  return TokenManager(secureStorage: storage, authService: authService);
-});
 
 /// Provider for authentication state.
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
   ref,
 ) {
-  final tokenManager = ref.watch(tokenManagerProvider);
-  return AuthNotifier(tokenManager: tokenManager);
+  final client = ref.watch(supabaseClientProvider);
+  return AuthNotifier(client);
 });

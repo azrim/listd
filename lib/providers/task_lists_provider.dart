@@ -4,7 +4,8 @@ import '../data/database/app_database.dart' hide databaseProvider;
 import '../data/database/daos/task_list_dao.dart';
 import '../models/task_list.dart';
 import '../services/auth/token_manager.dart';
-import '../services/atlas/mongo_realm_provider.dart';
+import '../services/tasks/supabase_tasks_provider.dart';
+import '../services/supabase/supabase_client_service.dart' show supabaseClientProvider;
 
 /// Provider for the database instance.
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -17,6 +18,12 @@ final taskListDaoProvider = Provider<TaskListDao>((ref) {
   return TaskListDao(db);
 });
 
+/// Provider for SupabaseTasksProvider.
+final supabaseTasksProviderProvider = Provider<SupabaseTasksProvider>((ref) {
+  final client = ref.watch(supabaseClientProvider);
+  return SupabaseTasksProvider(client);
+});
+
 /// Stream provider that watches all task lists from the local database.
 final taskListsStreamProvider = StreamProvider<List<TaskList>>((ref) {
   final dao = ref.watch(taskListDaoProvider);
@@ -25,7 +32,7 @@ final taskListsStreamProvider = StreamProvider<List<TaskList>>((ref) {
   );
 });
 
-/// Future provider that fetches task lists from MongoDB Atlas with auth.
+/// Future provider that fetches task lists from Supabase with auth.
 final remoteTaskListsProvider = FutureProvider<List<TaskList>>((ref) async {
   // Wait for auth state to be ready
   final authState = ref.watch(authNotifierProvider);
@@ -33,13 +40,8 @@ final remoteTaskListsProvider = FutureProvider<List<TaskList>>((ref) async {
     return [];
   }
 
-  // Use MongoRealmProvider to fetch task lists
-  final app = ref.watch(realmAppProvider);
-  if (!app.isLoggedIn) {
-    return [];
-  }
-
-  final provider = MongoRealmProvider(app);
+  // Use SupabaseTasksProvider to fetch task lists
+  final provider = ref.watch(supabaseTasksProviderProvider);
   final taskLists = await provider.getTaskLists();
 
   // Save to local database for offline access
@@ -92,7 +94,7 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
     }
   }
 
-  /// Syncs task lists from MongoDB Atlas and saves to local database.
+  /// Syncs task lists from Supabase and saves to local database.
   Future<void> syncFromRemote() async {
     state = const AsyncValue.loading();
     try {
@@ -103,14 +105,8 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
         return;
       }
 
-      // Use MongoRealmProvider to sync
-      final app = _ref.read(realmAppProvider);
-      if (!app.isLoggedIn) {
-        await refresh();
-        return;
-      }
-
-      final provider = MongoRealmProvider(app);
+      // Use SupabaseTasksProvider to sync
+      final provider = _ref.read(supabaseTasksProviderProvider);
       final remoteLists = await provider.getTaskLists();
 
       // Save to local database
@@ -123,7 +119,7 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
     }
   }
 
-  /// Creates a new task list and syncs to MongoDB Atlas.
+  /// Creates a new task list and syncs to Supabase.
   Future<void> createTaskList(String title) async {
     try {
       final authState = _ref.read(authNotifierProvider);
@@ -131,20 +127,9 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
         return;
       }
 
-      final app = _ref.read(realmAppProvider);
-      if (!app.isLoggedIn) {
-        return;
-      }
-
-      // Create via Realm
-      final provider = MongoRealmProvider(app);
-      final newList = await provider.createTaskList(
-        TaskList(
-          id: '',
-          title: title,
-          updated: DateTime.now(),
-        ),
-      );
+      // Create via Supabase
+      final provider = _ref.read(supabaseTasksProviderProvider);
+      final newList = await provider.createTaskList(title);
 
       // Save to local database
       await _dao.upsertTaskLists([newList]);
@@ -164,13 +149,8 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
         return;
       }
 
-      final app = _ref.read(realmAppProvider);
-      if (!app.isLoggedIn) {
-        return;
-      }
-
-      // Delete via Realm
-      final provider = MongoRealmProvider(app);
+      // Delete via Supabase
+      final provider = _ref.read(supabaseTasksProviderProvider);
       await provider.deleteTaskList(id);
 
       // Remove from local database

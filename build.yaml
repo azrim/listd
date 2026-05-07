@@ -1,7 +1,0 @@
-targets:
-  $default:
-    builders:
-      realm:realm_generator:
-        enabled: true
-        generate_for:
-          - lib/data/realm/schemas/*.dart

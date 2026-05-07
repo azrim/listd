@@ -5,36 +5,33 @@ import '../../models/sync_status.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/daos/task_dao.dart';
 import '../../data/database/daos/task_list_dao.dart';
-import '../atlas/mongo_realm_provider.dart';
+import '../../providers/task_lists_provider.dart' show supabaseTasksProviderProvider;
+import '../tasks/supabase_tasks_provider.dart';
 
-/// Service for synchronizing local database with MongoDB Atlas via Realm.
+/// Service for synchronizing local Drift cache with Supabase.
 ///
-/// Realm handles cloud sync automatically via Device Sync.
-/// This service manages local Drift cache in sync with Realm data.
+/// This service manages local Drift cache in sync with Supabase data.
 class TaskSyncService {
   TaskSyncService({
     required TaskDao taskDao,
     required TaskListDao taskListDao,
-    required MongoRealmProvider realmProvider,
+    required SupabaseTasksProvider taskProvider,
   }) : _taskDao = taskDao,
        _taskListDao = taskListDao,
-       _realmProvider = realmProvider;
+       _taskProvider = taskProvider;
 
   final TaskDao _taskDao;
   final TaskListDao _taskListDao;
-  final MongoRealmProvider _realmProvider;
+  final SupabaseTasksProvider _taskProvider;
 
-  /// Performs a sync between local Drift cache and Realm data.
-  ///
-  /// Since Realm handles cloud sync automatically, this method
-  /// just ensures local Drift cache stays in sync with Realm.
+  /// Performs a sync between local Drift cache and Supabase data.
   ///
   /// Returns a [SyncSummary] with counts of synced items.
   Future<SyncSummary> syncAll() async {
-    // Pull task lists from Realm
+    // Pull task lists from Supabase
     final taskListSummary = await _pullTaskLists();
 
-    // Pull tasks from Realm
+    // Pull tasks from Supabase
     final taskSummary = await _pullTasks();
 
     return SyncSummary(
@@ -45,42 +42,40 @@ class TaskSyncService {
     );
   }
 
-  /// Pulls task lists from Realm and syncs with local Drift.
+  /// Pulls task lists from Supabase and syncs with local Drift.
   Future<_PullSummary> _pullTaskLists() async {
     try {
       // Get local task lists
       final localTaskLists = await _taskListDao.getAllTaskLists();
       final localDomainLists = localTaskLists.map((e) => e.toDomain()).toList();
 
-      // Get Realm task lists
-      final realmLists = await _realmProvider.getTaskLists();
+      // Get Supabase task lists
+      final remoteLists = await _taskProvider.getTaskLists();
 
       // Sync deleted task lists
       int deleted = 0;
-      final realmIds = realmLists.map((l) => l.id).toSet();
+      final remoteIds = remoteLists.map((l) => l.id).toSet();
       for (final local in localDomainLists) {
-        if (!realmIds.contains(local.id) && local.syncStatus != SyncStatus.deleted) {
+        if (!remoteIds.contains(local.id) &&
+            local.syncStatus != SyncStatus.deleted) {
           await _taskListDao.deleteTaskList(local.id);
           await _taskDao.deleteTasksByListId(local.id);
           deleted++;
         }
       }
 
-      // Upsert Realm task lists to local
-      if (realmLists.isNotEmpty) {
-        await _taskListDao.upsertTaskLists(realmLists);
+      // Upsert remote task lists to local
+      if (remoteLists.isNotEmpty) {
+        await _taskListDao.upsertTaskLists(remoteLists);
       }
 
-      return _PullSummary(
-        updated: realmLists.length,
-        deleted: deleted,
-      );
+      return _PullSummary(updated: remoteLists.length, deleted: deleted);
     } catch (e) {
       return const _PullSummary();
     }
   }
 
-  /// Pulls tasks from Realm and syncs with local Drift.
+  /// Pulls tasks from Supabase and syncs with local Drift.
   Future<_PullSummary> _pullTasks() async {
     try {
       // Get all local tasks grouped by task list
@@ -92,27 +87,27 @@ class TaskSyncService {
         localTasks[taskList.id] = tasks.map((e) => e.toDomain()).toList();
       }
 
-      // Get Realm tasks for all task lists
+      // Get remote tasks for all task lists
       int updated = 0;
       int deleted = 0;
 
       for (final taskList in taskLists) {
-        final realmTasks = await _realmProvider.getTasks(taskList.id);
-        
-        // Find deleted tasks (in local but not in Realm)
-        final realmTaskIds = realmTasks.map((t) => t.id).toSet();
+        final remoteTasks = await _taskProvider.getTasks(taskList.id);
+
+        // Find deleted tasks (in local but not in remote)
+        final remoteTaskIds = remoteTasks.map((t) => t.id).toSet();
         for (final localTask in localTasks[taskList.id] ?? []) {
-          if (!realmTaskIds.contains(localTask.id) && 
+          if (!remoteTaskIds.contains(localTask.id) &&
               localTask.syncStatus != SyncStatus.deleted) {
             await _taskDao.deleteTask(localTask.id);
             deleted++;
           }
         }
 
-        // Upsert Realm tasks to local
-        if (realmTasks.isNotEmpty) {
-          await _taskDao.upsertTasks(realmTasks);
-          updated += realmTasks.length;
+        // Upsert remote tasks to local
+        if (remoteTasks.isNotEmpty) {
+          await _taskDao.upsertTasks(remoteTasks);
+          updated += remoteTasks.length;
         }
       }
 
@@ -232,14 +227,14 @@ final taskListDaoProviderSync = Provider<TaskListDao>((ref) {
 final taskSyncServiceProvider = Provider<TaskSyncService>((ref) {
   final taskDao = ref.watch(taskDaoProviderSync);
   final taskListDao = ref.watch(taskListDaoProviderSync);
-  final app = ref.watch(realmAppProvider);
-
-  final realmProvider = MongoRealmProvider(app);
+  
+  // Import from providers
+  final supabaseTasksProvider = ref.watch(supabaseTasksProviderProvider);
 
   return TaskSyncService(
     taskDao: taskDao,
     taskListDao: taskListDao,
-    realmProvider: realmProvider,
+    taskProvider: supabaseTasksProvider,
   );
 });
 
