@@ -5,7 +5,8 @@ import '../../models/sync_status.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/daos/task_dao.dart';
 import '../../data/database/daos/task_list_dao.dart';
-import '../../providers/task_lists_provider.dart' show supabaseTasksProviderProvider;
+import '../../providers/task_lists_provider.dart'
+    show supabaseTasksProviderProvider;
 import '../tasks/supabase_tasks_provider.dart';
 
 /// Service for synchronizing local Drift cache with Supabase.
@@ -227,7 +228,7 @@ final taskListDaoProviderSync = Provider<TaskListDao>((ref) {
 final taskSyncServiceProvider = Provider<TaskSyncService>((ref) {
   final taskDao = ref.watch(taskDaoProviderSync);
   final taskListDao = ref.watch(taskListDaoProviderSync);
-  
+
   // Import from providers
   final supabaseTasksProvider = ref.watch(supabaseTasksProviderProvider);
 

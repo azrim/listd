@@ -51,7 +51,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       final client = ref.read(supabaseClientProvider);
       final authService = GoogleAuthService(client);
       await authService.authorize();
-      
+
       // Supabase handles the rest - auth state will update automatically
     } catch (e) {
       if (mounted) {

@@ -5,7 +5,8 @@ import '../data/database/daos/task_list_dao.dart';
 import '../models/task_list.dart';
 import '../services/auth/token_manager.dart';
 import '../services/tasks/supabase_tasks_provider.dart';
-import '../services/supabase/supabase_client_service.dart' show supabaseClientProvider;
+import '../services/supabase/supabase_client_service.dart'
+    show supabaseClientProvider;
 
 /// Provider for the database instance.
 final databaseProvider = Provider<AppDatabase>((ref) {

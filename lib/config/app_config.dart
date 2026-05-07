@@ -12,7 +12,8 @@ class AppConfig {
 
   /// TODO: Replace with your Supabase anon key
   /// Get this from: Supabase Dashboard → Settings → API → anon public key
-  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZraWd2b2h3bGd2aHVkbHdobHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzM4NzQsImV4cCI6MjA5Mzc0OTg3NH0.jll8L5D-KB3zc1U7k23OVUDI2_wCM3loSdncFBi-dJM';
+  static const String supabaseAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZraWd2b2h3bGd2aHVkbHdobHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzM4NzQsImV4cCI6MjA5Mzc0OTg3NH0.jll8L5D-KB3zc1U7k23OVUDI2_wCM3loSdncFBi-dJM';
 
   // ── Deep Link ──
   /// Deep link URL for OAuth callback (must match Supabase redirect URL)

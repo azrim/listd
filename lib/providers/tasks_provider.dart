@@ -5,7 +5,8 @@ import '../data/database/daos/task_dao.dart';
 import '../models/task.dart';
 import '../models/sync_status.dart';
 import '../services/auth/token_manager.dart';
-import 'task_lists_provider.dart' show databaseProvider, supabaseTasksProviderProvider;
+import 'task_lists_provider.dart'
+    show databaseProvider, supabaseTasksProviderProvider;
 
 /// Provider for the TaskDao.
 final taskDaoProvider = Provider<TaskDao>((ref) {

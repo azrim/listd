@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
 /// Google OAuth service using Supabase Auth.
 ///
 /// This replaces the manual OAuth2 PKCE flow with Supabase's built-in

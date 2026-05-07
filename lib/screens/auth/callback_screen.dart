@@ -67,7 +67,7 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen>
   Widget build(BuildContext context) {
     // Watch auth state and navigate when it changes
     final authState = ref.watch(authNotifierProvider);
-    
+
     // Check initial state
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndNavigate(authState);
@@ -89,29 +89,29 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen>
               children: [
                 // Pulsing circle
                 AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Container(
-                      width: 80 + (_pulseAnimation.value * 20),
-                      height: 80 + (_pulseAnimation.value * 20),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.primary.withAlpha(
-                          (76 + (_pulseAnimation.value * 50)).round(),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
+                      animation: _pulseAnimation,
+                      builder: (context, child) {
+                        return Container(
+                          width: 80 + (_pulseAnimation.value * 20),
+                          height: 80 + (_pulseAnimation.value * 20),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
                             color: AppColors.primary.withAlpha(
-                              (102 * _pulseAnimation.value).round(),
+                              (76 + (_pulseAnimation.value * 50)).round(),
                             ),
-                            blurRadius: 30,
-                            spreadRadius: 10,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withAlpha(
+                                  (102 * _pulseAnimation.value).round(),
+                                ),
+                                blurRadius: 30,
+                                spreadRadius: 10,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                )
+                        );
+                      },
+                    )
                     .animate(onPlay: (c) => c.repeat())
                     .shimmer(duration: 1500.ms)
                     .then()

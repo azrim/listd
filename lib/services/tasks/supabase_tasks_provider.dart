@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/task.dart';
@@ -15,14 +17,14 @@ class SupabaseTasksProvider implements ITaskProvider {
 
   @override
   ProviderCapabilities get capabilities => const ProviderCapabilities(
-        canCreateTasks: true,
-        canUpdateTasks: true,
-        canDeleteTasks: true,
-        canCreateTaskLists: true,
-        canUpdateTaskLists: true,
-        canDeleteTaskLists: true,
-        supportsOfflineSync: false, // TODO: implement with Drift cache
-      );
+    canCreateTasks: true,
+    canUpdateTasks: true,
+    canDeleteTasks: true,
+    canCreateTaskLists: true,
+    canUpdateTaskLists: true,
+    canDeleteTaskLists: true,
+    supportsOfflineSync: false, // TODO: implement with Drift cache
+  );
 
   /// Get current user ID (throws if not authenticated).
   String get currentUserId {
@@ -83,9 +85,18 @@ class SupabaseTasksProvider implements ITaskProvider {
         'is_important': task.isStarred,
         'is_my_day': false,
         'position': task.position,
+        'reminder': task.reminder?.toIso8601String(),
+        'repeat_config': task.repeat?.toJson() != null
+            ? jsonEncode(task.repeat!.toJson())
+            : null,
+        'tags': task.tags,
       };
 
-      final response = await _client.from('tasks').insert(data).select().single();
+      final response = await _client
+          .from('tasks')
+          .insert(data)
+          .select()
+          .single();
 
       return _mapToTask(response);
     } on PostgrestException catch (e) {
@@ -107,6 +118,11 @@ class SupabaseTasksProvider implements ITaskProvider {
         'is_important': task.isStarred,
         'position': task.position,
         'updated_at': DateTime.now().toIso8601String(),
+        'reminder': task.reminder?.toIso8601String(),
+        'repeat_config': task.repeat?.toJson() != null
+            ? jsonEncode(task.repeat!.toJson())
+            : null,
+        'tags': task.tags,
       };
 
       final response = await _client
@@ -171,7 +187,11 @@ class SupabaseTasksProvider implements ITaskProvider {
         'position': 0,
       };
 
-      final response = await _client.from('task_lists').insert(data).select().single();
+      final response = await _client
+          .from('task_lists')
+          .insert(data)
+          .select()
+          .single();
 
       return _mapToTaskList(response);
     } on PostgrestException catch (e) {
@@ -236,6 +256,39 @@ class SupabaseTasksProvider implements ITaskProvider {
   }
 
   Task _mapToTask(Map<String, dynamic> row) {
+    // Parse repeat config from JSON string
+    RepeatConfig? repeat;
+    if (row['repeat_config'] != null) {
+      try {
+        final json = jsonDecode(row['repeat_config'] as String) as Map<String, dynamic>;
+        repeat = RepeatConfig.fromJson(json);
+      } catch (_) {
+        repeat = null;
+      }
+    }
+
+    // Parse tags from array
+    List<String> tags = [];
+    if (row['tags'] != null) {
+      if (row['tags'] is List) {
+        tags = (row['tags'] as List).cast<String>();
+      }
+    }
+
+    // Parse steps from JSON array
+    List<TaskStep> steps = [];
+    if (row['steps'] != null && row['steps'] is List) {
+      steps = (row['steps'] as List).map((s) {
+        if (s is Map) {
+          return TaskStep.fromJson(s as Map<String, dynamic>);
+        }
+        return TaskStep(
+          id: s.toString(),
+          title: s.toString(),
+        );
+      }).toList();
+    }
+
     return Task(
       id: row['id'] as String,
       title: row['title'] as String,
@@ -246,6 +299,12 @@ class SupabaseTasksProvider implements ITaskProvider {
       taskListId: row['task_list_id'] as String,
       position: row['position'] as int? ?? 0,
       isStarred: row['is_important'] as bool? ?? false,
+      reminder: row['reminder'] != null
+          ? DateTime.parse(row['reminder'] as String)
+          : null,
+      repeat: repeat,
+      tags: tags,
+      steps: steps,
     );
   }
 }

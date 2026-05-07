@@ -4,14 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
-import 'services/supabase/supabase_client_service.dart' show supabaseClientProvider, SupabaseClientService;
+import 'services/supabase/supabase_client_service.dart'
+    show supabaseClientProvider, SupabaseClientService;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Supabase
   await SupabaseClientService.initialize();
-  
+
   runApp(
     ProviderScope(
       overrides: [
