@@ -15,15 +15,21 @@ final taskDaoProvider = Provider<TaskDao>((ref) {
 });
 
 /// Stream provider that watches tasks for a specific task list from local database.
-final tasksStreamProvider = StreamProvider.family<List<Task>, String>((ref, taskListId) {
+final tasksStreamProvider = StreamProvider.family<List<Task>, String>((
+  ref,
+  taskListId,
+) {
   final dao = ref.watch(taskDaoProvider);
-  return dao.watchTasksByListId(taskListId).map(
-    (entries) => entries.map((e) => e.toDomain()).toList(),
-  );
+  return dao
+      .watchTasksByListId(taskListId)
+      .map((entries) => entries.map((e) => e.toDomain()).toList());
 });
 
 /// Future provider that fetches tasks from Google API for a specific task list.
-final remoteTasksProvider = FutureProvider.family<List<Task>, String>((ref, taskListId) async {
+final remoteTasksProvider = FutureProvider.family<List<Task>, String>((
+  ref,
+  taskListId,
+) async {
   // Wait for auth state to be ready
   final authState = ref.watch(authNotifierProvider);
   if (authState is! AuthAuthenticated) {
@@ -58,9 +64,9 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     required TaskDao dao,
     required this.taskListId,
     required Ref ref,
-  })  : _dao = dao,
-        _ref = ref,
-        super(const AsyncValue.loading()) {
+  }) : _dao = dao,
+       _ref = ref,
+       super(const AsyncValue.loading()) {
     _init();
   }
 
@@ -120,7 +126,7 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
       // Call Google API
       final api = GoogleTasksApi(accessToken: accessToken);
       final createdTask = await api.createTask(taskListId, task);
-      
+
       // Save to local database
       await _dao.upsertTask(createdTask);
       await refresh();
@@ -162,7 +168,7 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
       // Call Google API
       final api = GoogleTasksApi(accessToken: accessToken);
       final updatedTask = await api.updateTask(taskListId, task);
-      
+
       // Save to local database
       await _dao.upsertTask(updatedTask);
       await refresh();
@@ -183,7 +189,7 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     try {
       // Get auth state
       final authState = _ref.read(authNotifierProvider);
-      
+
       if (authState is AuthAuthenticated) {
         // Try to delete from Google API
         try {
@@ -241,13 +247,19 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
 }
 
 /// Family provider for TasksNotifier.
-final tasksNotifierProvider = StateNotifierProvider.family<TasksNotifier, AsyncValue<List<Task>>, String>((ref, taskListId) {
-  final dao = ref.watch(taskDaoProvider);
-  return TasksNotifier(dao: dao, taskListId: taskListId, ref: ref);
-});
+final tasksNotifierProvider =
+    StateNotifierProvider.family<TasksNotifier, AsyncValue<List<Task>>, String>(
+      (ref, taskListId) {
+        final dao = ref.watch(taskDaoProvider);
+        return TasksNotifier(dao: dao, taskListId: taskListId, ref: ref);
+      },
+    );
 
 /// Convenience provider that combines local and remote tasks.
-final tasksProvider = FutureProvider.family<List<Task>, String>((ref, taskListId) async {
+final tasksProvider = FutureProvider.family<List<Task>, String>((
+  ref,
+  taskListId,
+) async {
   final localAsync = ref.watch(tasksStreamProvider(taskListId));
   final remoteAsync = ref.watch(remoteTasksProvider(taskListId));
 

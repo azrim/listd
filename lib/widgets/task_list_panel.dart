@@ -29,7 +29,8 @@ class TaskListPanel extends ConsumerWidget {
         // Task list with pull-to-refresh
         Expanded(
           child: tasksAsync.when(
-            data: (tasks) => _buildTaskList(context, ref, tasks, viewMode, selectedTaskId),
+            data: (tasks) =>
+                _buildTaskList(context, ref, tasks, viewMode, selectedTaskId),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => _buildError(context, ref, e),
           ),
@@ -77,7 +78,8 @@ class TaskListPanel extends ConsumerWidget {
                 ],
                 selected: {viewMode},
                 onSelectionChanged: (selection) {
-                  ref.read(taskViewModeProvider.notifier).state = selection.first;
+                  ref.read(taskViewModeProvider.notifier).state =
+                      selection.first;
                 },
                 showSelectedIcon: false,
                 style: const ButtonStyle(
@@ -89,7 +91,9 @@ class TaskListPanel extends ConsumerWidget {
               // Refresh button
               IconButton(
                 icon: const Icon(Icons.refresh, size: 20),
-                onPressed: () => ref.read(tasksNotifierProvider(listId).notifier).syncFromRemote(),
+                onPressed: () => ref
+                    .read(tasksNotifierProvider(listId).notifier)
+                    .syncFromRemote(),
                 tooltip: 'Refresh',
                 visualDensity: VisualDensity.compact,
               ),
@@ -98,7 +102,10 @@ class TaskListPanel extends ConsumerWidget {
                 icon: const Icon(Icons.more_vert, size: 20),
                 onSelected: (value) => _handleMenuAction(context, ref, value),
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'clear', child: Text('Clear completed')),
+                  const PopupMenuItem(
+                    value: 'clear',
+                    child: Text('Clear completed'),
+                  ),
                 ],
               ),
             ],
@@ -142,7 +149,9 @@ class TaskListPanel extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () => ref.read(tasksNotifierProvider(listId).notifier).syncFromRemote(),
+              onPressed: () => ref
+                  .read(tasksNotifierProvider(listId).notifier)
+                  .syncFromRemote(),
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
             ),
@@ -167,7 +176,8 @@ class TaskListPanel extends ConsumerWidget {
     final mainTasks = tasks.where((t) => t.parentId == null).toList();
 
     return RefreshIndicator(
-      onRefresh: () => ref.read(tasksNotifierProvider(listId).notifier).syncFromRemote(),
+      onRefresh: () =>
+          ref.read(tasksNotifierProvider(listId).notifier).syncFromRemote(),
       child: Stack(
         children: [
           viewMode == TaskViewMode.grid
@@ -185,7 +195,9 @@ class TaskListPanel extends ConsumerWidget {
                     return _TaskCard(
                       task: task,
                       isSelected: selectedTaskId == task.id,
-                      onTap: () => ref.read(selectedTaskIdProvider.notifier).state = task.id,
+                      onTap: () =>
+                          ref.read(selectedTaskIdProvider.notifier).state =
+                              task.id,
                     );
                   },
                 )
@@ -197,8 +209,12 @@ class TaskListPanel extends ConsumerWidget {
                     return _TaskRow(
                       task: task,
                       isSelected: selectedTaskId == task.id,
-                      onTap: () => ref.read(selectedTaskIdProvider.notifier).state = task.id,
-                      onToggle: () => ref.read(tasksNotifierProvider(listId).notifier).toggleComplete(task),
+                      onTap: () =>
+                          ref.read(selectedTaskIdProvider.notifier).state =
+                              task.id,
+                      onToggle: () => ref
+                          .read(tasksNotifierProvider(listId).notifier)
+                          .toggleComplete(task),
                       onDelete: () => _confirmDelete(context, ref, task),
                     );
                   },
@@ -215,7 +231,11 @@ class TaskListPanel extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref, Task task) async {
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    Task task,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -238,7 +258,9 @@ class TaskListPanel extends ConsumerWidget {
     );
 
     if (confirmed == true) {
-      await ref.read(tasksNotifierProvider(listId).notifier).deleteTask(task.id);
+      await ref
+          .read(tasksNotifierProvider(listId).notifier)
+          .deleteTask(task.id);
     }
   }
 
@@ -335,7 +357,11 @@ class _TaskRow extends StatelessWidget {
                           : Colors.transparent,
                     ),
                     child: task.isCompleted
-                        ? Icon(Icons.check, size: 16, color: colorScheme.onPrimary)
+                        ? Icon(
+                            Icons.check,
+                            size: 16,
+                            color: colorScheme.onPrimary,
+                          )
                         : null,
                   ),
                 ),
@@ -349,14 +375,21 @@ class _TaskRow extends StatelessWidget {
                         task.title,
                         style: TextStyle(
                           fontSize: 14,
-                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                          color: task.isCompleted ? colorScheme.outline : colorScheme.onSurface,
+                          decoration: task.isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
+                          color: task.isCompleted
+                              ? colorScheme.outline
+                              : colorScheme.onSurface,
                         ),
                       ),
                       if (task.notes.isNotEmpty)
                         Text(
                           task.notes,
-                          style: TextStyle(fontSize: 12, color: colorScheme.outline),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.outline,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -366,14 +399,20 @@ class _TaskRow extends StatelessWidget {
                 // Due date chip
                 if (task.due != null) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: _getDueDateColor(context, task.due!),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       _formatDueDate(task.due!),
-                      style: TextStyle(fontSize: 11, color: colorScheme.onSurface),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -423,11 +462,7 @@ class _TaskRow extends StatelessWidget {
 
 /// Task card widget for grid view
 class _TaskCard extends StatelessWidget {
-  const _TaskCard({
-    required this.task,
-    required this.isSelected,
-    this.onTap,
-  });
+  const _TaskCard({required this.task, required this.isSelected, this.onTap});
 
   final Task task;
   final bool isSelected;
@@ -439,7 +474,9 @@ class _TaskCard extends StatelessWidget {
 
     return Card(
       elevation: isSelected ? 2 : 0,
-      color: isSelected ? colorScheme.primaryContainer : colorScheme.surfaceContainerLow,
+      color: isSelected
+          ? colorScheme.primaryContainer
+          : colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(
@@ -458,9 +495,13 @@ class _TaskCard extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    task.isCompleted ? Icons.check_circle : Icons.circle_outlined,
+                    task.isCompleted
+                        ? Icons.check_circle
+                        : Icons.circle_outlined,
                     size: 18,
-                    color: task.isCompleted ? colorScheme.primary : colorScheme.outline,
+                    color: task.isCompleted
+                        ? colorScheme.primary
+                        : colorScheme.outline,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -468,21 +509,29 @@ class _TaskCard extends StatelessWidget {
                       task.title,
                       style: TextStyle(
                         fontSize: 14,
-                        decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                        color: task.isCompleted ? colorScheme.outline : colorScheme.onSurface,
+                        decoration: task.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                        color: task.isCompleted
+                            ? colorScheme.outline
+                            : colorScheme.onSurface,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (task.isStarred) const Icon(Icons.star, size: 16, color: Colors.amber),
+                  if (task.isStarred)
+                    const Icon(Icons.star, size: 16, color: Colors.amber),
                 ],
               ),
               if (task.due != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   _formatDueDate(task.due!),
-                  style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ],
@@ -534,15 +583,17 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
         taskListId: widget.listId,
       );
 
-      await ref.read(tasksNotifierProvider(widget.listId).notifier).createTask(newTask);
+      await ref
+          .read(tasksNotifierProvider(widget.listId).notifier)
+          .createTask(newTask);
 
       _controller.clear();
       _focusNode.requestFocus();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create task: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to create task: $e')));
       }
     } finally {
       if (mounted) {

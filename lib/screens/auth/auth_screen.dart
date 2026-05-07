@@ -1,105 +1,251 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/auth/google_auth_service.dart';
 import '../../services/auth/token_manager.dart';
+import '../../theme/app_colors.dart';
+import '../../widgets/glass_card.dart';
+import '../../widgets/gradient_button.dart';
 
-/// Authentication screen with Google sign-in button.
-class AuthScreen extends ConsumerWidget {
+/// Authentication screen with glassmorphism UI
+class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
+  ConsumerState<AuthScreen> createState() => _AuthScreenState();
+}
 
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // App logo
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.asset(
-                  'assets/images/listd_logo.png',
-                  width: 120,
-                  height: 120,
-                  errorBuilder: (context, error, stackTrace) {
-                    // Fallback to icon if logo fails to load
-                    return Icon(
-                      Icons.check_circle_outline,
-                      size: 120,
-                      color: colorScheme.primary,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 24),
-              // App title
-              Text(
-                'Listd',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Your tasks, organized',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 48),
-              // Google sign-in button
-              FilledButton.icon(
-                onPressed: () => _signInWithGoogle(context, ref),
-                icon: const Icon(Icons.login),
-                label: const Text('Sign in with Google'),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Info text
-              Text(
-                'Sign in to sync your Google Tasks',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+class _AuthScreenState extends ConsumerState<AuthScreen>
+    with SingleTickerProviderStateMixin {
+  bool _isLoading = false;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
 
-  Future<void> _signInWithGoogle(BuildContext context, WidgetRef ref) async {
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _signInWithGoogle() async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
     try {
       final secureStorage = ref.read(secureStorageServiceProvider);
       final authService = GoogleAuthService(secureStorage: secureStorage);
 
-      // Perform OAuth authorization (opens browser, waits for callback, stores tokens)
       final result = await authService.authorize();
 
-      // Update auth state with the new tokens
       final authNotifier = ref.read(authNotifierProvider.notifier);
       authNotifier.setAuthenticated(result.accessToken, result.expiresAt);
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Sign-in failed: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            backgroundColor: AppColors.danger,
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Background gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: AppColors.backgroundGradient,
+            ),
+          ),
+          // Animated orbs
+          _buildOrbs(),
+          // Content
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo with glow
+                  _buildLogo()
+                      .animate()
+                      .fadeIn(duration: 600.ms)
+                      .scale(begin: const Offset(0.8, 0.8)),
+                  const SizedBox(height: 24),
+                  // Title
+                  Text(
+                    'listd',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: -1,
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(delay: 200.ms, duration: 400.ms)
+                      .slideY(begin: 0.1),
+                  const SizedBox(height: 8),
+                  // Subtitle
+                  Text(
+                    'Your tasks, beautifully organized',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 16,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(delay: 300.ms, duration: 400.ms),
+                  const SizedBox(height: 48),
+                  // Sign in card
+                  GlassCard(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        GradientButton(
+                          label: 'Continue with Google',
+                          icon: Icons.g_mobiledata,
+                          isLoading: _isLoading,
+                          onPressed: _signInWithGoogle,
+                          width: 260,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'By continuing you agree to our Terms',
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 11,
+                            color: AppColors.textHint,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(delay: 400.ms, duration: 500.ms)
+                      .slideY(begin: 0.1),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrbs() {
+    return Stack(
+      children: [
+        // Top orb
+        Positioned(
+          top: -100,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: AnimatedBuilder(
+              animation: _pulseAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _pulseAnimation.value,
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.primary.withAlpha(51),
+                          AppColors.primary.withAlpha(0),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        // Bottom right orb
+        Positioned(
+          bottom: -150,
+          right: -100,
+          child: Container(
+            width: 400,
+            height: 400,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.primaryLight.withAlpha(31),
+                  AppColors.primaryLight.withAlpha(0),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLogo() {
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.primary, AppColors.primaryLight],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withAlpha(102),
+                blurRadius: 30 + (_pulseAnimation.value * 10),
+                spreadRadius: 5,
+              ),
+              BoxShadow(
+                color: AppColors.primary.withAlpha(51),
+                blurRadius: 60 + (_pulseAnimation.value * 15),
+                spreadRadius: 10,
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.check_circle_outline,
+            color: Colors.white,
+            size: 40,
+          ),
+        );
+      },
+    );
   }
 }
