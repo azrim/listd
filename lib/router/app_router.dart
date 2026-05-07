@@ -5,8 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../screens/auth/auth_screen.dart';
 import '../screens/auth/callback_screen.dart';
-import '../screens/task_lists/task_lists_screen.dart';
-import '../screens/tasks/tasks_screen.dart';
+import '../screens/home/home_screen.dart';
 import '../screens/settings/settings_screen.dart';
 
 /// The main router configuration for the application.
@@ -47,19 +46,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         name: 'home',
-        builder: (context, state) => const TaskListsScreen(),
-      ),
-      GoRoute(
-        path: '/tasks/:taskListId',
-        name: 'tasks',
-        builder: (context, state) {
-          final taskListId = state.pathParameters['taskListId']!;
-          final taskListTitle = state.uri.queryParameters['title'] ?? 'Tasks';
-          return TasksScreen(
-            taskListId: taskListId,
-            taskListTitle: taskListTitle,
-          );
-        },
+        builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
         path: '/settings',
@@ -67,8 +54,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SettingsScreen(),
       ),
     ],
-    errorBuilder: (context, state) => Scaffold(
-      body: Center(child: Text('Page not found: ${state.uri.path}')),
-    ),
+    errorBuilder: (context, state) =>
+        const Scaffold(body: Center(child: Text('Page not found'))),
   );
 });

@@ -18,6 +18,9 @@ class Task {
     this.parentId,
     this.position = 0,
     this.syncStatus = SyncStatus.synced,
+    this.completedAt,
+    this.subtaskCount = 0,
+    this.isStarred = false,
   });
 
   /// Unique identifier for the task (Google Tasks API format or UUID)
@@ -50,6 +53,15 @@ class Task {
   /// Sync status with remote
   final SyncStatus syncStatus;
 
+  /// Completion timestamp (null if not completed)
+  final DateTime? completedAt;
+
+  /// Number of subtasks for this task
+  final int subtaskCount;
+
+  /// Whether this task is starred/favorited
+  final bool isStarred;
+
   /// Whether this task is completed
   bool get isCompleted => status == 'completed';
 
@@ -70,6 +82,10 @@ class Task {
     bool clearParentId = false,
     int? position,
     SyncStatus? syncStatus,
+    DateTime? completedAt,
+    bool clearCompletedAt = false,
+    int? subtaskCount,
+    bool? isStarred,
   }) {
     return Task(
       id: id ?? this.id,
@@ -82,6 +98,9 @@ class Task {
       parentId: clearParentId ? null : (parentId ?? this.parentId),
       position: position ?? this.position,
       syncStatus: syncStatus ?? this.syncStatus,
+      completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
+      subtaskCount: subtaskCount ?? this.subtaskCount,
+      isStarred: isStarred ?? this.isStarred,
     );
   }
 
@@ -98,7 +117,10 @@ class Task {
         other.taskListId == taskListId &&
         other.parentId == parentId &&
         other.position == position &&
-        other.syncStatus == syncStatus;
+        other.syncStatus == syncStatus &&
+        other.completedAt == completedAt &&
+        other.subtaskCount == subtaskCount &&
+        other.isStarred == isStarred;
   }
 
   @override
@@ -114,6 +136,9 @@ class Task {
       parentId,
       position,
       syncStatus,
+      completedAt,
+      subtaskCount,
+      isStarred,
     );
   }
 

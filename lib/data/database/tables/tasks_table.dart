@@ -33,6 +33,9 @@ class Tasks extends Table {
   /// Position within the task list for ordering
   IntColumn get position => integer().withDefault(const Constant(0))();
 
+  /// Whether this task is starred/favorited
+  BoolColumn get isStarred => boolean().withDefault(const Constant(false))();
+
   /// Sync status: 0=synced, 1=created, 2=updated, 3=deleted
   IntColumn get syncStatus => integer().withDefault(const Constant(0))();
 

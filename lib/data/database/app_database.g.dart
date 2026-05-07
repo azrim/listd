@@ -101,6 +101,21 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _isStarredMeta = const VerificationMeta(
+    'isStarred',
+  );
+  @override
+  late final GeneratedColumn<bool> isStarred = GeneratedColumn<bool>(
+    'is_starred',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_starred" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _syncStatusMeta = const VerificationMeta(
     'syncStatus',
   );
@@ -124,6 +139,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
     taskListId,
     parentId,
     position,
+    isStarred,
     syncStatus,
   ];
   @override
@@ -198,6 +214,12 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
         position.isAcceptableOrUnknown(data['position']!, _positionMeta),
       );
     }
+    if (data.containsKey('is_starred')) {
+      context.handle(
+        _isStarredMeta,
+        isStarred.isAcceptableOrUnknown(data['is_starred']!, _isStarredMeta),
+      );
+    }
     if (data.containsKey('sync_status')) {
       context.handle(
         _syncStatusMeta,
@@ -249,6 +271,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
         DriftSqlType.int,
         data['${effectivePrefix}position'],
       )!,
+      isStarred: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_starred'],
+      )!,
       syncStatus: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sync_status'],
@@ -290,6 +316,9 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
   /// Position within the task list for ordering
   final int position;
 
+  /// Whether this task is starred/favorited
+  final bool isStarred;
+
   /// Sync status: 0=synced, 1=created, 2=updated, 3=deleted
   final int syncStatus;
   const TaskEntry({
@@ -302,6 +331,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     required this.taskListId,
     this.parentId,
     required this.position,
+    required this.isStarred,
     required this.syncStatus,
   });
   @override
@@ -320,6 +350,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
       map['parent_id'] = Variable<String>(parentId);
     }
     map['position'] = Variable<int>(position);
+    map['is_starred'] = Variable<bool>(isStarred);
     map['sync_status'] = Variable<int>(syncStatus);
     return map;
   }
@@ -337,6 +368,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           ? const Value.absent()
           : Value(parentId),
       position: Value(position),
+      isStarred: Value(isStarred),
       syncStatus: Value(syncStatus),
     );
   }
@@ -356,6 +388,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
       taskListId: serializer.fromJson<String>(json['taskListId']),
       parentId: serializer.fromJson<String?>(json['parentId']),
       position: serializer.fromJson<int>(json['position']),
+      isStarred: serializer.fromJson<bool>(json['isStarred']),
       syncStatus: serializer.fromJson<int>(json['syncStatus']),
     );
   }
@@ -372,6 +405,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
       'taskListId': serializer.toJson<String>(taskListId),
       'parentId': serializer.toJson<String?>(parentId),
       'position': serializer.toJson<int>(position),
+      'isStarred': serializer.toJson<bool>(isStarred),
       'syncStatus': serializer.toJson<int>(syncStatus),
     };
   }
@@ -386,6 +420,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     String? taskListId,
     Value<String?> parentId = const Value.absent(),
     int? position,
+    bool? isStarred,
     int? syncStatus,
   }) => TaskEntry(
     id: id ?? this.id,
@@ -397,6 +432,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     taskListId: taskListId ?? this.taskListId,
     parentId: parentId.present ? parentId.value : this.parentId,
     position: position ?? this.position,
+    isStarred: isStarred ?? this.isStarred,
     syncStatus: syncStatus ?? this.syncStatus,
   );
   TaskEntry copyWithCompanion(TasksCompanion data) {
@@ -412,6 +448,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           : this.taskListId,
       parentId: data.parentId.present ? data.parentId.value : this.parentId,
       position: data.position.present ? data.position.value : this.position,
+      isStarred: data.isStarred.present ? data.isStarred.value : this.isStarred,
       syncStatus: data.syncStatus.present
           ? data.syncStatus.value
           : this.syncStatus,
@@ -430,6 +467,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           ..write('taskListId: $taskListId, ')
           ..write('parentId: $parentId, ')
           ..write('position: $position, ')
+          ..write('isStarred: $isStarred, ')
           ..write('syncStatus: $syncStatus')
           ..write(')'))
         .toString();
@@ -446,6 +484,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     taskListId,
     parentId,
     position,
+    isStarred,
     syncStatus,
   );
   @override
@@ -461,6 +500,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           other.taskListId == this.taskListId &&
           other.parentId == this.parentId &&
           other.position == this.position &&
+          other.isStarred == this.isStarred &&
           other.syncStatus == this.syncStatus);
 }
 
@@ -474,6 +514,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
   final Value<String> taskListId;
   final Value<String?> parentId;
   final Value<int> position;
+  final Value<bool> isStarred;
   final Value<int> syncStatus;
   final Value<int> rowid;
   const TasksCompanion({
@@ -486,6 +527,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     this.taskListId = const Value.absent(),
     this.parentId = const Value.absent(),
     this.position = const Value.absent(),
+    this.isStarred = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -499,6 +541,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     required String taskListId,
     this.parentId = const Value.absent(),
     this.position = const Value.absent(),
+    this.isStarred = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -514,6 +557,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     Expression<String>? taskListId,
     Expression<String>? parentId,
     Expression<int>? position,
+    Expression<bool>? isStarred,
     Expression<int>? syncStatus,
     Expression<int>? rowid,
   }) {
@@ -527,6 +571,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
       if (taskListId != null) 'task_list_id': taskListId,
       if (parentId != null) 'parent_id': parentId,
       if (position != null) 'position': position,
+      if (isStarred != null) 'is_starred': isStarred,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (rowid != null) 'rowid': rowid,
     });
@@ -542,6 +587,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     Value<String>? taskListId,
     Value<String?>? parentId,
     Value<int>? position,
+    Value<bool>? isStarred,
     Value<int>? syncStatus,
     Value<int>? rowid,
   }) {
@@ -555,6 +601,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
       taskListId: taskListId ?? this.taskListId,
       parentId: parentId ?? this.parentId,
       position: position ?? this.position,
+      isStarred: isStarred ?? this.isStarred,
       syncStatus: syncStatus ?? this.syncStatus,
       rowid: rowid ?? this.rowid,
     );
@@ -590,6 +637,9 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     if (position.present) {
       map['position'] = Variable<int>(position.value);
     }
+    if (isStarred.present) {
+      map['is_starred'] = Variable<bool>(isStarred.value);
+    }
     if (syncStatus.present) {
       map['sync_status'] = Variable<int>(syncStatus.value);
     }
@@ -611,6 +661,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
           ..write('taskListId: $taskListId, ')
           ..write('parentId: $parentId, ')
           ..write('position: $position, ')
+          ..write('isStarred: $isStarred, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1013,6 +1064,7 @@ typedef $$TasksTableCreateCompanionBuilder =
       required String taskListId,
       Value<String?> parentId,
       Value<int> position,
+      Value<bool> isStarred,
       Value<int> syncStatus,
       Value<int> rowid,
     });
@@ -1027,6 +1079,7 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<String> taskListId,
       Value<String?> parentId,
       Value<int> position,
+      Value<bool> isStarred,
       Value<int> syncStatus,
       Value<int> rowid,
     });
@@ -1081,6 +1134,11 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<int> get position => $composableBuilder(
     column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isStarred => $composableBuilder(
+    column: $table.isStarred,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1144,6 +1202,11 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isStarred => $composableBuilder(
+    column: $table.isStarred,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get syncStatus => $composableBuilder(
     column: $table.syncStatus,
     builder: (column) => ColumnOrderings(column),
@@ -1188,6 +1251,9 @@ class $$TasksTableAnnotationComposer
   GeneratedColumn<int> get position =>
       $composableBuilder(column: $table.position, builder: (column) => column);
 
+  GeneratedColumn<bool> get isStarred =>
+      $composableBuilder(column: $table.isStarred, builder: (column) => column);
+
   GeneratedColumn<int> get syncStatus => $composableBuilder(
     column: $table.syncStatus,
     builder: (column) => column,
@@ -1231,6 +1297,7 @@ class $$TasksTableTableManager
                 Value<String> taskListId = const Value.absent(),
                 Value<String?> parentId = const Value.absent(),
                 Value<int> position = const Value.absent(),
+                Value<bool> isStarred = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TasksCompanion(
@@ -1243,6 +1310,7 @@ class $$TasksTableTableManager
                 taskListId: taskListId,
                 parentId: parentId,
                 position: position,
+                isStarred: isStarred,
                 syncStatus: syncStatus,
                 rowid: rowid,
               ),
@@ -1257,6 +1325,7 @@ class $$TasksTableTableManager
                 required String taskListId,
                 Value<String?> parentId = const Value.absent(),
                 Value<int> position = const Value.absent(),
+                Value<bool> isStarred = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TasksCompanion.insert(
@@ -1269,6 +1338,7 @@ class $$TasksTableTableManager
                 taskListId: taskListId,
                 parentId: parentId,
                 position: position,
+                isStarred: isStarred,
                 syncStatus: syncStatus,
                 rowid: rowid,
               ),

@@ -15,8 +15,8 @@ A native Flutter to-do application with Google Tasks integration for Linux deskt
 
 ## Screenshots
 
-| Auth Screen | Task Lists | Tasks |
-|-------------|------------|-------|
+| Auth Screen                        | Task Lists                                | Tasks                                |
+| ---------------------------------- | ----------------------------------------- | ------------------------------------ |
 | ![Auth](docs/screenshots/auth.png) | ![Lists](docs/screenshots/task-lists.png) | ![Tasks](docs/screenshots/tasks.png) |
 
 ## Getting Started
@@ -29,18 +29,21 @@ A native Flutter to-do application with Google Tasks integration for Linux deskt
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/azrim/listd.git
    cd listd
    ```
 
 2. Create a `.env` file (see `.env.example`):
+
    ```
    GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
    GOOGLE_CLIENT_SECRET=your_client_secret
    ```
 
 3. Get dependencies:
+
    ```bash
    flutter pub get
    ```

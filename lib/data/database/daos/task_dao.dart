@@ -54,6 +54,7 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
         taskListId: task.taskListId,
         parentId: task.parentId,
         position: task.position,
+        isStarred: task.isStarred,
         syncStatus: task.syncStatus.value,
       ),
     );
@@ -76,6 +77,7 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
                 taskListId: t.taskListId,
                 parentId: t.parentId,
                 position: t.position,
+                isStarred: t.isStarred,
                 syncStatus: t.syncStatus.value,
               ),
             )
@@ -148,6 +150,7 @@ extension TaskEntryExtension on TaskEntry {
       taskListId: taskListId,
       parentId: parentId,
       position: position,
+      isStarred: isStarred,
       syncStatus: SyncStatus.fromValue(syncStatus),
     );
   }
