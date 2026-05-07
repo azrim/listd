@@ -191,10 +191,20 @@ class SettingsScreen extends ConsumerWidget {
       context: context,
       applicationName: 'Listd',
       applicationVersion: '1.0.0',
-      applicationIcon: Icon(
-        Icons.check_circle_outline,
-        size: 48,
-        color: Theme.of(context).colorScheme.primary,
+      applicationIcon: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.asset(
+          'assets/images/listd_logo.png',
+          width: 48,
+          height: 48,
+          errorBuilder: (context, error, stackTrace) {
+            return Icon(
+              Icons.check_circle_outline,
+              size: 48,
+              color: Theme.of(context).colorScheme.primary,
+            );
+          },
+        ),
       ),
       applicationLegalese: '© 2024 Listd\nBuilt with Flutter',
       children: [

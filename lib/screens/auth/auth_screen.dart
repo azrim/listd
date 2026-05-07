@@ -19,11 +19,22 @@ class AuthScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // App logo/icon
-              Icon(
-                Icons.check_circle_outline,
-                size: 80,
-                color: colorScheme.primary,
+              // App logo
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(
+                  'assets/images/listd_logo.png',
+                  width: 120,
+                  height: 120,
+                  errorBuilder: (context, error, stackTrace) {
+                    // Fallback to icon if logo fails to load
+                    return Icon(
+                      Icons.check_circle_outline,
+                      size: 120,
+                      color: colorScheme.primary,
+                    );
+                  },
+                ),
               ),
               const SizedBox(height: 24),
               // App title

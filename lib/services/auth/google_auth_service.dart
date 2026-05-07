@@ -8,15 +8,13 @@ import 'package:http/http.dart' as http;
 import 'secure_storage_service.dart';
 
 /// Google OAuth2 configuration constants.
-/// 
+///
 /// IMPORTANT: Set these via Dart define arguments:
 ///   --dart-define=GOOGLE_CLIENT_ID=your_client_id
 ///   --dart-define=GOOGLE_CLIENT_SECRET=your_client_secret
 class GoogleOAuthConfig {
   // Desktop client credentials from Google Cloud Console
-  static const String clientId = String.fromEnvironment(
-    'GOOGLE_CLIENT_ID',
-  );
+  static const String clientId = String.fromEnvironment('GOOGLE_CLIENT_ID');
 
   static const String clientSecret = String.fromEnvironment(
     'GOOGLE_CLIENT_SECRET',

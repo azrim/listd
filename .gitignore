@@ -50,3 +50,6 @@ build/
 .flutter-plugins-dependencies
 .packages
 .dart_tool/
+
+# Environment variables (secrets)
+.env
