@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../config/app_config.dart';
 
 /// Google OAuth service using Supabase Auth.
 ///
@@ -19,8 +18,8 @@ class GoogleAuthService {
   Future<void> authorize() async {
     await _client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: AppConfig.redirectUrl,
-      scopes: 'openid email profile',
+      redirectTo: 'io.listd://login-callback',
+      authScreenLaunchMode: LaunchMode.externalApplication,
     );
   }
 

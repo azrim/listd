@@ -25,7 +25,7 @@ class AppConfig {
   /// Google OAuth Client ID (from Google Cloud Console)
   static const String googleClientId = String.fromEnvironment(
     'GOOGLE_CLIENT_ID',
-    defaultValue: '',
+    defaultValue: '335779516211-obq7kliv5p54djs062p6b7hjohci20cm.apps.googleusercontent.com',
   );
 
   // ── App Info ──

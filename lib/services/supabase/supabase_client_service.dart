@@ -12,7 +12,7 @@ class SupabaseClientService {
   /// Initialize Supabase. Call this before runApp().
   static Future<void> initialize() async {
     await Supabase.initialize(
-      url: AppConfig.supabaseUrl,
+      url: 'https://vkigvohwlgvhudlwhlyh.supabase.co',
       anonKey: AppConfig.supabaseAnonKey,
     );
     _client = Supabase.instance.client;
