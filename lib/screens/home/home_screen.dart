@@ -38,7 +38,9 @@ class HomeScreen extends ConsumerWidget {
       // Google Task list - find the title from task lists
       listName = taskListsAsync.when(
         data: (taskLists) {
-          final found = taskLists.where((tl) => tl.id == selectedListId).firstOrNull;
+          final found = taskLists
+              .where((tl) => tl.id == selectedListId)
+              .firstOrNull;
           return found?.title ?? 'Tasks';
         },
         loading: () => 'Loading...',

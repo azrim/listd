@@ -42,24 +42,27 @@ class SidebarPanel extends ConsumerWidget {
                   title: 'My Day',
                   iconColor: Colors.orange,
                   isSelected: selectedListId == SpecialListIds.myDay,
-                  onTap: () => ref.read(selectedTaskListIdProvider.notifier).state =
-                      SpecialListIds.myDay,
+                  onTap: () =>
+                      ref.read(selectedTaskListIdProvider.notifier).state =
+                          SpecialListIds.myDay,
                 ),
                 _SidebarItem(
                   icon: Icons.star_outline,
                   title: 'Important',
                   iconColor: colorScheme.primary,
                   isSelected: selectedListId == SpecialListIds.important,
-                  onTap: () => ref.read(selectedTaskListIdProvider.notifier).state =
-                      SpecialListIds.important,
+                  onTap: () =>
+                      ref.read(selectedTaskListIdProvider.notifier).state =
+                          SpecialListIds.important,
                 ),
                 _SidebarItem(
                   icon: Icons.calendar_today_outlined,
                   title: 'Planned',
                   iconColor: colorScheme.tertiary,
                   isSelected: selectedListId == SpecialListIds.planned,
-                  onTap: () => ref.read(selectedTaskListIdProvider.notifier).state =
-                      SpecialListIds.planned,
+                  onTap: () =>
+                      ref.read(selectedTaskListIdProvider.notifier).state =
+                          SpecialListIds.planned,
                 ),
                 const SizedBox(height: 16),
                 const Divider(height: 1),
@@ -69,17 +72,25 @@ class SidebarPanel extends ConsumerWidget {
                   icon: Icons.inbox,
                   title: 'Tasks',
                   isSelected: selectedListId == SpecialListIds.tasks,
-                  onTap: () => ref.read(selectedTaskListIdProvider.notifier).state =
-                      SpecialListIds.tasks,
+                  onTap: () =>
+                      ref.read(selectedTaskListIdProvider.notifier).state =
+                          SpecialListIds.tasks,
                 ),
                 taskListsAsync.when(
                   data: (taskLists) => Column(
-                    children: taskLists.map((taskList) => _TaskListItem(
-                      taskList: taskList,
-                      isSelected: selectedListId == taskList.id,
-                      onTap: () => ref.read(selectedTaskListIdProvider.notifier).state =
-                          taskList.id,
-                    )).toList(),
+                    children: taskLists
+                        .map(
+                          (taskList) => _TaskListItem(
+                            taskList: taskList,
+                            isSelected: selectedListId == taskList.id,
+                            onTap: () =>
+                                ref
+                                    .read(selectedTaskListIdProvider.notifier)
+                                    .state = taskList
+                                    .id,
+                          ),
+                        )
+                        .toList(),
                   ),
                   loading: () => const Padding(
                     padding: EdgeInsets.all(16),
@@ -108,7 +119,10 @@ class SidebarPanel extends ConsumerWidget {
               label: const Text('New list'),
               style: TextButton.styleFrom(
                 alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
@@ -140,9 +154,9 @@ class SidebarPanel extends ConsumerWidget {
           const SizedBox(width: 12),
           Text(
             'Listd',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -151,7 +165,7 @@ class SidebarPanel extends ConsumerWidget {
 
   Future<void> _showNewListDialog(BuildContext context) async {
     final controller = TextEditingController();
-    
+
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -177,7 +191,9 @@ class SidebarPanel extends ConsumerWidget {
 
     if (result != null && result.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Creating "$result"... (API not implemented yet)')),
+        SnackBar(
+          content: Text('Creating "$result"... (API not implemented yet)'),
+        ),
       );
     }
   }
@@ -211,9 +227,9 @@ class _SidebarItem extends StatelessWidget {
     Color? iconColor,
     bool isSelected = false,
     required this.onTap,
-  })  : subtitle = subtitle,
-        iconColor = iconColor,
-        isSelected = isSelected;
+  }) : subtitle = subtitle,
+       iconColor = iconColor,
+       isSelected = isSelected;
 
   final IconData icon;
   final String title;
@@ -236,26 +252,43 @@ class _SidebarItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: iconColor ?? colorScheme.onSurfaceVariant),
+              Icon(
+                icon,
+                size: 20,
+                color: iconColor ?? colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    color: isSelected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                    color: isSelected
+                        ? colorScheme.onSurface
+                        : colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
               if (subtitle != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text(subtitle!, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                  child: Text(
+                    subtitle!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -281,7 +314,9 @@ class _TaskListItem extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Material(
-      color: isSelected ? colorScheme.primaryContainer.withAlpha(128) : Colors.transparent,
+      color: isSelected
+          ? colorScheme.primaryContainer.withAlpha(128)
+          : Colors.transparent,
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -291,7 +326,9 @@ class _TaskListItem extends StatelessWidget {
               Icon(
                 taskList.isDefault ? Icons.star : Icons.list,
                 size: 20,
-                color: taskList.isDefault ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                color: taskList.isDefault
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -299,8 +336,12 @@ class _TaskListItem extends StatelessWidget {
                   taskList.title,
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    color: isSelected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                    color: isSelected
+                        ? colorScheme.onSurface
+                        : colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
