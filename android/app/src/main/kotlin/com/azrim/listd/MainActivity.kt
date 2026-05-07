@@ -1,0 +1,5 @@
+package com.azrim.listd
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()

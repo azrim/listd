@@ -1,0 +1,71 @@
+import 'package:flutter/foundation.dart';
+import 'sync_status.dart';
+
+/// Represents a task list in the Google Tasks domain model.
+///
+/// This is the core domain model used throughout the application for task lists.
+/// It is distinct from the Drift table model which handles database persistence.
+@immutable
+class TaskList {
+  const TaskList({
+    required this.id,
+    required this.title,
+    required this.updated,
+    this.syncStatus = SyncStatus.synced,
+    this.isDefault = false,
+  });
+
+  /// Unique identifier for the task list (Google Tasks API format)
+  final String id;
+
+  /// Display title of the task list
+  final String title;
+
+  /// Last update timestamp
+  final DateTime updated;
+
+  /// Sync status with remote
+  final SyncStatus syncStatus;
+
+  /// Whether this is the user's default task list
+  final bool isDefault;
+
+  /// Creates a copy with updated fields
+  TaskList copyWith({
+    String? id,
+    String? title,
+    DateTime? updated,
+    SyncStatus? syncStatus,
+    bool? isDefault,
+  }) {
+    return TaskList(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      updated: updated ?? this.updated,
+      syncStatus: syncStatus ?? this.syncStatus,
+      isDefault: isDefault ?? this.isDefault,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is TaskList &&
+        other.id == id &&
+        other.title == title &&
+        other.updated == updated &&
+        other.syncStatus == syncStatus &&
+        other.isDefault == isDefault;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(id, title, updated, syncStatus, isDefault);
+  }
+
+  @override
+  String toString() {
+    return 'TaskList(id: $id, title: $title, '
+        'syncStatus: $syncStatus, isDefault: $isDefault)';
+  }
+}
