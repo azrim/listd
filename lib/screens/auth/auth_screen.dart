@@ -73,7 +73,13 @@ class AuthScreen extends ConsumerWidget {
     try {
       final secureStorage = ref.read(secureStorageServiceProvider);
       final authService = GoogleAuthService(secureStorage: secureStorage);
-      await authService.authorize();
+
+      // Perform OAuth authorization (opens browser, waits for callback, stores tokens)
+      final result = await authService.authorize();
+
+      // Update auth state with the new tokens
+      final authNotifier = ref.read(authNotifierProvider.notifier);
+      authNotifier.setAuthenticated(result.accessToken, result.expiresAt);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

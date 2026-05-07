@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database/app_database.dart' hide databaseProvider;
 import '../data/database/daos/task_list_dao.dart';
 import '../models/task_list.dart';
-import '../services/tasks/google_tasks_provider.dart' show googleTasksProvider;
+import '../services/auth/token_manager.dart';
+import '../services/tasks/google_tasks_api.dart';
 
 /// Provider for the database instance.
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -24,10 +25,35 @@ final taskListsStreamProvider = StreamProvider<List<TaskList>>((ref) {
   );
 });
 
-/// Future provider that fetches task lists from Google API.
+/// Future provider that fetches task lists from Google API with auth.
 final remoteTaskListsProvider = FutureProvider<List<TaskList>>((ref) async {
-  final provider = ref.watch(googleTasksProvider);
-  return provider.getTaskLists();
+  // Wait for auth state to be ready
+  final authState = ref.watch(authNotifierProvider);
+  if (authState is! AuthAuthenticated) {
+    return [];
+  }
+
+  // Get valid access token
+  final tokenManager = ref.watch(tokenManagerProvider);
+  final accessToken = await tokenManager.getValidAccessToken();
+  if (accessToken == null) {
+    return [];
+  }
+
+  // Call the API
+  final api = GoogleTasksApi(accessToken: accessToken);
+  final taskLists = await api.getTaskLists();
+
+  // Mark as synced and save to local DB
+  final syncedLists = taskLists
+      .map((tl) => tl.copyWith(syncStatus: tl.syncStatus))
+      .toList();
+
+  // Save to local database
+  final dao = ref.read(taskListDaoProvider);
+  await dao.upsertTaskLists(syncedLists);
+
+  return syncedLists;
 });
 
 /// Family provider that fetches a single task list by ID.
@@ -43,9 +69,11 @@ final taskListProvider = FutureProvider.family<TaskList?, String>((
 /// Notifier for managing task lists state.
 class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
   final TaskListDao _dao;
+  final Ref _ref;
 
-  TaskListsNotifier({required TaskListDao dao})
+  TaskListsNotifier({required TaskListDao dao, required Ref ref})
     : _dao = dao,
+      _ref = ref,
       super(const AsyncValue.loading()) {
     _init();
   }
@@ -73,13 +101,36 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
 
   /// Syncs task lists from remote and saves to local database.
   Future<void> syncFromRemote() async {
+    state = const AsyncValue.loading();
     try {
-      // Note: Full sync would require auth token. This is a placeholder.
-      // In production, this would use the GoogleTasksProvider with proper auth.
-      await refresh();
+      // Get auth state
+      final authState = _ref.read(authNotifierProvider);
+      if (authState is! AuthAuthenticated) {
+        // Not authenticated, just refresh local data
+        await refresh();
+        return;
+      }
+
+      // Get valid access token
+      final tokenManager = _ref.read(tokenManagerProvider);
+      final accessToken = await tokenManager.getValidAccessToken();
+      if (accessToken == null) {
+        await refresh();
+        return;
+      }
+
+      // Call the API
+      final api = GoogleTasksApi(accessToken: accessToken);
+      final remoteLists = await api.getTaskLists();
+
+      // Save to local database
+      await _dao.upsertTaskLists(remoteLists);
+
+      // Update state
+      state = AsyncValue.data(remoteLists);
     } catch (e) {
       // Keep local data if remote sync fails
-      state = state;
+      await refresh();
     }
   }
 }
@@ -88,7 +139,7 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
 final taskListsNotifierProvider =
     StateNotifierProvider<TaskListsNotifier, AsyncValue<List<TaskList>>>((ref) {
       final dao = ref.watch(taskListDaoProvider);
-      return TaskListsNotifier(dao: dao);
+      return TaskListsNotifier(dao: dao, ref: ref);
     });
 
 /// Convenience provider that combines local and remote task lists.

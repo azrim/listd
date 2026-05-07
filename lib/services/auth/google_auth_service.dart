@@ -8,10 +8,18 @@ import 'package:http/http.dart' as http;
 import 'secure_storage_service.dart';
 
 /// Google OAuth2 configuration constants.
+/// 
+/// IMPORTANT: Set these via Dart define arguments:
+///   --dart-define=GOOGLE_CLIENT_ID=your_client_id
+///   --dart-define=GOOGLE_CLIENT_SECRET=your_client_secret
 class GoogleOAuthConfig {
+  // Desktop client credentials from Google Cloud Console
   static const String clientId = String.fromEnvironment(
     'GOOGLE_CLIENT_ID',
-    defaultValue: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+  );
+
+  static const String clientSecret = String.fromEnvironment(
+    'GOOGLE_CLIENT_SECRET',
   );
 
   static const String authorizationEndpoint =
@@ -169,6 +177,7 @@ class GoogleAuthService {
   Future<TokenRefreshResult> _exchangeCodeForTokens(String code) async {
     final tokenEndpoint = GoogleOAuthConfig.tokenEndpoint;
     final clientId = GoogleOAuthConfig.clientId;
+    final clientSecret = GoogleOAuthConfig.clientSecret;
     final redirectUri = GoogleOAuthConfig.redirectUri;
     final codeVerifier = _codeVerifier;
 
@@ -181,6 +190,7 @@ class GoogleAuthService {
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       body: {
         'client_id': clientId,
+        'client_secret': clientSecret,
         'grant_type': 'authorization_code',
         'code': code,
         'redirect_uri': redirectUri,
@@ -220,6 +230,7 @@ class GoogleAuthService {
   Future<TokenRefreshResult?> refreshAccessToken(String refreshToken) async {
     final tokenEndpoint = GoogleOAuthConfig.tokenEndpoint;
     final clientId = GoogleOAuthConfig.clientId;
+    final clientSecret = GoogleOAuthConfig.clientSecret;
 
     try {
       final response = await http.post(
@@ -227,6 +238,7 @@ class GoogleAuthService {
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'client_id': clientId,
+          'client_secret': clientSecret,
           'grant_type': 'refresh_token',
           'refresh_token': refreshToken,
         },
