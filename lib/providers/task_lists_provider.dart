@@ -4,7 +4,7 @@ import '../data/database/app_database.dart' hide databaseProvider;
 import '../data/database/daos/task_list_dao.dart';
 import '../models/task_list.dart';
 import '../services/auth/token_manager.dart';
-import '../services/tasks/google_tasks_api.dart';
+import '../services/atlas/mongo_realm_provider.dart';
 
 /// Provider for the database instance.
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -25,7 +25,7 @@ final taskListsStreamProvider = StreamProvider<List<TaskList>>((ref) {
   );
 });
 
-/// Future provider that fetches task lists from Google API with auth.
+/// Future provider that fetches task lists from MongoDB Atlas with auth.
 final remoteTaskListsProvider = FutureProvider<List<TaskList>>((ref) async {
   // Wait for auth state to be ready
   final authState = ref.watch(authNotifierProvider);
@@ -33,27 +33,20 @@ final remoteTaskListsProvider = FutureProvider<List<TaskList>>((ref) async {
     return [];
   }
 
-  // Get valid access token
-  final tokenManager = ref.watch(tokenManagerProvider);
-  final accessToken = await tokenManager.getValidAccessToken();
-  if (accessToken == null) {
+  // Use MongoRealmProvider to fetch task lists
+  final app = ref.watch(realmAppProvider);
+  if (!app.isLoggedIn) {
     return [];
   }
 
-  // Call the API
-  final api = GoogleTasksApi(accessToken: accessToken);
-  final taskLists = await api.getTaskLists();
+  final provider = MongoRealmProvider(app);
+  final taskLists = await provider.getTaskLists();
 
-  // Mark as synced and save to local DB
-  final syncedLists = taskLists
-      .map((tl) => tl.copyWith(syncStatus: tl.syncStatus))
-      .toList();
-
-  // Save to local database
+  // Save to local database for offline access
   final dao = ref.read(taskListDaoProvider);
-  await dao.upsertTaskLists(syncedLists);
+  await dao.upsertTaskLists(taskLists);
 
-  return syncedLists;
+  return taskLists;
 });
 
 /// Family provider that fetches a single task list by ID.
@@ -99,29 +92,26 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
     }
   }
 
-  /// Syncs task lists from remote and saves to local database.
+  /// Syncs task lists from MongoDB Atlas and saves to local database.
   Future<void> syncFromRemote() async {
     state = const AsyncValue.loading();
     try {
       // Get auth state
       final authState = _ref.read(authNotifierProvider);
       if (authState is! AuthAuthenticated) {
-        // Not authenticated, just refresh local data
         await refresh();
         return;
       }
 
-      // Get valid access token
-      final tokenManager = _ref.read(tokenManagerProvider);
-      final accessToken = await tokenManager.getValidAccessToken();
-      if (accessToken == null) {
+      // Use MongoRealmProvider to sync
+      final app = _ref.read(realmAppProvider);
+      if (!app.isLoggedIn) {
         await refresh();
         return;
       }
 
-      // Call the API
-      final api = GoogleTasksApi(accessToken: accessToken);
-      final remoteLists = await api.getTaskLists();
+      final provider = MongoRealmProvider(app);
+      final remoteLists = await provider.getTaskLists();
 
       // Save to local database
       await _dao.upsertTaskLists(remoteLists);
@@ -129,37 +119,39 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
       // Update state
       state = AsyncValue.data(remoteLists);
     } catch (e) {
-      // Keep local data if remote sync fails
       await refresh();
     }
   }
-  /// Creates a new task list and syncs to Google Tasks API.
+
+  /// Creates a new task list and syncs to MongoDB Atlas.
   Future<void> createTaskList(String title) async {
     try {
-      // Get auth state
       final authState = _ref.read(authNotifierProvider);
       if (authState is! AuthAuthenticated) {
         return;
       }
 
-      // Get valid access token
-      final tokenManager = _ref.read(tokenManagerProvider);
-      final accessToken = await tokenManager.getValidAccessToken();
-      if (accessToken == null) {
+      final app = _ref.read(realmAppProvider);
+      if (!app.isLoggedIn) {
         return;
       }
 
-      // Create via API
-      final api = GoogleTasksApi(accessToken: accessToken);
-      final newList = await api.createTaskList(title);
+      // Create via Realm
+      final provider = MongoRealmProvider(app);
+      final newList = await provider.createTaskList(
+        TaskList(
+          id: '',
+          title: title,
+          updated: DateTime.now(),
+        ),
+      );
 
       // Save to local database
       await _dao.upsertTaskLists([newList]);
 
-      // Refresh the list
+      // Refresh
       await refresh();
     } catch (e) {
-      // Ignore errors, just refresh local data
       await refresh();
     }
   }
@@ -167,22 +159,19 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
   /// Deletes a task list.
   Future<void> deleteTaskList(String id) async {
     try {
-      // Get auth state
       final authState = _ref.read(authNotifierProvider);
       if (authState is! AuthAuthenticated) {
         return;
       }
 
-      // Get valid access token
-      final tokenManager = _ref.read(tokenManagerProvider);
-      final accessToken = await tokenManager.getValidAccessToken();
-      if (accessToken == null) {
+      final app = _ref.read(realmAppProvider);
+      if (!app.isLoggedIn) {
         return;
       }
 
-      // Delete via API
-      final api = GoogleTasksApi(accessToken: accessToken);
-      await api.deleteTaskList(id);
+      // Delete via Realm
+      final provider = MongoRealmProvider(app);
+      await provider.deleteTaskList(id);
 
       // Remove from local database
       await _dao.deleteTaskList(id);
@@ -208,13 +197,11 @@ final taskListsProvider = FutureProvider<List<TaskList>>((ref) async {
   final localAsync = ref.watch(taskListsStreamProvider);
   final remoteAsync = ref.watch(remoteTaskListsProvider);
 
-  // Return local data if available
   return localAsync.when(
     data: (localLists) async {
       if (localLists.isNotEmpty) {
         return localLists;
       }
-      // Try remote if local is empty
       return remoteAsync.when(
         data: (remoteLists) => remoteLists,
         loading: () => localLists,
@@ -223,13 +210,13 @@ final taskListsProvider = FutureProvider<List<TaskList>>((ref) async {
     },
     loading: () => remoteAsync.when(
       data: (remoteLists) => remoteLists,
-      loading: () => [],
-      error: (_, _) => [],
+      loading: () => <TaskList>[],
+      error: (_, _) => <TaskList>[],
     ),
     error: (_, _) => remoteAsync.when(
       data: (remoteLists) => remoteLists,
-      loading: () => [],
-      error: (_, _) => [],
+      loading: () => <TaskList>[],
+      error: (_, _) => <TaskList>[],
     ),
   );
 });

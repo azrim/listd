@@ -36,26 +36,43 @@ class SettingsScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
               children: [
                 // Appearance section
-                _SectionHeader(title: 'Appearance').animate().fadeIn(duration: 300.ms),
+                _SectionHeader(
+                  title: 'Appearance',
+                ).animate().fadeIn(duration: 300.ms),
                 const SizedBox(height: 12),
                 _ThemeSelectorCard(
-                  currentMode: themeMode,
-                  onChanged: (mode) => ref.read(themeModeProvider.notifier).setThemeMode(mode),
-                ).animate().fadeIn(delay: 100.ms, duration: 300.ms).slideY(begin: 0.1),
-                
+                      currentMode: themeMode,
+                      onChanged: (mode) => ref
+                          .read(themeModeProvider.notifier)
+                          .setThemeMode(mode),
+                    )
+                    .animate()
+                    .fadeIn(delay: 100.ms, duration: 300.ms)
+                    .slideY(begin: 0.1),
+
                 const SizedBox(height: 32),
-                
+
                 // Account section
-                _SectionHeader(title: 'Account').animate().fadeIn(delay: 200.ms, duration: 300.ms),
+                _SectionHeader(
+                  title: 'Account',
+                ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
                 const SizedBox(height: 12),
-                _AccountCard().animate().fadeIn(delay: 300.ms, duration: 300.ms).slideY(begin: 0.1),
-                
+                _AccountCard()
+                    .animate()
+                    .fadeIn(delay: 300.ms, duration: 300.ms)
+                    .slideY(begin: 0.1),
+
                 const SizedBox(height: 32),
-                
+
                 // About section
-                _SectionHeader(title: 'About').animate().fadeIn(delay: 400.ms, duration: 300.ms),
+                _SectionHeader(
+                  title: 'About',
+                ).animate().fadeIn(delay: 400.ms, duration: 300.ms),
                 const SizedBox(height: 12),
-                _AboutCard().animate().fadeIn(delay: 500.ms, duration: 300.ms).slideY(begin: 0.1),
+                _AboutCard()
+                    .animate()
+                    .fadeIn(delay: 500.ms, duration: 300.ms)
+                    .slideY(begin: 0.1),
               ],
             ),
           ),
@@ -305,10 +322,7 @@ class _AccountCard extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           // Divider
-          Container(
-            height: 1,
-            color: AppColors.glassBorder.withAlpha(64),
-          ),
+          Container(height: 1, color: AppColors.glassBorder.withAlpha(64)),
           const SizedBox(height: 16),
           // Sign out button
           GestureDetector(
@@ -327,11 +341,7 @@ class _AccountCard extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.logout,
-                    color: AppColors.danger,
-                    size: 18,
-                  ),
+                  const Icon(Icons.logout, color: AppColors.danger, size: 18),
                   const SizedBox(width: 8),
                   Text(
                     'Sign out',
@@ -400,7 +410,9 @@ class _AccountCard extends ConsumerWidget {
                       onPressed: () => Navigator.of(context).pop(false),
                       child: Text(
                         'Cancel',
-                        style: GoogleFonts.spaceGrotesk(color: AppColors.textSecondary),
+                        style: GoogleFonts.spaceGrotesk(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
                   ),
@@ -506,10 +518,7 @@ class _AboutCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Container(
-            height: 1,
-            color: AppColors.glassBorder.withAlpha(64),
-          ),
+          Container(height: 1, color: AppColors.glassBorder.withAlpha(64)),
           const SizedBox(height: 16),
           // About button
           GestureDetector(

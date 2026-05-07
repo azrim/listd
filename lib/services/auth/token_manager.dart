@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'secure_storage_service.dart';
 import 'google_auth_service.dart';
+import '../atlas/mongo_realm_provider.dart';
 
 /// Represents the authentication state of the application.
 sealed class AuthState {
@@ -17,8 +18,13 @@ class AuthUnauthenticated extends AuthState {
 class AuthAuthenticated extends AuthState {
   final String accessToken;
   final int expiresAt;
+  final User? realmUser;
 
-  const AuthAuthenticated({required this.accessToken, required this.expiresAt});
+  const AuthAuthenticated({
+    required this.accessToken,
+    required this.expiresAt,
+    this.realmUser,
+  });
 
   /// Check if token will expire within the specified minutes.
   bool willExpireWithin(Duration duration) {
@@ -140,13 +146,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Logs out the user.
   Future<void> logout() async {
+    // TODO: Log out from Realm if connected
     await _tokenManager.logout();
     state = const AuthUnauthenticated();
   }
 
   /// Updates state after successful authentication.
-  void setAuthenticated(String accessToken, int expiresAt) {
-    state = AuthAuthenticated(accessToken: accessToken, expiresAt: expiresAt);
+  void setAuthenticated(String accessToken, int expiresAt, {User? realmUser}) {
+    state = AuthAuthenticated(
+      accessToken: accessToken,
+      expiresAt: expiresAt,
+      realmUser: realmUser,
+    );
+  }
+
+  /// Updates state with Realm user after login.
+  void setRealmUser(User realmUser) {
+    if (state is AuthAuthenticated) {
+      final current = state as AuthAuthenticated;
+      state = AuthAuthenticated(
+        accessToken: current.accessToken,
+        expiresAt: current.expiresAt,
+        realmUser: realmUser,
+      );
+    }
   }
 }
 

@@ -52,11 +52,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             ),
           ),
           // FAB
-          Positioned(
-            right: 24,
-            bottom: 24,
-            child: _buildFAB(),
-          ),
+          Positioned(right: 24, bottom: 24, child: _buildFAB()),
         ],
       ),
     );
@@ -116,11 +112,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         itemBuilder: (context, index) {
           final task = mainTasks[index];
           return _TaskGlassTile(
-            key: ValueKey(task.id),
-            task: task,
-            onToggle: () => _toggleTask(task),
-            onDelete: () => _deleteTask(task),
-          )
+                key: ValueKey(task.id),
+                task: task,
+                onToggle: () => _toggleTask(task),
+                onDelete: () => _deleteTask(task),
+              )
               .animate()
               .fadeIn(delay: (index * 50).ms, duration: 300.ms)
               .slideX(begin: 0.1);
@@ -349,7 +345,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                        icon: const Icon(
+                          Icons.close,
+                          color: AppColors.textSecondary,
+                        ),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
@@ -376,7 +375,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       ),
                       child: Text(
                         'Add Task',
-                        style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
+                        style: GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -445,10 +446,7 @@ class _TaskGlassTile extends StatelessWidget {
         child: Row(
           children: [
             // Animated checkbox
-            _AnimatedCheckbox(
-              isCompleted: task.isCompleted,
-              onTap: onToggle,
-            ),
+            _AnimatedCheckbox(isCompleted: task.isCompleted, onTap: onToggle),
             const SizedBox(width: 14),
             // Task content
             Expanded(
@@ -463,8 +461,9 @@ class _TaskGlassTile extends StatelessWidget {
                       color: task.isCompleted
                           ? AppColors.textHint
                           : AppColors.textPrimary,
-                      decoration:
-                          task.isCompleted ? TextDecoration.lineThrough : null,
+                      decoration: task.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
                     ),
                   ),
                   if (task.notes.isNotEmpty) ...[
@@ -487,11 +486,7 @@ class _TaskGlassTile extends StatelessWidget {
             // Star icon
             if (task.isStarred) ...[
               const SizedBox(width: 8),
-              const Icon(
-                Icons.star,
-                size: 18,
-                color: Colors.amber,
-              ),
+              const Icon(Icons.star, size: 18, color: Colors.amber),
             ],
           ],
         ),
@@ -502,10 +497,7 @@ class _TaskGlassTile extends StatelessWidget {
 
 /// Animated checkbox with glow effect
 class _AnimatedCheckbox extends StatefulWidget {
-  const _AnimatedCheckbox({
-    required this.isCompleted,
-    this.onTap,
-  });
+  const _AnimatedCheckbox({required this.isCompleted, this.onTap});
 
   final bool isCompleted;
   final VoidCallback? onTap;
@@ -526,9 +518,10 @@ class _AnimatedCheckboxState extends State<_AnimatedCheckbox>
       duration: const Duration(milliseconds: 280),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.2,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -582,11 +575,7 @@ class _AnimatedCheckboxState extends State<_AnimatedCheckbox>
                     : [],
               ),
               child: widget.isCompleted
-                  ? const Icon(
-                      Icons.check,
-                      size: 14,
-                      color: Colors.white,
-                    )
+                  ? const Icon(Icons.check, size: 14, color: Colors.white)
                   : null,
             ),
           );

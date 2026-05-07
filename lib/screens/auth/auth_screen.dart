@@ -99,14 +99,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                   const SizedBox(height: 24),
                   // Title
                   Text(
-                    'listd',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: -1,
-                    ),
-                  )
+                        'listd',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: -1,
+                        ),
+                      )
                       .animate()
                       .fadeIn(delay: 200.ms, duration: 400.ms)
                       .slideY(begin: 0.1),
@@ -119,33 +119,31 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w400,
                     ),
-                  )
-                      .animate()
-                      .fadeIn(delay: 300.ms, duration: 400.ms),
+                  ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
                   const SizedBox(height: 48),
                   // Sign in card
                   GlassCard(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        GradientButton(
-                          label: 'Continue with Google',
-                          icon: Icons.g_mobiledata,
-                          isLoading: _isLoading,
-                          onPressed: _signInWithGoogle,
-                          width: 260,
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          children: [
+                            GradientButton(
+                              label: 'Continue with Google',
+                              icon: Icons.g_mobiledata,
+                              isLoading: _isLoading,
+                              onPressed: _signInWithGoogle,
+                              width: 260,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'By continuing you agree to our Terms',
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 11,
+                                color: AppColors.textHint,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'By continuing you agree to our Terms',
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 11,
-                            color: AppColors.textHint,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
+                      )
                       .animate()
                       .fadeIn(delay: 400.ms, duration: 500.ms)
                       .slideY(begin: 0.1),

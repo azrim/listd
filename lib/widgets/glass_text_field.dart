@@ -53,7 +53,10 @@ class GlassTextField extends StatelessWidget {
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: Colors.white.withAlpha(15), // 6% white
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.white.withAlpha(31)),
@@ -142,16 +145,25 @@ class _FocusedGlassTextFieldState extends State<FocusedGlassTextField> {
               fontSize: 14,
             ),
             prefixIcon: widget.prefixIcon != null
-                ? Icon(widget.prefixIcon, color: AppColors.textSecondary, size: 20)
+                ? Icon(
+                    widget.prefixIcon,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  )
                 : null,
             suffixIcon: widget.suffixIcon,
             filled: true,
             fillColor: Colors.white.withAlpha(_isFocused ? 25 : 15),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: _isFocused ? AppColors.primary : Colors.white.withAlpha(31),
+                color: _isFocused
+                    ? AppColors.primary
+                    : Colors.white.withAlpha(31),
                 width: _isFocused ? 2 : 1,
               ),
             ),

@@ -40,11 +40,7 @@ class TaskListsScreen extends ConsumerWidget {
             ),
           ),
           // FAB
-          Positioned(
-            right: 24,
-            bottom: 24,
-            child: _buildFAB(ref),
-          ),
+          Positioned(right: 24, bottom: 24, child: _buildFAB(ref)),
         ],
       ),
     );
@@ -93,11 +89,15 @@ class TaskListsScreen extends ConsumerWidget {
             actions: [
               IconButton(
                 icon: const Icon(Icons.sync, color: AppColors.textSecondary),
-                onPressed: () => ref.read(taskListsNotifierProvider.notifier).refresh(),
+                onPressed: () =>
+                    ref.read(taskListsNotifierProvider.notifier).refresh(),
                 tooltip: 'Sync',
               ),
               IconButton(
-                icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary),
+                icon: const Icon(
+                  Icons.settings_outlined,
+                  color: AppColors.textSecondary,
+                ),
                 onPressed: () => context.go('/settings'),
                 tooltip: 'Settings',
               ),
@@ -131,9 +131,9 @@ class TaskListsScreen extends ConsumerWidget {
         itemBuilder: (context, index) {
           final taskList = taskLists[index];
           return _TaskListGlassTile(
-            taskList: taskList,
-            onTap: () => _navigateToTasks(context, taskList),
-          )
+                taskList: taskList,
+                onTap: () => _navigateToTasks(context, taskList),
+              )
               .animate()
               .fadeIn(delay: (index * 50).ms, duration: 300.ms)
               .slideX(begin: 0.1);
@@ -183,7 +183,8 @@ class TaskListsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               TextButton.icon(
-                onPressed: () => ref.read(taskListsNotifierProvider.notifier).refresh(),
+                onPressed: () =>
+                    ref.read(taskListsNotifierProvider.notifier).refresh(),
                 icon: const Icon(Icons.refresh, color: AppColors.primary),
                 label: Text(
                   'Sync from Google',
@@ -293,7 +294,8 @@ class TaskListsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               TextButton.icon(
-                onPressed: () => ref.read(taskListsNotifierProvider.notifier).refresh(),
+                onPressed: () =>
+                    ref.read(taskListsNotifierProvider.notifier).refresh(),
                 icon: const Icon(Icons.refresh, color: AppColors.primary),
                 label: Text(
                   'Retry',
@@ -336,10 +338,7 @@ class TaskListsScreen extends ConsumerWidget {
 
 /// Glass tile for task list item
 class _TaskListGlassTile extends StatelessWidget {
-  const _TaskListGlassTile({
-    required this.taskList,
-    this.onTap,
-  });
+  const _TaskListGlassTile({required this.taskList, this.onTap});
 
   final TaskList taskList;
   final VoidCallback? onTap;
@@ -388,11 +387,7 @@ class _TaskListGlassTile extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(
-            Icons.chevron_right,
-            color: AppColors.textHint,
-            size: 20,
-          ),
+          const Icon(Icons.chevron_right, color: AppColors.textHint, size: 20),
         ],
       ),
     );

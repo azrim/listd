@@ -26,11 +26,13 @@ class GoogleOAuthConfig {
   static const String revocationEndpoint =
       'https://oauth2.googleapis.com/revoke';
 
-  static const String scopes = 'https://www.googleapis.com/auth/tasks';
+  static const List<String> defaultScopes = [
+    'openid',
+    'email',
+    'profile',
+  ];
 
   static const String redirectUri = 'http://localhost:8080/callback';
-
-  static const List<String> defaultScopes = [scopes];
 }
 
 /// Result of a token refresh operation.

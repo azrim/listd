@@ -1,42 +1,40 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../tasks/google_tasks_provider.dart';
-import '../tasks/task_provider.dart';
+
 import '../../models/task.dart';
-import '../../models/task_list.dart';
 import '../../models/sync_status.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/daos/task_dao.dart';
 import '../../data/database/daos/task_list_dao.dart';
+import '../atlas/mongo_realm_provider.dart';
 
-/// Service for synchronizing local database with remote Google Tasks.
+/// Service for synchronizing local database with MongoDB Atlas via Realm.
 ///
-/// Handles bidirectional sync: pulling remote changes and pushing local changes.
+/// Realm handles cloud sync automatically via Device Sync.
+/// This service manages local Drift cache in sync with Realm data.
 class TaskSyncService {
   TaskSyncService({
     required TaskDao taskDao,
     required TaskListDao taskListDao,
-    required ITaskProvider taskProvider,
+    required MongoRealmProvider realmProvider,
   }) : _taskDao = taskDao,
        _taskListDao = taskListDao,
-       _taskProvider = taskProvider;
+       _realmProvider = realmProvider;
 
   final TaskDao _taskDao;
   final TaskListDao _taskListDao;
-  final ITaskProvider _taskProvider;
+  final MongoRealmProvider _realmProvider;
 
-  /// Performs a full sync between local database and remote Google Tasks.
+  /// Performs a sync between local Drift cache and Realm data.
   ///
-  /// Sync strategy (last-write-wins):
-  /// 1. Push local changes (created/updated/deleted) to remote
-  /// 2. Pull remote data
-  /// 3. Merge based on updated timestamps
+  /// Since Realm handles cloud sync automatically, this method
+  /// just ensures local Drift cache stays in sync with Realm.
   ///
   /// Returns a [SyncSummary] with counts of synced items.
   Future<SyncSummary> syncAll() async {
-    // Pull task lists first
+    // Pull task lists from Realm
     final taskListSummary = await _pullTaskLists();
 
-    // Pull tasks for each task list
+    // Pull tasks from Realm
     final taskSummary = await _pullTasks();
 
     return SyncSummary(
@@ -47,71 +45,45 @@ class TaskSyncService {
     );
   }
 
-  /// Pulls task lists from remote and merges with local.
+  /// Pulls task lists from Realm and syncs with local Drift.
   Future<_PullSummary> _pullTaskLists() async {
     try {
       // Get local task lists
       final localTaskLists = await _taskListDao.getAllTaskLists();
       final localDomainLists = localTaskLists.map((e) => e.toDomain()).toList();
 
-      // Get pending sync items (local changes to push)
-      final pendingLists = await _taskListDao.getPendingSyncTaskLists();
+      // Get Realm task lists
+      final realmLists = await _realmProvider.getTaskLists();
 
-      // Push local changes
-      await _pushTaskLists(pendingLists.map((e) => e.toDomain()).toList());
-
-      // Pull remote data
-      final syncResult = await _taskProvider.sync(localDomainLists, {});
-
-      // Process deleted task lists
+      // Sync deleted task lists
       int deleted = 0;
-      for (final id in syncResult.deletedTaskListIds) {
-        await _taskListDao.deleteTaskList(id);
-        await _taskDao.deleteTasksByListId(id);
-        deleted++;
+      final realmIds = realmLists.map((l) => l.id).toSet();
+      for (final local in localDomainLists) {
+        if (!realmIds.contains(local.id) && local.syncStatus != SyncStatus.deleted) {
+          await _taskListDao.deleteTaskList(local.id);
+          await _taskDao.deleteTasksByListId(local.id);
+          deleted++;
+        }
       }
 
-      // Upsert remote task lists
-      if (syncResult.taskLists.isNotEmpty) {
-        await _taskListDao.upsertTaskLists(syncResult.taskLists);
+      // Upsert Realm task lists to local
+      if (realmLists.isNotEmpty) {
+        await _taskListDao.upsertTaskLists(realmLists);
       }
 
       return _PullSummary(
-        updated: syncResult.taskLists.length,
+        updated: realmLists.length,
         deleted: deleted,
       );
     } catch (e) {
-      // On error, return empty summary - caller should handle
       return const _PullSummary();
     }
   }
 
-  /// Pushes local task list changes to remote.
-  Future<void> _pushTaskLists(List<TaskList> taskLists) async {
-    if (!_taskProvider.capabilities.canUpdateTaskLists) return;
-
-    for (final taskList in taskLists) {
-      // Skip synced or already deleted items
-      if (taskList.syncStatus == SyncStatus.synced) continue;
-      if (taskList.syncStatus == SyncStatus.deleted) {
-        // Try to delete on remote if it exists
-        if (_taskProvider.capabilities.canDeleteTaskLists) {
-          try {
-            await _taskProvider.deleteTask(taskList.id, taskList.id);
-          } catch (_) {
-            // Ignore errors - item might not exist on remote
-          }
-        }
-      }
-      // Note: Google Tasks API doesn't support creating/updating task lists
-      // So we just mark local changes as synced after attempting
-    }
-  }
-
-  /// Pulls tasks from remote and merges with local.
+  /// Pulls tasks from Realm and syncs with local Drift.
   Future<_PullSummary> _pullTasks() async {
     try {
-      // Get all local tasks
+      // Get all local tasks grouped by task list
       final localTasks = <String, List<Task>>{};
       final taskLists = await _taskListDao.getAllTaskLists();
 
@@ -120,28 +92,27 @@ class TaskSyncService {
         localTasks[taskList.id] = tasks.map((e) => e.toDomain()).toList();
       }
 
-      // Get pending sync items (local changes to push)
-      final allPendingTasks = await _taskDao.getPendingSyncTasks();
-
-      // Push local changes
-      await _pushTasks(allPendingTasks.map((e) => e.toDomain()).toList());
-
-      // Pull remote data using sync method
-      final syncResult = await _taskProvider.sync([], localTasks);
-
-      // Process deleted tasks
-      int deleted = 0;
-      for (final taskListId in syncResult.deletedTaskListIds) {
-        await _taskDao.deleteTasksByListId(taskListId);
-        deleted++;
-      }
-
-      // Upsert remote tasks
+      // Get Realm tasks for all task lists
       int updated = 0;
-      for (final entry in syncResult.tasks.entries) {
-        if (entry.value.isNotEmpty) {
-          await _taskDao.upsertTasks(entry.value);
-          updated += entry.value.length;
+      int deleted = 0;
+
+      for (final taskList in taskLists) {
+        final realmTasks = await _realmProvider.getTasks(taskList.id);
+        
+        // Find deleted tasks (in local but not in Realm)
+        final realmTaskIds = realmTasks.map((t) => t.id).toSet();
+        for (final localTask in localTasks[taskList.id] ?? []) {
+          if (!realmTaskIds.contains(localTask.id) && 
+              localTask.syncStatus != SyncStatus.deleted) {
+            await _taskDao.deleteTask(localTask.id);
+            deleted++;
+          }
+        }
+
+        // Upsert Realm tasks to local
+        if (realmTasks.isNotEmpty) {
+          await _taskDao.upsertTasks(realmTasks);
+          updated += realmTasks.length;
         }
       }
 
@@ -151,53 +122,7 @@ class TaskSyncService {
     }
   }
 
-  /// Pushes local task changes to remote.
-  Future<void> _pushTasks(List<Task> tasks) async {
-    if (!_taskProvider.capabilities.canCreateTasks &&
-        !_taskProvider.capabilities.canUpdateTasks &&
-        !_taskProvider.capabilities.canDeleteTasks) {
-      return;
-    }
-
-    for (final task in tasks) {
-      if (task.syncStatus == SyncStatus.synced) continue;
-
-      try {
-        if (task.syncStatus == SyncStatus.deleted) {
-          if (_taskProvider.capabilities.canDeleteTasks) {
-            await _taskProvider.deleteTask(task.taskListId, task.id);
-            await _taskDao.deleteTask(task.id);
-          }
-        } else if (task.syncStatus == SyncStatus.created) {
-          if (_taskProvider.capabilities.canCreateTasks) {
-            final createdTask = await _taskProvider.createTask(
-              task.taskListId,
-              task,
-            );
-            // Update local with remote ID and synced status
-            await _taskDao.upsertTask(
-              createdTask.copyWith(
-                taskListId: task.taskListId,
-                syncStatus: SyncStatus.synced,
-              ),
-            );
-          }
-        } else if (task.syncStatus == SyncStatus.updated) {
-          if (_taskProvider.capabilities.canUpdateTasks) {
-            await _taskProvider.updateTask(task.taskListId, task);
-            await _taskDao.markSynced(task.id);
-          }
-        }
-      } catch (e) {
-        // On individual task sync failure, continue with others
-        // The task will remain with its pending sync status
-      }
-    }
-  }
-
-  /// Performs a full sync including both push and pull phases.
-  ///
-  /// This is the main entry point for initiating a complete sync.
+  /// Performs a full sync.
   Future<SyncSummary> fullSync() async {
     return syncAll();
   }
@@ -292,27 +217,29 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 });
 
 /// Provider for TaskDao.
-final taskDaoProvider = Provider<TaskDao>((ref) {
+final taskDaoProviderSync = Provider<TaskDao>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return TaskDao(db);
 });
 
 /// Provider for TaskListDao.
-final taskListDaoProvider = Provider<TaskListDao>((ref) {
+final taskListDaoProviderSync = Provider<TaskListDao>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return TaskListDao(db);
 });
 
 /// Provider for TaskSyncService.
 final taskSyncServiceProvider = Provider<TaskSyncService>((ref) {
-  final taskDao = ref.watch(taskDaoProvider);
-  final taskListDao = ref.watch(taskListDaoProvider);
-  final taskProvider = ref.watch(googleTasksProvider);
+  final taskDao = ref.watch(taskDaoProviderSync);
+  final taskListDao = ref.watch(taskListDaoProviderSync);
+  final app = ref.watch(realmAppProvider);
+
+  final realmProvider = MongoRealmProvider(app);
 
   return TaskSyncService(
     taskDao: taskDao,
     taskListDao: taskListDao,
-    taskProvider: taskProvider,
+    realmProvider: realmProvider,
   );
 });
 

@@ -5,7 +5,7 @@ import '../data/database/daos/task_dao.dart';
 import '../models/task.dart';
 import '../models/sync_status.dart';
 import '../services/auth/token_manager.dart';
-import '../services/tasks/google_tasks_api.dart';
+import '../services/atlas/mongo_realm_provider.dart';
 import 'task_lists_provider.dart' show databaseProvider;
 
 /// Provider for the TaskDao.
@@ -25,7 +25,7 @@ final tasksStreamProvider = StreamProvider.family<List<Task>, String>((
       .map((entries) => entries.map((e) => e.toDomain()).toList());
 });
 
-/// Future provider that fetches tasks from Google API for a specific task list.
+/// Future provider that fetches tasks from MongoDB Atlas for a specific task list.
 final remoteTasksProvider = FutureProvider.family<List<Task>, String>((
   ref,
   taskListId,
@@ -36,18 +36,16 @@ final remoteTasksProvider = FutureProvider.family<List<Task>, String>((
     return [];
   }
 
-  // Get valid access token
-  final tokenManager = ref.watch(tokenManagerProvider);
-  final accessToken = await tokenManager.getValidAccessToken();
-  if (accessToken == null) {
+  // Use MongoRealmProvider to fetch tasks
+  final app = ref.watch(realmAppProvider);
+  if (!app.isLoggedIn) {
     return [];
   }
 
-  // Call the API
-  final api = GoogleTasksApi(accessToken: accessToken);
-  final tasks = await api.getTasks(taskListId);
+  final provider = MongoRealmProvider(app);
+  final tasks = await provider.getTasks(taskListId);
 
-  // Save to local database
+  // Save to local database for offline access
   final dao = ref.read(taskDaoProvider);
   await dao.upsertTasks(tasks);
 
@@ -91,7 +89,7 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     }
   }
 
-  /// Creates a new task via Google API and saves to local database.
+  /// Creates a new task via MongoDB Atlas and saves to local database.
   Future<void> createTask(Task task) async {
     try {
       // Get auth state
@@ -108,11 +106,10 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         return;
       }
 
-      // Get valid access token
-      final tokenManager = _ref.read(tokenManagerProvider);
-      final accessToken = await tokenManager.getValidAccessToken();
-      if (accessToken == null) {
-        // Save locally if no token
+      // Use MongoRealmProvider
+      final app = _ref.read(realmAppProvider);
+      if (!app.isLoggedIn) {
+        // Save locally if not logged in to Realm
         final newTask = task.copyWith(
           id: task.id.isEmpty ? const Uuid().v4() : task.id,
           updated: DateTime.now(),
@@ -123,9 +120,9 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         return;
       }
 
-      // Call Google API
-      final api = GoogleTasksApi(accessToken: accessToken);
-      final createdTask = await api.createTask(taskListId, task);
+      // Create via Realm
+      final provider = MongoRealmProvider(app);
+      final createdTask = await provider.createTask(taskListId, task);
 
       // Save to local database
       await _dao.upsertTask(createdTask);
@@ -135,7 +132,7 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     }
   }
 
-  /// Updates an existing task via Google API.
+  /// Updates an existing task via MongoDB Atlas.
   Future<void> updateTask(Task task) async {
     try {
       // Get auth state
@@ -151,11 +148,10 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         return;
       }
 
-      // Get valid access token
-      final tokenManager = _ref.read(tokenManagerProvider);
-      final accessToken = await tokenManager.getValidAccessToken();
-      if (accessToken == null) {
-        // Save locally if no token
+      // Use MongoRealmProvider
+      final app = _ref.read(realmAppProvider);
+      if (!app.isLoggedIn) {
+        // Save locally if not logged in to Realm
         final updatedTask = task.copyWith(
           updated: DateTime.now(),
           syncStatus: SyncStatus.updated,
@@ -165,9 +161,9 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         return;
       }
 
-      // Call Google API
-      final api = GoogleTasksApi(accessToken: accessToken);
-      final updatedTask = await api.updateTask(taskListId, task);
+      // Update via Realm
+      final provider = MongoRealmProvider(app);
+      final updatedTask = await provider.updateTask(taskListId, task);
 
       // Save to local database
       await _dao.upsertTask(updatedTask);
@@ -184,23 +180,22 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     await updateTask(updatedTask);
   }
 
-  /// Deletes a task via Google API.
+  /// Deletes a task via MongoDB Atlas.
   Future<void> deleteTask(String taskId) async {
     try {
       // Get auth state
       final authState = _ref.read(authNotifierProvider);
 
       if (authState is AuthAuthenticated) {
-        // Try to delete from Google API
+        // Try to delete from Realm
         try {
-          final tokenManager = _ref.read(tokenManagerProvider);
-          final accessToken = await tokenManager.getValidAccessToken();
-          if (accessToken != null) {
-            final api = GoogleTasksApi(accessToken: accessToken);
-            await api.deleteTask(taskListId, taskId);
+          final app = _ref.read(realmAppProvider);
+          if (app.isLoggedIn) {
+            final provider = MongoRealmProvider(app);
+            await provider.deleteTask(taskListId, taskId);
           }
         } catch (_) {
-          // If API fails, continue with local delete
+          // If Realm fails, continue with local delete
         }
       }
 
@@ -212,7 +207,7 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     }
   }
 
-  /// Syncs tasks from remote and saves to local database.
+  /// Syncs tasks from MongoDB Atlas and saves to local database.
   Future<void> syncFromRemote() async {
     state = const AsyncValue.loading();
     try {
@@ -223,17 +218,15 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         return;
       }
 
-      // Get valid access token
-      final tokenManager = _ref.read(tokenManagerProvider);
-      final accessToken = await tokenManager.getValidAccessToken();
-      if (accessToken == null) {
+      // Use MongoRealmProvider
+      final app = _ref.read(realmAppProvider);
+      if (!app.isLoggedIn) {
         await refresh();
         return;
       }
 
-      // Call the API
-      final api = GoogleTasksApi(accessToken: accessToken);
-      final remoteTasks = await api.getTasks(taskListId);
+      final provider = MongoRealmProvider(app);
+      final remoteTasks = await provider.getTasks(taskListId);
 
       // Save to local database
       await _dao.upsertTasks(remoteTasks);

@@ -6,7 +6,11 @@ import 'app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static TextTheme _buildTextTheme(Color textPrimary, Color textSecondary, Color textHint) {
+  static TextTheme _buildTextTheme(
+    Color textPrimary,
+    Color textSecondary,
+    Color textHint,
+  ) {
     final base = GoogleFonts.spaceGroteskTextTheme();
     return base.copyWith(
       displayLarge: base.displayLarge?.copyWith(color: textPrimary),
@@ -15,8 +19,14 @@ class AppTheme {
       headlineLarge: base.headlineLarge?.copyWith(color: textPrimary),
       headlineMedium: base.headlineMedium?.copyWith(color: textPrimary),
       headlineSmall: base.headlineSmall?.copyWith(color: textPrimary),
-      titleLarge: base.titleLarge?.copyWith(color: textPrimary, fontWeight: FontWeight.w600),
-      titleMedium: base.titleMedium?.copyWith(color: textPrimary, fontWeight: FontWeight.w600),
+      titleLarge: base.titleLarge?.copyWith(
+        color: textPrimary,
+        fontWeight: FontWeight.w600,
+      ),
+      titleMedium: base.titleMedium?.copyWith(
+        color: textPrimary,
+        fontWeight: FontWeight.w600,
+      ),
       titleSmall: base.titleSmall?.copyWith(color: textSecondary),
       bodyLarge: base.bodyLarge?.copyWith(color: textPrimary),
       bodyMedium: base.bodyMedium?.copyWith(color: textSecondary),
@@ -41,16 +51,17 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primary,
-        brightness: brightness,
-        surface: surfaceColor,
-      ).copyWith(
-        primary: primary,
-        onPrimary: Colors.white,
-        surface: surfaceColor,
-        onSurface: textPrimary,
-      ),
+      colorScheme:
+          ColorScheme.fromSeed(
+            seedColor: primary,
+            brightness: brightness,
+            surface: surfaceColor,
+          ).copyWith(
+            primary: primary,
+            onPrimary: Colors.white,
+            surface: surfaceColor,
+            onSurface: textPrimary,
+          ),
       scaffoldBackgroundColor: backgroundColor,
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
@@ -99,7 +110,10 @@ class AppTheme {
         ),
         hintStyle: GoogleFonts.spaceGrotesk(color: textHint),
         labelStyle: GoogleFonts.spaceGrotesk(color: textSecondary),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -107,7 +121,9 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 4,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
           textStyle: GoogleFonts.spaceGrotesk(
             fontSize: 14,
             fontWeight: FontWeight.w600,

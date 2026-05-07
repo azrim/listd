@@ -65,7 +65,9 @@ class TaskTile extends StatelessWidget {
                       height: 24,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: task.isCompleted ? AppColors.primary : Colors.transparent,
+                        color: task.isCompleted
+                            ? AppColors.primary
+                            : Colors.transparent,
                         border: Border.all(
                           color: task.isCompleted
                               ? AppColors.primary
@@ -83,7 +85,11 @@ class TaskTile extends StatelessWidget {
                             : [],
                       ),
                       child: task.isCompleted
-                          ? const Icon(Icons.check, size: 14, color: Colors.white)
+                          ? const Icon(
+                              Icons.check,
+                              size: 14,
+                              color: Colors.white,
+                            )
                           : null,
                     ),
                   ),
@@ -101,8 +107,9 @@ class TaskTile extends StatelessWidget {
                             color: task.isCompleted
                                 ? AppColors.textHint
                                 : AppColors.textPrimary,
-                            decoration:
-                                task.isCompleted ? TextDecoration.lineThrough : null,
+                            decoration: task.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
                           ),
                         ),
                         if (task.notes.isNotEmpty) ...[
@@ -125,11 +132,7 @@ class TaskTile extends StatelessWidget {
                   // Star icon
                   if (task.isStarred) ...[
                     const SizedBox(width: 8),
-                    const Icon(
-                      Icons.star,
-                      size: 18,
-                      color: Colors.amber,
-                    ),
+                    const Icon(Icons.star, size: 18, color: Colors.amber),
                   ],
                 ],
               ),

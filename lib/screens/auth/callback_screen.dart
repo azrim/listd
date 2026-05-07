@@ -103,29 +103,29 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen>
               children: [
                 // Pulsing circle
                 AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Container(
-                      width: 80 + (_pulseAnimation.value * 20),
-                      height: 80 + (_pulseAnimation.value * 20),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.primary.withAlpha(
-                          (76 + (_pulseAnimation.value * 50)).round(),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
+                      animation: _pulseAnimation,
+                      builder: (context, child) {
+                        return Container(
+                          width: 80 + (_pulseAnimation.value * 20),
+                          height: 80 + (_pulseAnimation.value * 20),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
                             color: AppColors.primary.withAlpha(
-                              (102 * _pulseAnimation.value).round(),
+                              (76 + (_pulseAnimation.value * 50)).round(),
                             ),
-                            blurRadius: 30,
-                            spreadRadius: 10,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withAlpha(
+                                  (102 * _pulseAnimation.value).round(),
+                                ),
+                                blurRadius: 30,
+                                spreadRadius: 10,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                )
+                        );
+                      },
+                    )
                     .animate(onPlay: (c) => c.repeat())
                     .shimmer(duration: 1500.ms)
                     .then()
@@ -139,21 +139,19 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen>
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w400,
                   ),
-                )
-                    .animate()
-                    .fadeIn(delay: 200.ms, duration: 400.ms),
+                ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
                 const SizedBox(height: 24),
                 // Progress indicator
                 SizedBox(
                   width: 200,
                   child: LinearProgressIndicator(
                     backgroundColor: AppColors.glassWhite,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.primary,
+                    ),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                )
-                    .animate()
-                    .fadeIn(delay: 400.ms, duration: 400.ms),
+                ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
               ],
             ),
           ),
