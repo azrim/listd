@@ -76,6 +76,10 @@ class SupabaseTasksProvider implements ITaskProvider {
   @override
   Future<Task> createTask(String taskListId, Task task) async {
     try {
+      // Note: sync_status is a Drift-only column for offline tracking and
+      // does NOT exist server-side. Including it crashes the INSERT with
+      // "column tasks.sync_status does not exist" and leaves TasksNotifier
+      // in an error state (which surfaces as "Failed to load tasks").
       final data = {
         'user_id': currentUserId,
         'task_list_id': taskListId,
@@ -88,7 +92,6 @@ class SupabaseTasksProvider implements ITaskProvider {
         'position': task.position,
         'parent_id': task.parentId,
         'completed_at': task.completedAt?.toIso8601String(),
-        'sync_status': task.syncStatus.value,
         'reminder': task.reminder?.toIso8601String(),
         'repeat_config': task.repeat?.toJson() != null
             ? jsonEncode(task.repeat!.toJson())

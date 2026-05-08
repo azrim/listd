@@ -551,6 +551,14 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
           .read(tasksNotifierProvider(targetListId).notifier)
           .createTask(newTask);
       _controller.clear();
+    } catch (e) {
+      // Mutation errors no longer wipe out the loaded task list — surface
+      // them inline instead so the user knows what happened and can retry.
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text('Could not add task: $e')));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

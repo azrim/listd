@@ -92,26 +92,18 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         ? task.copyWith(id: const Uuid().v4())
         : task;
 
-    try {
-      final provider = _ref.read(supabaseTasksProviderProvider);
-      await provider.createTask(taskListId, taskWithId);
-      await _syncFromRemote();
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
+    final provider = _ref.read(supabaseTasksProviderProvider);
+    await provider.createTask(taskListId, taskWithId);
+    await _syncFromRemote();
   }
 
   Future<void> updateTask(Task task) async {
     final authState = _ref.read(authNotifierProvider);
     if (authState is! AuthAuthenticated) return;
 
-    try {
-      final provider = _ref.read(supabaseTasksProviderProvider);
-      await provider.updateTask(taskListId, task);
-      await _syncFromRemote();
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
+    final provider = _ref.read(supabaseTasksProviderProvider);
+    await provider.updateTask(taskListId, task);
+    await _syncFromRemote();
   }
 
   Future<void> toggleComplete(Task task) async {
@@ -123,13 +115,9 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     final authState = _ref.read(authNotifierProvider);
     if (authState is! AuthAuthenticated) return;
 
-    try {
-      final provider = _ref.read(supabaseTasksProviderProvider);
-      await provider.deleteTask(taskListId, taskId);
-      await _syncFromRemote();
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
+    final provider = _ref.read(supabaseTasksProviderProvider);
+    await provider.deleteTask(taskListId, taskId);
+    await _syncFromRemote();
   }
 }
 
