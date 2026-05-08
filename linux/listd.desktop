@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=listd
+Comment=Listd Task Manager
+Exec=/home/azrim/Projects/listd/build/linux/x64/release/bundle/listd %u
+Icon=listd
+Terminal=false
+Type=Application
+Categories=Utility;
+MimeType=x-scheme-handler/listd;
