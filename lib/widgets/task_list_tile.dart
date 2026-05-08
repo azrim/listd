@@ -37,7 +37,9 @@ class TaskListTile extends StatelessWidget {
             child: Icon(
               taskList.isDefault ? Icons.star : Icons.list,
               size: 20,
-              color: taskList.isDefault ? Colors.white : AppColors.textSecondary,
+              color: taskList.isDefault
+                  ? Colors.white
+                  : AppColors.textSecondary,
             ),
           ),
           const SizedBox(width: 14),
@@ -50,7 +52,9 @@ class TaskListTile extends StatelessWidget {
                   taskList.title,
                   style: GoogleFonts.manrope(
                     fontSize: 15,
-                    fontWeight: taskList.isDefault ? FontWeight.w600 : FontWeight.w500,
+                    fontWeight: taskList.isDefault
+                        ? FontWeight.w600
+                        : FontWeight.w500,
                     color: AppColors.textPrimary,
                   ),
                 ),

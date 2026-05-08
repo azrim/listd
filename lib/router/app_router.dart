@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../screens/auth/auth_screen.dart';
 import '../screens/auth/callback_screen.dart';
+import '../screens/folders/manage_folders_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/settings/settings_screen.dart';
 
@@ -61,6 +62,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/settings',
         name: 'settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/folders',
+        name: 'folders',
+        builder: (context, state) => const ManageFoldersScreen(),
       ),
     ],
     errorBuilder: (context, state) =>

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../theme/app_colors.dart';
 
-/// A gradient button with glow shadow effect
+/// A theme-aware primary call-to-action button.
 class GradientButton extends StatefulWidget {
   const GradientButton({
     super.key,
@@ -49,6 +48,7 @@ class _GradientButtonState extends State<GradientButton>
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
@@ -58,10 +58,10 @@ class _GradientButtonState extends State<GradientButton>
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withAlpha(
-                  (122 * (0.5 + _pulseAnimation.value * 0.3)).round(),
+                color: scheme.primary.withAlpha(
+                  (90 * (0.4 + _pulseAnimation.value * 0.3)).round(),
                 ),
-                blurRadius: 22,
+                blurRadius: 18,
                 offset: const Offset(0, 6),
               ),
             ],
@@ -71,11 +71,7 @@ class _GradientButtonState extends State<GradientButton>
       },
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.primary, AppColors.primaryLight],
-          ),
+          color: scheme.primary,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Material(
@@ -86,12 +82,14 @@ class _GradientButtonState extends State<GradientButton>
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               child: widget.isLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          scheme.onPrimary,
+                        ),
                       ),
                     )
                   : Row(
@@ -99,13 +97,13 @@ class _GradientButtonState extends State<GradientButton>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (widget.icon != null) ...[
-                          Icon(widget.icon, color: Colors.white, size: 18),
+                          Icon(widget.icon, color: scheme.onPrimary, size: 18),
                           const SizedBox(width: 8),
                         ],
                         Text(
                           widget.label,
                           style: GoogleFonts.manrope(
-                            color: Colors.white,
+                            color: scheme.onPrimary,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -137,7 +135,8 @@ class GlassOutlinedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = color ?? AppColors.textPrimary;
+    final scheme = Theme.of(context).colorScheme;
+    final effectiveColor = color ?? scheme.onSurface;
 
     return OutlinedButton(
       onPressed: onPressed,
@@ -151,10 +150,7 @@ class GlassOutlinedButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[Icon(icon, size: 18), const SizedBox(width: 8)],
-          Text(
-            label,
-            style: GoogleFonts.manrope(fontWeight: FontWeight.w500),
-          ),
+          Text(label, style: GoogleFonts.manrope(fontWeight: FontWeight.w500)),
         ],
       ),
     );

@@ -7,8 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/auth/google_auth_service.dart';
 import '../../services/auth/token_manager.dart';
 import '../../services/supabase/supabase_client_service.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/gradients.dart';
+import '../../widgets/app_logo.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/gradient_button.dart';
 
@@ -58,10 +57,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       // The widget will rebuild due to authNotifierProvider change
     } catch (e) {
       if (mounted) {
+        final scheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Sign-in failed: ${e.toString()}'),
-            backgroundColor: AppColors.danger,
+            backgroundColor: scheme.error,
           ),
         );
         setState(() => _isLoading = false);
@@ -83,22 +83,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       });
     }
 
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: scheme.surface,
       body: Stack(
         children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: AppGradients.screenBackground,
-            ),
-          ),
-          _buildOrbs(),
+          _buildOrbs(scheme),
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildLogo()
+                  _buildLogo(scheme)
                       .animate()
                       .fadeIn(duration: 600.ms)
                       .scale(begin: const Offset(0.8, 0.8)),
@@ -108,7 +105,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                         style: GoogleFonts.manrope(
                           fontSize: 40,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: scheme.onSurface,
                           letterSpacing: -1,
                         ),
                       )
@@ -120,7 +117,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     'Your tasks, beautifully organized',
                     style: GoogleFonts.manrope(
                       fontSize: 16,
-                      color: AppColors.textSecondary,
+                      color: scheme.onSurfaceVariant,
                       fontWeight: FontWeight.w400,
                     ),
                   ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
@@ -143,7 +140,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                               'By continuing you agree to our Terms',
                               style: GoogleFonts.manrope(
                                 fontSize: 11,
-                                color: AppColors.textHint,
+                                color: scheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -161,7 +158,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     );
   }
 
-  Widget _buildOrbs() {
+  Widget _buildOrbs(ColorScheme scheme) {
     return Stack(
       children: [
         Positioned(
@@ -181,8 +178,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppColors.primary.withAlpha(51),
-                          AppColors.primary.withAlpha(0),
+                          scheme.primary.withAlpha(51),
+                          scheme.primary.withAlpha(0),
                         ],
                       ),
                     ),
@@ -202,8 +199,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.primaryLight.withAlpha(31),
-                  AppColors.primaryLight.withAlpha(0),
+                  scheme.tertiary.withAlpha(28),
+                  scheme.tertiary.withAlpha(0),
                 ],
               ),
             ),
@@ -213,38 +210,29 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     );
   }
 
-  Widget _buildLogo() {
+  Widget _buildLogo(ColorScheme scheme) {
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
         return Container(
-          width: 80,
-          height: 80,
+          width: 96,
+          height: 96,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.primary, AppColors.primaryLight],
-            ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withAlpha(102),
+                color: scheme.primary.withAlpha(70),
                 blurRadius: 30 + (_pulseAnimation.value * 10),
-                spreadRadius: 5,
+                spreadRadius: 4,
               ),
               BoxShadow(
-                color: AppColors.primary.withAlpha(51),
+                color: scheme.primary.withAlpha(35),
                 blurRadius: 60 + (_pulseAnimation.value * 15),
-                spreadRadius: 10,
+                spreadRadius: 8,
               ),
             ],
           ),
-          child: const Icon(
-            Icons.check_circle_outline,
-            color: Colors.white,
-            size: 40,
-          ),
+          child: const AppLogo(size: 96),
         );
       },
     );

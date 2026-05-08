@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../models/task.dart';
 import '../providers/tasks_provider.dart';
-import '../theme/app_colors.dart';
 
 /// Task detail panel - 3rd column in 3-column layout.
 class TaskDetailPanel extends ConsumerStatefulWidget {
@@ -88,12 +87,13 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1629),
-        border: const Border(
-          left: BorderSide(color: Color(0xFF5C6BC0), width: 1),
+        color: scheme.surface,
+        border: Border(
+          left: BorderSide(color: scheme.outlineVariant, width: 1),
         ),
       ),
       child: SafeArea(
@@ -128,20 +128,23 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFF1A2040), width: 1)),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: scheme.outlineVariant, width: 1),
+        ),
       ),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.close, color: Color(0xFF8C8A97)),
+            icon: Icon(Icons.close, color: scheme.onSurfaceVariant),
             onPressed: widget.onClose,
           ),
           const Spacer(),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Color(0xFFEF5350)),
+            icon: Icon(Icons.delete_outline, color: scheme.error),
             onPressed: () {
               ref
                   .read(tasksNotifierProvider(widget.listId).notifier)
@@ -155,6 +158,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 
   Widget _buildTitleSection() {
+    final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         // Checkbox
@@ -166,25 +170,25 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: widget.task.isCompleted
-                  ? AppColors.primary
+                  ? scheme.primary
                   : Colors.transparent,
               border: Border.all(
                 color: widget.task.isCompleted
-                    ? AppColors.primary
-                    : const Color(0xFF5C5C5C),
+                    ? scheme.primary
+                    : scheme.outline,
                 width: 2,
               ),
               boxShadow: widget.task.isCompleted
                   ? [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.4),
+                        color: scheme.primary.withValues(alpha: 0.35),
                         blurRadius: 8,
                       ),
                     ]
                   : null,
             ),
             child: widget.task.isCompleted
-                ? const Icon(Icons.check, size: 14, color: Colors.white)
+                ? Icon(Icons.check, size: 14, color: scheme.onPrimary)
                 : null,
           ),
         ),
@@ -198,8 +202,8 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: widget.task.isCompleted
-                  ? AppColors.textHint
-                  : AppColors.textPrimary,
+                  ? scheme.onSurfaceVariant
+                  : scheme.onSurface,
               decoration: widget.task.isCompleted
                   ? TextDecoration.lineThrough
                   : null,
@@ -207,7 +211,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
             decoration: InputDecoration(
               border: InputBorder.none,
               hintText: 'Task title',
-              hintStyle: GoogleFonts.manrope(color: AppColors.textHint),
+              hintStyle: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
               isDense: true,
               contentPadding: EdgeInsets.zero,
             ),
@@ -218,8 +222,8 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
           icon: Icon(
             widget.task.isStarred ? Icons.star : Icons.star_border,
             color: widget.task.isStarred
-                ? Colors.amber
-                : AppColors.textSecondary,
+                ? scheme.tertiary
+                : scheme.onSurfaceVariant,
           ),
           onPressed: _toggleStar,
         ),
@@ -228,6 +232,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 
   Widget _buildSubtasksSection() {
+    final scheme = Theme.of(context).colorScheme;
     final steps = widget.task.steps;
     final completedCount = steps.where((s) => s.isCompleted).length;
 
@@ -237,10 +242,10 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
         // Section header
         Row(
           children: [
-            const Icon(
+            Icon(
               Icons.check_box_outlined,
               size: 18,
-              color: Color(0xFF8C8A97),
+              color: scheme.onSurfaceVariant,
             ),
             const SizedBox(width: 8),
             Text(
@@ -248,7 +253,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
               style: GoogleFonts.manrope(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF8C8A97),
+                color: scheme.onSurfaceVariant,
                 letterSpacing: 1.2,
               ),
             ),
@@ -258,7 +263,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                 '$completedCount/${steps.length}',
                 style: GoogleFonts.manrope(
                   fontSize: 11,
-                  color: AppColors.textHint,
+                  color: scheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -287,13 +292,13 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
-                const Icon(Icons.add, size: 18, color: Color(0xFF8C8A97)),
+                Icon(Icons.add, size: 18, color: scheme.onSurfaceVariant),
                 const SizedBox(width: 8),
                 Text(
                   'Add step',
                   style: GoogleFonts.manrope(
                     fontSize: 14,
-                    color: const Color(0xFF8C8A97),
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -308,36 +313,38 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A2040),
-        title: Text(
-          'Add step',
-          style: GoogleFonts.manrope(color: AppColors.textPrimary),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: GoogleFonts.manrope(color: AppColors.textPrimary),
-          decoration: InputDecoration(
-            hintText: 'Step description',
-            hintStyle: GoogleFonts.manrope(color: AppColors.textHint),
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          title: Text(
+            'Add step',
+            style: GoogleFonts.manrope(color: scheme.onSurface),
           ),
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.manrope(color: AppColors.textSecondary),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: GoogleFonts.manrope(color: scheme.onSurface),
+            decoration: InputDecoration(
+              hintText: 'Step description',
+              hintStyle: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
             ),
+            onSubmitted: (value) => Navigator.of(context).pop(value),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text('Add', style: GoogleFonts.manrope()),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: Text('Add', style: GoogleFonts.manrope()),
+            ),
+          ],
+        );
+      },
     );
 
     if (result != null && result.isNotEmpty) {
@@ -351,6 +358,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 
   Widget _buildMetadataSection() {
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -368,7 +376,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
           value: widget.task.hasReminder
               ? _formatTime(widget.task.reminder!)
               : null,
-          valueColor: AppColors.primary,
+          valueColor: scheme.primary,
           onTap: () => _showReminderPicker(),
         ),
         // Due date
@@ -426,7 +434,6 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   void _showRepeatPicker() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A2040),
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -476,6 +483,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 
   Widget _buildTagsSection() {
+    final scheme = Theme.of(context).colorScheme;
     final tags = widget.task.tags;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -485,7 +493,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
           style: GoogleFonts.manrope(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF8C8A97),
+            color: scheme.onSurfaceVariant,
             letterSpacing: 1.2,
           ),
         ),
@@ -501,9 +509,9 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.2),
+                  color: scheme.primary.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primary, width: 1),
+                  border: Border.all(color: scheme.primary, width: 1),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -512,7 +520,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                       tag,
                       style: GoogleFonts.manrope(
                         fontSize: 12,
-                        color: Colors.white,
+                        color: scheme.onSurface,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -523,10 +531,10 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                             .toList();
                         _updateTask(widget.task.copyWith(tags: updatedTags));
                       },
-                      child: const Icon(
+                      child: Icon(
                         Icons.close,
                         size: 14,
-                        color: Color(0xFF8C8A97),
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -542,19 +550,19 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF5C5C5C)),
+                  border: Border.all(color: scheme.outline),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.add, size: 14, color: Color(0xFF8C8A97)),
+                    Icon(Icons.add, size: 14, color: scheme.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
                       'Add tag',
                       style: GoogleFonts.manrope(
                         fontSize: 12,
-                        color: const Color(0xFF8C8A97),
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -571,36 +579,38 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A2040),
-        title: Text(
-          'Add tag',
-          style: GoogleFonts.manrope(color: AppColors.textPrimary),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: GoogleFonts.manrope(color: AppColors.textPrimary),
-          decoration: InputDecoration(
-            hintText: 'Tag name',
-            hintStyle: GoogleFonts.manrope(color: AppColors.textHint),
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          title: Text(
+            'Add tag',
+            style: GoogleFonts.manrope(color: scheme.onSurface),
           ),
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.manrope(color: AppColors.textSecondary),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: GoogleFonts.manrope(color: scheme.onSurface),
+            decoration: InputDecoration(
+              hintText: 'Tag name',
+              hintStyle: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
             ),
+            onSubmitted: (value) => Navigator.of(context).pop(value),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text('Add', style: GoogleFonts.manrope()),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: Text('Add', style: GoogleFonts.manrope()),
+            ),
+          ],
+        );
+      },
     );
 
     if (result != null && result.isNotEmpty) {
@@ -610,6 +620,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 
   Widget _buildNotesSection() {
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -618,7 +629,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
           style: GoogleFonts.manrope(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF8C8A97),
+            color: scheme.onSurfaceVariant,
             letterSpacing: 1.2,
           ),
         ),
@@ -626,24 +637,18 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
         Container(
           constraints: const BoxConstraints(minHeight: 80),
           decoration: BoxDecoration(
-            color: const Color(0xFF1A2040),
+            color: scheme.surfaceContainer,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.2),
-              width: 1,
-            ),
+            border: Border.all(color: scheme.outlineVariant, width: 1),
           ),
           child: TextField(
             controller: _notesController,
             onChanged: _onNotesChanged,
             maxLines: null,
-            style: GoogleFonts.manrope(
-              fontSize: 14,
-              color: AppColors.textPrimary,
-            ),
+            style: GoogleFonts.manrope(fontSize: 14, color: scheme.onSurface),
             decoration: InputDecoration(
               hintText: 'Add a note...',
-              hintStyle: GoogleFonts.manrope(color: AppColors.textHint),
+              hintStyle: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(12),
             ),
@@ -654,9 +659,10 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 
   Widget _buildFooter() {
+    final scheme = Theme.of(context).colorScheme;
     return Text(
       'Created ${_formatDate(widget.task.updated)}',
-      style: GoogleFonts.manrope(fontSize: 11, color: AppColors.textHint),
+      style: GoogleFonts.manrope(fontSize: 11, color: scheme.onSurfaceVariant),
     );
   }
 
@@ -682,6 +688,7 @@ class _StepItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onToggle,
       child: Padding(
@@ -693,18 +700,14 @@ class _StepItem extends StatelessWidget {
               height: 18,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
-                color: step.isCompleted
-                    ? AppColors.primary
-                    : Colors.transparent,
+                color: step.isCompleted ? scheme.primary : Colors.transparent,
                 border: Border.all(
-                  color: step.isCompleted
-                      ? AppColors.primary
-                      : const Color(0xFF5C5C5C),
+                  color: step.isCompleted ? scheme.primary : scheme.outline,
                   width: 1.5,
                 ),
               ),
               child: step.isCompleted
-                  ? const Icon(Icons.check, size: 12, color: Colors.white)
+                  ? Icon(Icons.check, size: 12, color: scheme.onPrimary)
                   : null,
             ),
             const SizedBox(width: 12),
@@ -714,8 +717,8 @@ class _StepItem extends StatelessWidget {
                 style: GoogleFonts.manrope(
                   fontSize: 14,
                   color: step.isCompleted
-                      ? AppColors.textHint
-                      : AppColors.textPrimary,
+                      ? scheme.onSurfaceVariant
+                      : scheme.onSurface,
                   decoration: step.isCompleted
                       ? TextDecoration.lineThrough
                       : null,
@@ -748,34 +751,35 @@ class _MetadataRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A2040),
+          color: scheme.surfaceContainer,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: const Color(0xFF8C8A97)),
+            Icon(icon, size: 18, color: scheme.onSurfaceVariant),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 value ?? label,
                 style: GoogleFonts.manrope(
                   fontSize: 14,
-                  color: valueColor ?? AppColors.textPrimary,
+                  color: valueColor ?? scheme.onSurface,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             if (value != null)
-              const Icon(
+              Icon(
                 Icons.chevron_right,
                 size: 18,
-                color: AppColors.textHint,
+                color: scheme.onSurfaceVariant,
               ),
           ],
         ),

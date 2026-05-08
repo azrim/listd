@@ -10,7 +10,11 @@ class SupabaseClientService {
   static SupabaseClient? _client;
 
   /// Initialize Supabase. Call this before runApp().
+  ///
+  /// Requires `SUPABASE_URL` and `SUPABASE_ANON_KEY` to be supplied via
+  /// `--dart-define`; see [AppConfig.assertConfigured].
   static Future<void> initialize() async {
+    AppConfig.assertConfigured();
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
       anonKey: AppConfig.supabaseAnonKey,

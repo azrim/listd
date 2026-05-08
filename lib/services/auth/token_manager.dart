@@ -52,12 +52,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       switch (event) {
         case AuthChangeEvent.signedIn:
-          if (session != null) {
-            state = AuthAuthenticated(session);
-          } else {
-            state = const AuthUnauthenticated();
-          }
+          state = session != null
+              ? AuthAuthenticated(session)
+              : const AuthUnauthenticated();
         case AuthChangeEvent.signedOut:
+        // ignore: deprecated_member_use
+        case AuthChangeEvent.userDeleted:
           state = const AuthUnauthenticated();
         case AuthChangeEvent.tokenRefreshed:
         case AuthChangeEvent.userUpdated:
@@ -66,17 +66,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
           if (currentSession != null) {
             state = AuthAuthenticated(currentSession);
           }
-        case AuthChangeEvent.passwordRecovery:
-          // Password recovery - don't change auth state
-          break;
         case AuthChangeEvent.initialSession:
-          // Initial session check on app start
           if (session != null) {
             state = AuthAuthenticated(session);
+          } else {
+            state = const AuthUnauthenticated();
           }
-          break;
-        case _:
-          // Handle any future events
+        case AuthChangeEvent.passwordRecovery:
+          // No auth-state change for password recovery flow.
           break;
       }
     });

@@ -30,7 +30,7 @@ class TasksScreen extends ConsumerStatefulWidget {
 class _TasksScreenState extends ConsumerState<TasksScreen> {
   @override
   Widget build(BuildContext context) {
-    final tasksAsync = ref.watch(tasksStreamProvider(widget.taskListId));
+    final tasksAsync = ref.watch(tasksNotifierProvider(widget.taskListId));
 
     return Scaffold(
       body: Stack(

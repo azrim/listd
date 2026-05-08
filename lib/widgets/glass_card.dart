@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 
-/// Glass-styled card that works on Linux desktop.
+/// Stitch-styled card surface used throughout the app.
 ///
-/// Uses layered gradient + border to simulate glass without BackdropFilter
-/// (which is not supported on Linux Flutter).
+/// Despite the legacy "Glass" name, this widget renders a flat
+/// theme-aware card so it looks correct under both light and dark
+/// Stitch indigo themes (no more BackdropFilter / hardcoded blue).
 class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
@@ -27,25 +27,27 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = glowColor ?? AppColors.primary;
+    final scheme = Theme.of(context).colorScheme;
+    final hasGlow = glowColor != null;
+    final accent = glowColor ?? scheme.primary;
     return Container(
       width: width,
       margin: margin,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
-        color: const Color(0xFF1A2040),
-        border: Border.all(color: color.withValues(alpha: 0.22), width: 1),
-        boxShadow: glowColor != null
+        color: scheme.surfaceContainer,
+        border: Border.all(
+          color: hasGlow
+              ? accent.withValues(alpha: 0.5)
+              : scheme.outlineVariant,
+          width: 1,
+        ),
+        boxShadow: hasGlow
             ? [
                 BoxShadow(
-                  color: color.withValues(alpha: 0.12),
+                  color: accent.withValues(alpha: 0.18),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
                 ),
               ]
             : null,
@@ -55,28 +57,15 @@ class GlassCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(borderRadius),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(borderRadius),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withValues(alpha: 0.07),
-                  Colors.white.withValues(alpha: 0.02),
-                ],
-              ),
-            ),
-            child: child,
-          ),
+          child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
         ),
       ),
     );
   }
 }
 
-/// A glass-styled container with gradient border effect.
+/// A theme-aware container that previously rendered a translucent glass
+/// effect. Kept for backward compatibility with existing screens.
 class GlassContainer extends StatelessWidget {
   const GlassContainer({
     super.key,
@@ -91,29 +80,20 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.15),
-            Colors.white.withValues(alpha: 0.05),
-          ],
-        ),
+        color: scheme.surfaceContainer,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-          width: 1,
-        ),
+        border: Border.all(color: scheme.outlineVariant, width: 1),
       ),
       child: child,
     );
   }
 }
 
-/// A small glass chip/badge widget.
+/// A small chip/badge widget that picks up the active theme.
 class GlassChip extends StatelessWidget {
   const GlassChip({
     super.key,
@@ -128,15 +108,13 @@ class GlassChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: scheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.15),
-          width: 1,
-        ),
+        border: Border.all(color: scheme.outlineVariant, width: 1),
       ),
       child: child,
     );

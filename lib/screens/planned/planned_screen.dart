@@ -5,30 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/task.dart';
 import '../../providers/task_lists_provider.dart';
 import '../../providers/tasks_provider.dart';
-import '../../theme/app_colors.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/task_detail_panel.dart';
-
-/// Provider for all tasks across all lists (for planned view)
-final allTasksProvider = FutureProvider<List<Task>>((ref) async {
-  // Get all task lists first
-  final taskListsAsync = ref.watch(taskListsStreamProvider);
-
-  return taskListsAsync.when(
-    data: (taskLists) async {
-      final allTasks = <Task>[];
-      for (final list in taskLists) {
-        final tasksAsync = ref.watch(tasksStreamProvider(list.id));
-        tasksAsync.whenData((tasks) {
-          allTasks.addAll(tasks);
-        });
-      }
-      return allTasks;
-    },
-    loading: () => <Task>[],
-    error: (_, _) => <Task>[],
-  );
-});
 
 /// Provider for selected task in planned view
 final plannedSelectedTaskProvider = StateProvider<Task?>((ref) => null);
@@ -59,76 +37,116 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
   @override
   Widget build(BuildContext context) {
     final tasksAsync = ref.watch(allTasksProvider);
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF060818), Color(0xFF0D1535), Color(0xFF162040)],
-            stops: [0.0, 0.5, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: tasksAsync.when(
-                        data: (tasks) => _buildContent(tasks),
-                        loading: () =>
-                            const Center(child: CircularProgressIndicator()),
-                        error: (e, _) => Center(
-                          child: Text(
-                            'Error: $e',
-                            style: TextStyle(color: AppColors.danger),
-                          ),
-                        ),
-                      ),
+      backgroundColor: scheme.surface,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(scheme),
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: tasksAsync.when(
+                      data: (tasks) => _buildContent(tasks),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => _buildError(scheme, e),
                     ),
-                    // Detail panel
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                      width: _selectedTask != null ? 320 : 0,
-                      child: _selectedTask != null
-                          ? TaskDetailPanel(
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    width: _selectedTask != null ? 360 : 0,
+                    child: _selectedTask != null
+                        ? Container(
+                            decoration: BoxDecoration(
+                              color: scheme.surfaceContainerLow,
+                              border: Border(
+                                left: BorderSide(color: scheme.outlineVariant),
+                              ),
+                            ),
+                            child: TaskDetailPanel(
                               task: _selectedTask!,
                               listId: _selectedTask!.taskListId,
                               onClose: _closeDetailPanel,
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                  ],
-                ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildError(ColorScheme scheme, Object error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: scheme.error),
+            const SizedBox(height: 12),
+            Text(
+              'Could not load tasks',
+              style: GoogleFonts.manrope(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$error',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () {
+                // Refresh every list-scoped notifier; allTasksProvider
+                // re-aggregates from those.
+                final lists = ref.read(taskListsNotifierProvider).valueOrNull;
+                if (lists == null) return;
+                for (final list in lists) {
+                  ref.read(tasksNotifierProvider(list.id).notifier).refresh();
+                }
+              },
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(ColorScheme scheme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.glassBorderSubtle)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.calendar_today, color: AppColors.primary, size: 28),
+          Icon(Icons.calendar_today, color: scheme.primary, size: 28),
           const SizedBox(width: 12),
           Text(
             'Planned',
             style: GoogleFonts.manrope(
               fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: scheme.onSurface,
             ),
           ),
         ],
@@ -137,12 +155,12 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
   }
 
   Widget _buildContent(List<Task> allTasks) {
+    final scheme = Theme.of(context).colorScheme;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
     final nextWeekEnd = today.add(const Duration(days: 7));
 
-    // Filter and categorize tasks with due dates
     final tasksWithDue = allTasks
         .where((t) => t.due != null && !t.isCompleted)
         .toList();
@@ -174,7 +192,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
         laterTasks.isNotEmpty;
 
     if (!hasAnyTasks) {
-      return _buildEmptyState();
+      return _buildEmptyState(scheme);
     }
 
     return SingleChildScrollView(
@@ -185,7 +203,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
           if (overdue.isNotEmpty) ...[
             _DateSection(
               icon: Icons.warning,
-              iconColor: AppColors.danger,
+              iconColor: scheme.error,
               title: 'Overdue',
               tasks: overdue,
               onTaskSelected: _onTaskSelected,
@@ -196,7 +214,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
           if (todayTasks.isNotEmpty) ...[
             _DateSection(
               icon: Icons.calendar_today,
-              iconColor: AppColors.primary,
+              iconColor: scheme.primary,
               title: 'Today',
               tasks: todayTasks,
               onTaskSelected: _onTaskSelected,
@@ -207,7 +225,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
           if (tomorrowTasks.isNotEmpty) ...[
             _DateSection(
               icon: Icons.calendar_today,
-              iconColor: AppColors.textPrimary,
+              iconColor: scheme.onSurface,
               title: 'Tomorrow',
               tasks: tomorrowTasks,
               onTaskSelected: _onTaskSelected,
@@ -218,7 +236,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
           if (nextWeekTasks.isNotEmpty) ...[
             _DateSection(
               icon: Icons.calendar_today,
-              iconColor: AppColors.textPrimary,
+              iconColor: scheme.onSurface,
               title: 'Next 7 Days',
               tasks: nextWeekTasks,
               isGrid: true,
@@ -230,7 +248,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
           if (laterTasks.isNotEmpty) ...[
             _DateSection(
               icon: Icons.schedule,
-              iconColor: AppColors.textHint,
+              iconColor: scheme.onSurfaceVariant,
               title: 'Later',
               tasks: laterTasks,
               onTaskSelected: _onTaskSelected,
@@ -242,19 +260,19 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(ColorScheme scheme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.event_available, size: 64, color: AppColors.textHint),
+          Icon(Icons.event_available, size: 64, color: scheme.onSurfaceVariant),
           const SizedBox(height: 16),
           Text(
             'No planned tasks',
             style: GoogleFonts.manrope(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: scheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
@@ -262,7 +280,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
             'Tasks with due dates will appear here',
             style: GoogleFonts.manrope(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: scheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -365,6 +383,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Icon(icon, size: 18, color: iconColor),
@@ -378,13 +397,14 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Expanded(
-          child: Container(height: 1, color: AppColors.glassBorderSubtle),
-        ),
+        Expanded(child: Container(height: 1, color: scheme.outlineVariant)),
         const SizedBox(width: 8),
         Text(
           '$taskCount',
-          style: GoogleFonts.manrope(fontSize: 12, color: AppColors.textHint),
+          style: GoogleFonts.manrope(
+            fontSize: 12,
+            color: scheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -405,13 +425,13 @@ class _TaskCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      glowColor: isSelected ? AppColors.primary : null,
+      glowColor: isSelected ? scheme.primary : null,
       onTap: onTap,
       child: Row(
         children: [
-          // Checkbox
           GestureDetector(
             onTap: () {
               ref
@@ -423,29 +443,28 @@ class _TaskCard extends ConsumerWidget {
               height: 20,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: task.isCompleted
-                    ? AppColors.primary
-                    : Colors.transparent,
+                color: task.isCompleted ? scheme.primary : Colors.transparent,
                 border: Border.all(
-                  color: task.isCompleted ? AppColors.primary : Colors.white38,
+                  color: task.isCompleted
+                      ? scheme.primary
+                      : scheme.outlineVariant,
                   width: 2,
                 ),
               ),
               child: task.isCompleted
-                  ? const Icon(Icons.check, size: 12, color: Colors.white)
+                  ? Icon(Icons.check, size: 12, color: scheme.onPrimary)
                   : null,
             ),
           ),
           const SizedBox(width: 12),
-          // Task title
           Expanded(
             child: Text(
               task.title,
               style: GoogleFonts.manrope(
                 fontSize: 14,
                 color: task.isCompleted
-                    ? AppColors.textHint
-                    : AppColors.textPrimary,
+                    ? scheme.onSurfaceVariant
+                    : scheme.onSurface,
                 decoration: task.isCompleted
                     ? TextDecoration.lineThrough
                     : null,
@@ -454,26 +473,21 @@ class _TaskCard extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          // Due date
           if (task.due != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
+                color: scheme.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 _formatDueDate(task.due!),
-                style: GoogleFonts.manrope(
-                  fontSize: 11,
-                  color: AppColors.primary,
-                ),
+                style: GoogleFonts.manrope(fontSize: 11, color: scheme.primary),
               ),
             ),
-          // Star
           if (task.isStarred) ...[
             const SizedBox(width: 8),
-            const Icon(Icons.star, size: 16, color: Colors.amber),
+            Icon(Icons.star, size: 16, color: scheme.tertiary),
           ],
         ],
       ),
