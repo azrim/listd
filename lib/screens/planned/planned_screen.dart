@@ -3,32 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/task.dart';
-import '../../providers/task_lists_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/task_detail_panel.dart';
-
-/// Provider for all tasks across all lists (for planned view)
-final allTasksProvider = FutureProvider<List<Task>>((ref) async {
-  // Get all task lists first
-  final taskListsAsync = ref.watch(taskListsStreamProvider);
-
-  return taskListsAsync.when(
-    data: (taskLists) async {
-      final allTasks = <Task>[];
-      for (final list in taskLists) {
-        final tasksAsync = ref.watch(tasksStreamProvider(list.id));
-        tasksAsync.whenData((tasks) {
-          allTasks.addAll(tasks);
-        });
-      }
-      return allTasks;
-    },
-    loading: () => <Task>[],
-    error: (_, _) => <Task>[],
-  );
-});
 
 /// Provider for selected task in planned view
 final plannedSelectedTaskProvider = StateProvider<Task?>((ref) => null);

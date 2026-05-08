@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/task.dart';
+import '../../models/task_list.dart';
 import '../../providers/task_lists_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../providers/ui_state_providers.dart';
@@ -41,7 +42,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _selectFirstList() {
-    final taskListsAsync = ref.read(taskListsStreamProvider);
+    final taskListsAsync = ref.read(taskListsNotifierProvider);
     taskListsAsync.whenData((taskLists) {
       if (taskLists.isNotEmpty) {
         final currentSelection = ref.read(selectedTaskListIdProvider);
@@ -57,17 +58,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final selectedListId = ref.watch(selectedTaskListIdProvider);
     final selectedTaskId = ref.watch(selectedTaskIdProvider);
-    final taskListsAsync = ref.watch(taskListsStreamProvider);
+    final taskListsAsync = ref.watch(taskListsNotifierProvider);
 
-    // Auto-select first list when data loads
-    taskListsAsync.whenData((taskLists) {
-      if (taskLists.isNotEmpty && selectedListId == null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Listen for the first non-empty data load and auto-select the first list
+    // (no postFrame; ref.listen runs after the build completes).
+    ref.listen<AsyncValue<List<TaskList>>>(
+      taskListsNotifierProvider,
+      (previous, next) {
+        next.whenData((taskLists) {
+          if (taskLists.isEmpty) return;
+          if (ref.read(selectedTaskListIdProvider) != null) return;
           ref.read(selectedTaskListIdProvider.notifier).state =
               taskLists.first.id;
         });
-      }
-    });
+      },
+    );
 
     // Get list name
     String listName = 'Tasks';
@@ -173,7 +178,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Task? _getTaskForDetail(String taskId, String listId) {
-    final tasksAsync = ref.read(tasksStreamProvider(listId));
+    final tasksAsync = ref.read(tasksNotifierProvider(listId));
     return tasksAsync.whenOrNull(
       data: (tasks) => tasks.where((t) => t.id == taskId).firstOrNull,
     );

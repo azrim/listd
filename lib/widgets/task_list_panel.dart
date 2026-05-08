@@ -22,7 +22,7 @@ class TaskListPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tasksAsync = ref.watch(tasksStreamProvider(listId));
+    final tasksAsync = ref.watch(tasksNotifierProvider(listId));
     final selectedTaskId = ref.watch(selectedTaskIdProvider);
 
     return Column(
