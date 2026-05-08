@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../providers/task_lists_provider.dart';
 import '../models/task_list.dart';
@@ -111,12 +112,29 @@ class SidebarPanel extends ConsumerWidget {
             ),
           ),
           const Divider(height: 1),
+          // New list button
           Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: TextButton.icon(
-              onPressed: () => _showNewListDialog(context),
+              onPressed: () => _showNewListDialog(context, ref),
               icon: const Icon(Icons.add, size: 20),
               label: const Text('New list'),
+              style: TextButton.styleFrom(
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ),
+          // Settings button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: TextButton.icon(
+              onPressed: () => context.push('/settings'),
+              icon: const Icon(Icons.settings_outlined, size: 20),
+              label: const Text('Settings'),
               style: TextButton.styleFrom(
                 alignment: Alignment.centerLeft,
                 padding: const EdgeInsets.symmetric(
@@ -163,7 +181,7 @@ class SidebarPanel extends ConsumerWidget {
     );
   }
 
-  Future<void> _showNewListDialog(BuildContext context) async {
+  Future<void> _showNewListDialog(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController();
 
     final result = await showDialog<String>(
@@ -190,11 +208,8 @@ class SidebarPanel extends ConsumerWidget {
     );
 
     if (result != null && result.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Creating "$result"... (API not implemented yet)'),
-        ),
-      );
+      // Create the list via provider
+      ref.read(taskListsNotifierProvider.notifier).createTaskList(result);
     }
   }
 }
