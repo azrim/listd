@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/task.dart';
+import '../../providers/task_lists_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/task_detail_panel.dart';
@@ -52,12 +53,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
                       data: (tasks) => _buildContent(tasks),
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Center(
-                        child: Text(
-                          'Error: $e',
-                          style: TextStyle(color: scheme.error),
-                        ),
-                      ),
+                      error: (e, _) => _buildError(scheme, e),
                     ),
                   ),
                   AnimatedContainer(
@@ -82,6 +78,52 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildError(ColorScheme scheme, Object error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: scheme.error),
+            const SizedBox(height: 12),
+            Text(
+              'Could not load tasks',
+              style: GoogleFonts.manrope(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$error',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () {
+                // Refresh every list-scoped notifier; allTasksProvider
+                // re-aggregates from those.
+                final lists = ref.read(taskListsNotifierProvider).valueOrNull;
+                if (lists == null) return;
+                for (final list in lists) {
+                  ref.read(tasksNotifierProvider(list.id).notifier).refresh();
+                }
+              },
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Retry'),
             ),
           ],
         ),
