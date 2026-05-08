@@ -70,7 +70,7 @@ class TaskTile extends StatelessWidget {
                         // Title
                         Text(
                           task.title,
-                          style: GoogleFonts.spaceGrotesk(
+                          style: GoogleFonts.manrope(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: task.isCompleted
@@ -282,7 +282,7 @@ class _DueDateChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             _formatDate(dueDate),
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.manrope(
               fontSize: 11,
               color: textColor,
               fontWeight: isToday ? FontWeight.w600 : FontWeight.w400,
@@ -329,7 +329,7 @@ class _RepeatChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             _formatRepeat(repeat),
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.manrope(
               fontSize: 11,
               color: AppColors.textSecondary,
             ),
@@ -382,7 +382,7 @@ class _ReminderChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             _formatReminder(reminder),
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.manrope(
               fontSize: 11,
               color: AppColors.primary,
             ),
@@ -428,7 +428,7 @@ class _TagsChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             remainingCount > 0 ? '$displayTag +$remainingCount' : displayTag,
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.manrope(
               fontSize: 11,
               color: AppColors.textSecondary,
             ),
@@ -483,7 +483,7 @@ class _StepsProgress extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             '$completed/${steps.length} steps',
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.manrope(
               fontSize: 11,
               color: AppColors.textSecondary,
             ),

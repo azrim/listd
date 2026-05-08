@@ -44,7 +44,7 @@ class SettingsScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Settings',
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.manrope(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -163,7 +163,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: GoogleFonts.spaceGrotesk(
+      style: GoogleFonts.manrope(
         fontSize: 12,
         fontWeight: FontWeight.w600,
         color: AppColors.primary,

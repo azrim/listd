@@ -77,7 +77,7 @@ class TaskListsScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Text(
                     'listd',
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.manrope(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -167,7 +167,7 @@ class TaskListsScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               Text(
                 'No task lists found',
-                style: GoogleFonts.spaceGrotesk(
+                style: GoogleFonts.manrope(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -176,7 +176,7 @@ class TaskListsScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 'Your Google Tasks will appear here',
-                style: GoogleFonts.spaceGrotesk(
+                style: GoogleFonts.manrope(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
@@ -188,7 +188,7 @@ class TaskListsScreen extends ConsumerWidget {
                 icon: const Icon(Icons.refresh, color: AppColors.primary),
                 label: Text(
                   'Sync from Google',
-                  style: GoogleFonts.spaceGrotesk(color: AppColors.primary),
+                  style: GoogleFonts.manrope(color: AppColors.primary),
                 ),
               ),
             ],
@@ -277,7 +277,7 @@ class TaskListsScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               Text(
                 'Failed to load task lists',
-                style: GoogleFonts.spaceGrotesk(
+                style: GoogleFonts.manrope(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -286,7 +286,7 @@ class TaskListsScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 error.toString(),
-                style: GoogleFonts.spaceGrotesk(
+                style: GoogleFonts.manrope(
                   fontSize: 12,
                   color: AppColors.textSecondary,
                 ),
@@ -299,7 +299,7 @@ class TaskListsScreen extends ConsumerWidget {
                 icon: const Icon(Icons.refresh, color: AppColors.primary),
                 label: Text(
                   'Retry',
-                  style: GoogleFonts.spaceGrotesk(color: AppColors.primary),
+                  style: GoogleFonts.manrope(color: AppColors.primary),
                 ),
               ),
             ],
@@ -370,7 +370,7 @@ class _TaskListGlassTile extends StatelessWidget {
               children: [
                 Text(
                   taskList.title,
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.manrope(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -379,7 +379,7 @@ class _TaskListGlassTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Updated ${_formatDate(taskList.updated)}',
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.manrope(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),

@@ -104,7 +104,7 @@ class _GradientButtonState extends State<GradientButton>
                         ],
                         Text(
                           widget.label,
-                          style: GoogleFonts.spaceGrotesk(
+                          style: GoogleFonts.manrope(
                             color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -153,7 +153,7 @@ class GlassOutlinedButton extends StatelessWidget {
           if (icon != null) ...[Icon(icon, size: 18), const SizedBox(width: 8)],
           Text(
             label,
-            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w500),
+            style: GoogleFonts.manrope(fontWeight: FontWeight.w500),
           ),
         ],
       ),

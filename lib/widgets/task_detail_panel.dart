@@ -172,7 +172,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
           child: TextField(
             controller: _titleController,
             onChanged: _onTitleChanged,
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.manrope(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -180,7 +180,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
             decoration: InputDecoration(
               border: InputBorder.none,
               hintText: 'Task title',
-              hintStyle: GoogleFonts.spaceGrotesk(color: AppColors.textHint),
+              hintStyle: GoogleFonts.manrope(color: AppColors.textHint),
               isDense: true,
               contentPadding: EdgeInsets.zero,
             ),
@@ -209,7 +209,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
       children: [
         Text(
           'Notes',
-          style: GoogleFonts.spaceGrotesk(
+          style: GoogleFonts.manrope(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: AppColors.textSecondary,
@@ -232,7 +232,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
       children: [
         Text(
           'Created ${_formatDate(widget.task.updated)}',
-          style: GoogleFonts.spaceGrotesk(
+          style: GoogleFonts.manrope(
             fontSize: 12,
             color: AppColors.textHint,
           ),
@@ -246,7 +246,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
           ),
           label: Text(
             'Delete',
-            style: GoogleFonts.spaceGrotesk(color: AppColors.danger),
+            style: GoogleFonts.manrope(color: AppColors.danger),
           ),
         ),
       ],
@@ -363,7 +363,7 @@ class _StepsSectionState extends State<_StepsSection> {
       children: [
         Text(
           'Steps',
-          style: GoogleFonts.spaceGrotesk(
+          style: GoogleFonts.manrope(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: AppColors.textSecondary,
@@ -402,13 +402,13 @@ class _StepsSectionState extends State<_StepsSection> {
               child: TextField(
                 controller: _addController,
                 onSubmitted: (_) => _addStep(),
-                style: GoogleFonts.spaceGrotesk(
+                style: GoogleFonts.manrope(
                   fontSize: 14,
                   color: AppColors.textPrimary,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Add a step...',
-                  hintStyle: GoogleFonts.spaceGrotesk(
+                  hintStyle: GoogleFonts.manrope(
                     color: AppColors.textHint,
                     fontSize: 14,
                   ),
@@ -503,7 +503,7 @@ class _StepTile extends StatelessWidget {
                       onTap: _launchUrl,
                       child: Text(
                         step.title,
-                        style: GoogleFonts.spaceGrotesk(
+                        style: GoogleFonts.manrope(
                           fontSize: 14,
                           color: AppColors.primary,
                           decoration: step.isCompleted
@@ -514,7 +514,7 @@ class _StepTile extends StatelessWidget {
                     )
                   : Text(
                       step.title,
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.manrope(
                         fontSize: 14,
                         color: step.isCompleted
                             ? AppColors.textHint
@@ -767,7 +767,7 @@ class _MetadataRow extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 label,
-                style: GoogleFonts.spaceGrotesk(
+                style: GoogleFonts.manrope(
                   fontSize: 14,
                   color: AppColors.textPrimary,
                 ),
@@ -776,7 +776,7 @@ class _MetadataRow extends StatelessWidget {
               if (value != null) ...[
                 Text(
                   value!,
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.manrope(
                     fontSize: 14,
                     color: valueColor ?? AppColors.textSecondary,
                   ),
@@ -883,7 +883,7 @@ class _RepeatBottomSheetState extends State<_RepeatBottomSheet> {
         children: [
           Text(
             'Repeat',
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.manrope(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -915,7 +915,7 @@ class _RepeatBottomSheetState extends State<_RepeatBottomSheet> {
                   ),
                   child: Text(
                     type.name[0].toUpperCase() + type.name.substring(1),
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.manrope(
                       fontSize: 14,
                       color: isSelected
                           ? Colors.white
@@ -931,7 +931,7 @@ class _RepeatBottomSheetState extends State<_RepeatBottomSheet> {
             onPressed: () => widget.onSelected(null),
             child: Text(
               'Clear',
-              style: GoogleFonts.spaceGrotesk(color: AppColors.danger),
+              style: GoogleFonts.manrope(color: AppColors.danger),
             ),
           ),
           const SizedBox(height: 8),
@@ -951,7 +951,7 @@ class _RepeatBottomSheetState extends State<_RepeatBottomSheet> {
             ),
             child: Text(
               'Confirm',
-              style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
+              style: GoogleFonts.manrope(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -1029,7 +1029,7 @@ class _TagsBottomSheetState extends State<_TagsBottomSheet> {
         children: [
           Text(
             'Tags',
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.manrope(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -1061,7 +1061,7 @@ class _TagsBottomSheetState extends State<_TagsBottomSheet> {
                   ),
                   child: Text(
                     tag,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.manrope(
                       fontSize: 12,
                       color: isSelected
                           ? Colors.white
@@ -1079,10 +1079,10 @@ class _TagsBottomSheetState extends State<_TagsBottomSheet> {
                 child: TextField(
                   controller: _newTagController,
                   onSubmitted: (_) => _addNewTag(),
-                  style: GoogleFonts.spaceGrotesk(color: AppColors.textPrimary),
+                  style: GoogleFonts.manrope(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'New tag...',
-                    hintStyle: GoogleFonts.spaceGrotesk(
+                    hintStyle: GoogleFonts.manrope(
                       color: AppColors.textHint,
                     ),
                     border: OutlineInputBorder(
@@ -1119,7 +1119,7 @@ class _TagsBottomSheetState extends State<_TagsBottomSheet> {
             ),
             child: Text(
               'Save',
-              style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
+              style: GoogleFonts.manrope(fontWeight: FontWeight.w600),
             ),
           ),
         ],

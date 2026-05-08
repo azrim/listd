@@ -120,7 +120,7 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen>
                 // Loading text
                 Text(
                   'Connecting to Supabase...',
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.manrope(
                     fontSize: 16,
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w400,

@@ -2,24 +2,19 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../providers/task_lists_provider.dart';
-import '../theme/app_colors.dart';
 import '../models/task_list.dart';
+import '../providers/task_lists_provider.dart';
+import '../providers/ui_state_providers.dart';
+import '../theme/app_colors.dart';
 
-/// Provider for the currently selected task list ID
-final selectedTaskListIdProvider = StateProvider<String?>((ref) => null);
+/// Sidebar panel with task lists - glassmorphism style
+/// Re-exports provider for backward compatibility
+export '../providers/ui_state_providers.dart'
+    show selectedTaskListIdProvider, SpecialListIds;
 
-/// Special list IDs for built-in views
-class SpecialListIds {
-  static const String myDay = '@myday';
-  static const String important = '@important';
-  static const String planned = '@planned';
-  static const String tasks = '@tasks';
-}
-
-/// Left sidebar panel with task lists - glassmorphism style
+/// Left sidebar panel with task lists
 class SidebarPanel extends ConsumerWidget {
   const SidebarPanel({super.key});
 
@@ -33,15 +28,15 @@ class SidebarPanel extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.bgSurface.withAlpha(179), // 70% opacity
+            color: AppColors.bgContainer.withAlpha(179),
             border: const Border(
-              right: BorderSide(color: AppColors.glassBorder, width: 1),
+              right: BorderSide(color: AppColors.glassBorderSubtle, width: 1),
             ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildHeader(context),
+              _buildHeader(),
               const Divider(height: 1, color: Colors.white10),
               Expanded(
                 child: ListView(
@@ -51,7 +46,6 @@ class SidebarPanel extends ConsumerWidget {
                     _SidebarItem(
                       icon: Icons.wb_sunny_outlined,
                       title: 'My Day',
-                      iconColor: Colors.orange,
                       isSelected: selectedListId == SpecialListIds.myDay,
                       onTap: () =>
                           ref.read(selectedTaskListIdProvider.notifier).state =
@@ -60,7 +54,6 @@ class SidebarPanel extends ConsumerWidget {
                     _SidebarItem(
                       icon: Icons.star_outline,
                       title: 'Important',
-                      iconColor: AppColors.primary,
                       isSelected: selectedListId == SpecialListIds.important,
                       onTap: () =>
                           ref.read(selectedTaskListIdProvider.notifier).state =
@@ -69,7 +62,6 @@ class SidebarPanel extends ConsumerWidget {
                     _SidebarItem(
                       icon: Icons.calendar_today_outlined,
                       title: 'Planned',
-                      iconColor: Colors.cyan,
                       isSelected: selectedListId == SpecialListIds.planned,
                       onTap: () =>
                           ref.read(selectedTaskListIdProvider.notifier).state =
@@ -148,7 +140,9 @@ class SidebarPanel extends ConsumerWidget {
                 child: _GlassButton(
                   icon: Icons.settings_outlined,
                   label: 'Settings',
-                  onPressed: () => context.push('/settings'),
+                  onPressed: () {
+                    // Navigate to settings - will be handled by router
+                  },
                 ),
               ),
             ],
@@ -158,7 +152,7 @@ class SidebarPanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
@@ -168,18 +162,25 @@ class SidebarPanel extends ConsumerWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              'assets/images/listd_logo.png',
+            child: Container(
               width: 32,
               height: 32,
-              errorBuilder: (_, _, _) =>
-                  Icon(Icons.check_circle, size: 32, color: AppColors.primary),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryContainer, AppColors.secondary],
+                ),
+              ),
+              child: const Icon(
+                Icons.check_circle_outline,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
           const SizedBox(width: 12),
           Text(
             'Listd',
-            style: TextStyle(
+            style: GoogleFonts.manrope(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -196,28 +197,38 @@ class SidebarPanel extends ConsumerWidget {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('New list'),
+        backgroundColor: AppColors.bgContainerHigh,
+        title: Text(
+          'New list',
+          style: GoogleFonts.manrope(color: AppColors.textPrimary),
+        ),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(hintText: 'List name'),
+          style: GoogleFonts.manrope(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: 'List name',
+            hintStyle: GoogleFonts.manrope(color: AppColors.textHint),
+          ),
           onSubmitted: (value) => Navigator.of(context).pop(value),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.manrope(color: AppColors.textSecondary),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Create'),
+            child: Text('Create', style: GoogleFonts.manrope()),
           ),
         ],
       ),
     );
 
     if (result != null && result.isNotEmpty) {
-      // Create the list via provider
       ref.read(taskListsNotifierProvider.notifier).createTaskList(result);
     }
   }
@@ -234,7 +245,7 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Text(
         title,
-        style: TextStyle(
+        style: GoogleFonts.manrope(
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.textHint,
@@ -249,18 +260,12 @@ class _SidebarItem extends StatelessWidget {
   const _SidebarItem({
     required this.icon,
     required this.title,
-    String? subtitle,
-    Color? iconColor,
-    bool isSelected = false,
+    this.isSelected = false,
     required this.onTap,
-  }) : subtitle = subtitle,
-       iconColor = iconColor,
-       isSelected = isSelected;
+  });
 
   final IconData icon;
   final String title;
-  final String? subtitle;
-  final Color? iconColor;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -268,7 +273,7 @@ class _SidebarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: isSelected
-          ? AppColors.primary.withAlpha(51) // 20% opacity
+          ? AppColors.secondaryContainer.withAlpha(51)
           : Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -276,12 +281,12 @@ class _SidebarItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: iconColor ?? AppColors.textSecondary),
+              Icon(icon, size: 20, color: AppColors.textSecondary),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
-                  style: TextStyle(
+                  style: GoogleFonts.manrope(
                     fontSize: 14,
                     fontWeight: isSelected
                         ? FontWeight.w600
@@ -292,21 +297,6 @@ class _SidebarItem extends StatelessWidget {
                   ),
                 ),
               ),
-              if (subtitle != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(26),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    subtitle!,
-                    style: TextStyle(fontSize: 12, color: AppColors.textHint),
-                  ),
-                ),
             ],
           ),
         ),
@@ -318,7 +308,7 @@ class _SidebarItem extends StatelessWidget {
 class _TaskListItem extends StatelessWidget {
   const _TaskListItem({
     required this.taskList,
-    required this.isSelected,
+    this.isSelected = false,
     required this.onTap,
   });
 
@@ -330,7 +320,7 @@ class _TaskListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: isSelected
-          ? AppColors.primary.withAlpha(51) // 20% opacity
+          ? AppColors.secondaryContainer.withAlpha(77)
           : Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -342,14 +332,14 @@ class _TaskListItem extends StatelessWidget {
                 taskList.isDefault ? Icons.star : Icons.list,
                 size: 20,
                 color: taskList.isDefault
-                    ? AppColors.primary
+                    ? AppColors.primaryLight
                     : AppColors.textSecondary,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   taskList.title,
-                  style: TextStyle(
+                  style: GoogleFonts.manrope(
                     fontSize: 14,
                     fontWeight: isSelected
                         ? FontWeight.w600
@@ -368,35 +358,39 @@ class _TaskListItem extends StatelessWidget {
   }
 }
 
-/// Glass-style button for sidebar actions
 class _GlassButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-
   const _GlassButton({
     required this.icon,
     required this.label,
     required this.onPressed,
   });
 
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withAlpha(15),
+      color: AppColors.glassWhite,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(8),
-        child: Padding(
+        child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.glassBorderSubtle),
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 18, color: AppColors.textSecondary),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Text(
                 label,
-                style: const TextStyle(
+                style: GoogleFonts.manrope(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),

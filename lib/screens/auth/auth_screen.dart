@@ -104,7 +104,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                   const SizedBox(height: 24),
                   Text(
                         'listd',
-                        style: GoogleFonts.spaceGrotesk(
+                        style: GoogleFonts.manrope(
                           fontSize: 40,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -117,7 +117,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                   const SizedBox(height: 8),
                   Text(
                     'Your tasks, beautifully organized',
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.manrope(
                       fontSize: 16,
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w400,
@@ -140,7 +140,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                             const SizedBox(height: 16),
                             Text(
                               'By continuing you agree to our Terms',
-                              style: GoogleFonts.spaceGrotesk(
+                              style: GoogleFonts.manrope(
                                 fontSize: 11,
                                 color: AppColors.textHint,
                               ),

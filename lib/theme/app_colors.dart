@@ -1,45 +1,163 @@
 import 'package:flutter/material.dart';
+import 'gradients.dart';
 
-/// Design system colors for Listd glassmorphism UI
+/// Design system colors for Listd.
+///
+/// Based on the Stitch "Midnight Studio" dark-first design language.
+/// Dark theme uses indigo-tinted charcoal. Light theme uses refined corporate style.
 class AppColors {
   AppColors._();
 
-  // ── Signature brand color ──
-  static const Color primary = Color(0xFF5C6BC0);
-  static const Color primaryLight = Color(0xFF7986CB);
-  static const Color primaryDark = Color(0xFF3949AB);
-  static const Color primaryGlow = Color(0xFF5C6BC0);
+  // ─────────────────────────────────────────────────────────
+  // BRAND COLORS
+  // ─────────────────────────────────────────────────────────
 
-  // ── Backgrounds ──
-  static const Color bgDeep = Color(0xFF07081A);
-  static const Color bgMid = Color(0xFF0E1030);
-  static const Color bgSurface = Color(0xFF131440);
+  /// Primary brand color - Deep Navy (used in light theme)
+  static const Color primary = Color(0xFF1A146B);
 
-  // ── Glass effect ──
-  static const Color glassWhite = Color(0x12FFFFFF); // 7% white
-  static const Color glassBorder = Color(0x40FFFFFF); // 25% white
+  /// Primary accent - Light indigo (used in dark theme)
+  static const Color primaryLight = Color(0xFFC3C0FF);
 
-  // ── Status ──
-  static const Color danger = Color(0xFFEF5350);
-  static const Color success = Color(0xFF66BB6A);
+  /// Primary container - Deep navy container
+  static const Color primaryContainer = Color(0xFF312E81);
+
+  /// On primary container
+  static const Color onPrimaryContainer = Color(0xFF9C9AF4);
+
+  /// Secondary brand color
+  static const Color secondary = Color(0xFF4648D4);
+
+  /// Secondary container
+  static const Color secondaryContainer = Color(0xFF6063EE);
+
+  /// On secondary container
+  static const Color onSecondaryContainer = Color(0xFFFFFBFF);
+
+  // ─────────────────────────────────────────────────────────
+  // DARK THEME (DEFAULT)
+  // ─────────────────────────────────────────────────────────
+
+  /// Dark background - Deep charcoal with indigo undertone
+  static const Color bgDeep = Color(0xFF0B1326);
+
+  /// Dark surface - Slightly elevated from background
+  static const Color bgSurface = Color(0xFF131B2E);
+
+  /// Dark surface container - Higher elevation
+  static const Color bgContainer = Color(0xFF171F33);
+
+  /// Dark surface container high - Highest elevation
+  static const Color bgContainerHigh = Color(0xFF222A3D);
+
+  /// Dark surface container highest - Popovers/modals
+  static const Color bgContainerHighest = Color(0xFF2D3449);
+
+  // ─────────────────────────────────────────────────────────
+  // LIGHT THEME
+  // ─────────────────────────────────────────────────────────
+
+  /// Light background - Crisp white
+  static const Color bgLight = Color(0xFFF7F9FB);
+
+  /// Light surface
+  static const Color bgLightSurface = Color(0xFFF7F9FB);
+
+  /// Light surface container low
+  static const Color bgLightContainerLow = Color(0xFFF2F4F6);
+
+  /// Light surface container
+  static const Color bgLightContainer = Color(0x0ffecef0);
+
+  /// Light surface container high
+  static const Color bgLightContainerHigh = Color(0xFFE6E8EA);
+
+  /// Light surface container highest
+  static const Color bgLightContainerHighest = Color(0xFFE0E3E5);
+
+  // ─────────────────────────────────────────────────────────
+  // GLASS EFFECT
+  // ─────────────────────────────────────────────────────────
+
+  /// Glass fill - White at 7% opacity
+  static const Color glassWhite = Color(0x12FFFFFF);
+
+  /// Glass border - White at 25% opacity
+  static const Color glassBorder = Color(0x40FFFFFF);
+
+  /// Glass border subtle - White at 10% opacity
+  static const Color glassBorderSubtle = Color(0x1AFFFFFF);
+
+  // ─────────────────────────────────────────────────────────
+  // TEXT COLORS
+  // ─────────────────────────────────────────────────────────
+
+  /// Dark text primary - White-smoke for max contrast
+  static const Color textPrimary = Color(0xFFDAE2FD);
+
+  /// Dark text secondary - Muted gray
+  static const Color textSecondary = Color(0xFFC8C5D3);
+
+  /// Dark text hint - Lowest contrast
+  static const Color textHint = Color(0xFF918F9C);
+
+  /// Light text primary - Near black
+  static const Color textPrimaryLight = Color(0xFF191C1E);
+
+  /// Light text secondary - Muted gray
+  static const Color textSecondaryLight = Color(0xFF474651);
+
+  /// Light text hint - Lowest contrast
+  static const Color textHintLight = Color(0xFF777682);
+
+  // ─────────────────────────────────────────────────────────
+  // STATUS COLORS
+  // ─────────────────────────────────────────────────────────
+
+  /// Error color (light)
+  static const Color error = Color(0xFFBA1A1A);
+
+  /// Error color (dark) - Softened for dark mode
+  static const Color errorDark = Color(0xFFFFB4AB);
+
+  /// Error container
+  static const Color errorContainer = Color(0xFF93000A);
+
+  /// Success - Desaturated to match indigo palette
+  static const Color success = Color(0xFF4CAF50);
+
+  /// Success dark mode
+  static const Color successDark = Color(0xFF81C784);
+
+  /// Warning
   static const Color warning = Color(0xFFFFCA28);
 
-  // ── Text ──
-  static const Color textPrimary = Color(0xF2FFFFFF); // 95%
-  static const Color textSecondary = Color(0x8CFFFFFF); // 55%
-  static const Color textHint = Color(0x59FFFFFF); // 35%
+  /// Warning dark mode
+  static const Color warningDark = Color(0xFFFFB688);
 
-  // ── Gradients ──
-  static const LinearGradient primaryGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [primary, primaryLight],
-  );
+  // ─────────────────────────────────────────────────────────
+  // OUTLINE COLORS
+  // ─────────────────────────────────────────────────────────
 
-  static const LinearGradient backgroundGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [bgDeep, bgMid, bgSurface],
-    stops: [0.0, 0.5, 1.0],
-  );
+  /// Outline (light theme)
+  static const Color outline = Color(0xFF777682);
+
+  /// Outline variant (light theme)
+  static const Color outlineVariant = Color(0xFFC8C5D3);
+
+  /// Outline (dark theme)
+  static const Color outlineDark = Color(0xFF918F9C);
+
+  /// Outline variant (dark theme)
+  static const Color outlineVariantDark = Color(0xFF474651);
+
+  // ─────────────────────────────────────────────────────────
+  // GRADIENTS (defined in AppGradients)
+  // ─────────────────────────────────────────────────────────
+
+  // Backward compatibility aliases
+  static const Color danger = error;
+  static const Color bgMid = Color(0xFF0B1326);
+
+  /// Background gradient (dark) - for backward compatibility
+  static const backgroundGradient = AppGradients.backgroundDark;
 }

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/task_lists_provider.dart';
-import '../../theme/app_colors.dart';
-import '../../widgets/sidebar_panel.dart';
+import '../../theme/gradients.dart';
 import '../../widgets/task_list_panel.dart';
+import '../../widgets/sidebar_panel.dart';
 
 /// Home screen with Microsoft To-Do style three-panel layout
 class HomeScreen extends ConsumerStatefulWidget {
@@ -76,7 +76,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     return Container(
-      decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+      decoration: BoxDecoration(gradient: AppGradients.backgroundDark),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Row(

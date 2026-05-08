@@ -37,13 +37,13 @@ class GlassTextField extends StatelessWidget {
       onChanged: onChanged,
       onSubmitted: onSubmitted,
       cursorColor: AppColors.primary,
-      style: GoogleFonts.spaceGrotesk(
+      style: GoogleFonts.manrope(
         color: AppColors.textPrimary,
         fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.spaceGrotesk(
+        hintStyle: GoogleFonts.manrope(
           color: AppColors.textHint,
           fontSize: 14,
         ),
@@ -134,13 +134,13 @@ class _FocusedGlassTextFieldState extends State<FocusedGlassTextField> {
           onChanged: widget.onChanged,
           onSubmitted: widget.onSubmitted,
           cursorColor: AppColors.primary,
-          style: GoogleFonts.spaceGrotesk(
+          style: GoogleFonts.manrope(
             color: AppColors.textPrimary,
             fontSize: 14,
           ),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: GoogleFonts.spaceGrotesk(
+            hintStyle: GoogleFonts.manrope(
               color: AppColors.textHint,
               fontSize: 14,
             ),
