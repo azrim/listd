@@ -87,6 +87,12 @@ class AppColors {
   /// Glass border subtle - White at 10% opacity
   static const Color glassBorderSubtle = Color(0x1AFFFFFF);
 
+  /// Glass fill - Base fill for glass card
+  static const Color glassFill = Color(0x0DFFFFFF); // 5% white
+
+  /// Glass fill light - Slightly brighter for gradient
+  static const Color glassFillLight = Color(0x14FFFFFF); // 8% white
+
   // ─────────────────────────────────────────────────────────
   // TEXT COLORS
   // ─────────────────────────────────────────────────────────
@@ -156,7 +162,18 @@ class AppColors {
 
   // Backward compatibility aliases
   static const Color danger = error;
-  static const Color bgMid = Color(0xFF0B1326);
+
+  /// Glassmorphism primary - for active nav, checkbox glow
+  static const Color glassPrimary = Color(0xFF5C6BC0);
+
+  /// Glassmorphism primary light - for gradient
+  static const Color glassPrimaryLight = Color(0xFF7986CB);
+
+  /// Glass dark mid - for gradient layer 2
+  static const Color bgMid = Color(0xFF0E1030);
+
+  /// Glass dark surface - for gradient layer 3
+  static const Color bgSurfaceDark = Color(0xFF131440);
 
   /// Background gradient (dark) - for backward compatibility
   static const backgroundGradient = AppGradients.backgroundDark;

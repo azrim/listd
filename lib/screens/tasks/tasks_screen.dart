@@ -35,10 +35,19 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background gradient
+          // gradient background
           Container(
             decoration: const BoxDecoration(
-              gradient: AppColors.backgroundGradient,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF060818),
+                  Color(0xFF0D1535),
+                  Color(0xFF162040),
+                ],
+                stops: [0.0, 0.5, 1.0],
+              ),
             ),
           ),
           // Custom glass app bar
@@ -320,7 +329,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         decoration: const BoxDecoration(
-          color: AppColors.bgSurface,
+          color: AppColors.bgSurfaceDark,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: ClipRRect(
@@ -375,9 +384,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       ),
                       child: Text(
                         'Add Task',
-                        style: GoogleFonts.manrope(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: GoogleFonts.manrope(fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),

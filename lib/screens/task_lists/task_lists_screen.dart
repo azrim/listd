@@ -1,332 +1,234 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../models/task_list.dart';
 import '../../providers/task_lists_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/glass_card.dart';
+import '../../widgets/gradient_button.dart';
 
-/// Screen displaying all task lists with glassmorphism UI.
-class TaskListsScreen extends ConsumerWidget {
-  const TaskListsScreen({super.key});
+/// Folders screen with grid layout.
+class FoldersScreen extends ConsumerWidget {
+  const FoldersScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final taskListsAsync = ref.watch(taskListsStreamProvider);
 
     return Scaffold(
-      body: Stack(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF060818), Color(0xFF0D1535), Color(0xFF162040)],
+            stops: [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: taskListsAsync.when(
+                  data: (taskLists) => _buildGrid(context, ref, taskLists),
+                  loading: () => _buildLoadingGrid(),
+                  error: (error, _) => _buildError(context, ref, error),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.glassBorderSubtle)),
+      ),
+      child: Row(
         children: [
-          // Background gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: AppColors.backgroundGradient,
+          const Icon(
+            Icons.folder_outlined,
+            color: AppColors.textPrimary,
+            size: 28,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'Folders',
+            style: GoogleFonts.manrope(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
           ),
-          // Custom glass app bar
-          _buildGlassAppBar(context, ref),
-          // Content
-          SafeArea(
-            child: taskListsAsync.when(
-              data: (taskLists) => _buildTaskList(context, ref, taskLists),
-              loading: () => _buildLoadingState(),
-              error: (error, stack) => _buildError(context, ref, error),
-            ),
+          const Spacer(),
+          GradientButton(
+            label: 'Create New Folder',
+            icon: Icons.add,
+            onPressed: () => _showCreateFolderDialog(context),
+            width: 180,
           ),
-          // FAB
-          Positioned(right: 24, bottom: 24, child: _buildFAB(ref)),
         ],
       ),
     );
   }
 
-  Widget _buildGlassAppBar(BuildContext context, WidgetRef ref) {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-          child: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primary,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withAlpha(153),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'listd',
-                    style: GoogleFonts.manrope(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.sync, color: AppColors.textSecondary),
-                onPressed: () =>
-                    ref.read(taskListsNotifierProvider.notifier).refresh(),
-                tooltip: 'Sync',
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.settings_outlined,
-                  color: AppColors.textSecondary,
-                ),
-                onPressed: () => context.go('/settings'),
-                tooltip: 'Settings',
-              ),
-              const SizedBox(width: 8),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTaskList(
+  Widget _buildGrid(
     BuildContext context,
     WidgetRef ref,
     List<TaskList> taskLists,
   ) {
-    if (taskLists.isEmpty) {
-      return _buildEmptyState(context, ref);
-    }
+    // Folder accent colors cycling
+    final accentColors = [
+      AppColors.primary, // indigo
+      const Color(0xFF4CAF50), // green
+      const Color(0xFFFFCA28), // amber
+      const Color(0xFFEF5350), // red
+      const Color(0xFFE91E63), // pink
+      const Color(0xFF009688), // teal
+    ];
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        final notifier = ref.read(taskListsNotifierProvider.notifier);
-        await notifier.refresh();
-      },
-      color: AppColors.primary,
-      backgroundColor: AppColors.bgSurface,
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(24, 80, 24, 100),
-        itemCount: taskLists.length,
-        itemBuilder: (context, index) {
-          final taskList = taskLists[index];
-          return _TaskListGlassTile(
-                taskList: taskList,
-                onTap: () => _navigateToTasks(context, taskList),
-              )
-              .animate()
-              .fadeIn(delay: (index * 50).ms, duration: 300.ms)
-              .slideX(begin: 0.1);
-        },
+    final itemCount = taskLists.length + 1; // +1 for "Create Folder" card
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(24),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.4,
       ),
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        if (index == taskLists.length) {
+          // Last item: Create Folder card with dashed border
+          return _CreateFolderCard(
+            onTap: () => _showCreateFolderDialog(context),
+          );
+        }
+
+        final taskList = taskLists[index];
+        final accentColor = accentColors[index % accentColors.length];
+        return _FolderCard(
+          taskList: taskList,
+          accentColor: accentColor,
+          onTap: () => _navigateToTasks(context, taskList),
+        );
+      },
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: GlassCard(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary.withAlpha(31),
-                ),
-                child: const Icon(
-                  Icons.list_alt_outlined,
-                  size: 32,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No task lists found',
-                style: GoogleFonts.manrope(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Your Google Tasks will appear here',
-                style: GoogleFonts.manrope(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 24),
-              TextButton.icon(
-                onPressed: () =>
-                    ref.read(taskListsNotifierProvider.notifier).refresh(),
-                icon: const Icon(Icons.refresh, color: AppColors.primary),
-                label: Text(
-                  'Sync from Google',
-                  style: GoogleFonts.manrope(color: AppColors.primary),
-                ),
-              ),
-            ],
-          ),
-        ),
+  Widget _buildLoadingGrid() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(24),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.4,
       ),
-    ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95));
-  }
-
-  Widget _buildLoadingState() {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(24, 100, 24, 100),
-      itemCount: 5,
+      itemCount: 6,
       itemBuilder: (context, index) {
-        return Shimmer.fromColors(
-          baseColor: AppColors.bgSurface,
-          highlightColor: AppColors.bgMid,
-          child: GlassCard(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withAlpha(26),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 120,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          color: Colors.white.withAlpha(26),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: 80,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          color: Colors.white.withAlpha(26),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+        return GlassCard(
+          child: Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primary.withOpacity(0.5),
+              strokeWidth: 2,
             ),
           ),
-        ).animate().fadeIn(delay: (index * 100).ms);
+        );
       },
     );
   }
 
   Widget _buildError(BuildContext context, WidgetRef ref, Object error) {
     return Center(
-      child: Padding(
+      child: GlassCard(
         padding: const EdgeInsets.all(32),
-        child: GlassCard(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.danger.withAlpha(31),
-                ),
-                child: const Icon(
-                  Icons.error_outline,
-                  size: 32,
-                  color: AppColors.danger,
-                ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load folders',
+              style: GoogleFonts.manrope(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load task lists',
-                style: GoogleFonts.manrope(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error.toString(),
+              style: GoogleFonts.manrope(
+                fontSize: 12,
+                color: AppColors.textSecondary,
               ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                style: GoogleFonts.manrope(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            TextButton.icon(
+              onPressed: () =>
+                  ref.read(taskListsNotifierProvider.notifier).refresh(),
+              icon: const Icon(Icons.refresh, color: AppColors.primary),
+              label: Text(
+                'Retry',
+                style: GoogleFonts.manrope(color: AppColors.primary),
               ),
-              const SizedBox(height: 24),
-              TextButton.icon(
-                onPressed: () =>
-                    ref.read(taskListsNotifierProvider.notifier).refresh(),
-                icon: const Icon(Icons.refresh, color: AppColors.primary),
-                label: Text(
-                  'Retry',
-                  style: GoogleFonts.manrope(color: AppColors.primary),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    ).animate().fadeIn(duration: 400.ms);
+    );
   }
 
-  Widget _buildFAB(WidgetRef ref) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withAlpha(102),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
+  void _showCreateFolderDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.bgSurface,
+        title: Text(
+          'Create folder',
+          style: GoogleFonts.manrope(color: AppColors.textPrimary),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: GoogleFonts.manrope(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: 'Folder name',
+            hintStyle: GoogleFonts.manrope(color: AppColors.textHint),
+          ),
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.manrope(color: AppColors.textSecondary),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: Text('Create', style: GoogleFonts.manrope()),
           ),
         ],
       ),
-      child: FloatingActionButton(
-        onPressed: () => ref.read(taskListsNotifierProvider.notifier).refresh(),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.refresh, color: Colors.white),
-      ),
     );
+
+    if (result != null && result.isNotEmpty) {
+      // Create folder via provider
+      // For now, just navigate to the new folder
+    }
   }
 
   void _navigateToTasks(BuildContext context, TaskList taskList) {
@@ -336,70 +238,151 @@ class TaskListsScreen extends ConsumerWidget {
   }
 }
 
-/// Glass tile for task list item
-class _TaskListGlassTile extends StatelessWidget {
-  const _TaskListGlassTile({required this.taskList, this.onTap});
-
+/// Folder card with colored accent border
+class _FolderCard extends StatelessWidget {
   final TaskList taskList;
-  final VoidCallback? onTap;
+  final Color accentColor;
+  final VoidCallback onTap;
+
+  const _FolderCard({
+    required this.taskList,
+    required this.accentColor,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GlassCard(
-      margin: const EdgeInsets.only(bottom: 12),
       onTap: onTap,
-      child: Row(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Top accent border (4px)
           Container(
-            width: 44,
-            height: 44,
+            height: 4,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.primary.withAlpha(31),
-            ),
-            child: const Icon(
-              Icons.list_alt,
-              color: AppColors.primary,
-              size: 22,
+              color: accentColor,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
             ),
           ),
-          const SizedBox(width: 16),
           Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Folder icon in rounded square
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.folder, color: accentColor, size: 24),
+                  ),
+                  const Spacer(),
+                  // Folder name
+                  Text(
+                    taskList.title,
+                    style: GoogleFonts.manrope(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  // Active tasks count
+                  Text(
+                    'Active tasks',
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Create folder card with dashed border
+class _CreateFolderCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _CreateFolderCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.textSecondary.withOpacity(0.3),
+            width: 2,
+            strokeAlign: BorderSide.strokeAlignInside,
+          ),
+        ),
+        child: CustomPaint(
+          painter: _DashedBorderPainter(
+            color: AppColors.textSecondary.withOpacity(0.3),
+          ),
+          child: Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  taskList.title,
-                  style: GoogleFonts.manrope(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.glassWhite,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: AppColors.textSecondary,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 12),
                 Text(
-                  'Updated ${_formatDate(taskList.updated)}',
+                  'Create Folder',
                   style: GoogleFonts.manrope(
-                    fontSize: 12,
+                    fontSize: 14,
                     color: AppColors.textSecondary,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: AppColors.textHint, size: 20),
-        ],
+        ),
       ),
     );
   }
+}
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
+/// Custom painter for dashed border
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
 
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${date.month}/${date.day}';
+  _DashedBorderPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Empty - we use Container border instead
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

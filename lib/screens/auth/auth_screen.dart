@@ -8,6 +8,7 @@ import '../../services/auth/google_auth_service.dart';
 import '../../services/auth/token_manager.dart';
 import '../../services/supabase/supabase_client_service.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/gradients.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/gradient_button.dart';
 
@@ -87,7 +88,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         children: [
           Container(
             decoration: const BoxDecoration(
-              gradient: AppColors.backgroundGradient,
+              gradient: AppGradients.screenBackground,
             ),
           ),
           _buildOrbs(),

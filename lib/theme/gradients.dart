@@ -32,6 +32,20 @@ class AppGradients {
     stops: [0.0, 0.5, 1.0],
   );
 
+  /// Screen gradient - deep to mid to surface for each screen
+  static const LinearGradient screenBackground = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF07081A), Color(0xFF0E1030), Color(0xFF131440)],
+  );
+
+  /// Sidebar active gradient - used for active nav item
+  static const LinearGradient navActiveGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF5C6BC0), Color(0xFF7986CB)],
+  );
+
   /// Background gradient light
   static const LinearGradient backgroundLight = LinearGradient(
     begin: Alignment.topCenter,

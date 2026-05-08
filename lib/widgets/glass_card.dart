@@ -1,56 +1,74 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
-/// A glassmorphism-styled card widget with blur effect and gradient border.
+/// Glass-styled card that works on Linux desktop.
+///
+/// Uses layered gradient + border to simulate glass without BackdropFilter
+/// (which is not supported on Linux Flutter).
 class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
-    this.child,
+    required this.child,
     this.padding,
     this.margin,
-    this.borderRadius = 16,
-    this.glassOpacity = 0.15,
-    this.glassBlur = 15,
+    this.borderRadius = 12,
+    this.glowColor,
+    this.width,
     this.onTap,
   });
 
-  final Widget? child;
+  final Widget child;
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
   final double borderRadius;
-  final double glassOpacity;
-  final double glassBlur;
+  final Color? glowColor;
+  final double? width;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final color = glowColor ?? AppColors.primary;
     return Container(
+      width: width,
       margin: margin,
-      child: ClipRRect(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: glassBlur, sigmaY: glassBlur),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(borderRadius),
-              child: Container(
-                padding: padding ?? const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.bgContainer.withAlpha(
-                    (glassOpacity * 255).round(),
-                  ),
-                  borderRadius: BorderRadius.circular(borderRadius),
-                  border: Border.all(
-                    color: AppColors.glassBorderSubtle,
-                    width: 1,
-                  ),
+        color: const Color(0xFF1A2040),
+        border: Border.all(color: color.withOpacity(0.22), width: 1),
+        boxShadow: glowColor != null
+            ? [
+                BoxShadow(
+                  color: color.withOpacity(0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
                 ),
-                child: child,
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.35),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(borderRadius),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.07),
+                  Colors.white.withOpacity(0.02),
+                ],
               ),
             ),
+            child: child,
           ),
         ),
       ),
@@ -58,20 +76,18 @@ class GlassCard extends StatelessWidget {
   }
 }
 
-/// A glassmorphism-styled container with a gradient border effect.
+/// A glass-styled container with gradient border effect.
 class GlassContainer extends StatelessWidget {
   const GlassContainer({
     super.key,
     required this.child,
     this.padding,
     this.borderRadius = 16,
-    this.glassOpacity = 0.1,
   });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final double borderRadius;
-  final double glassOpacity;
 
   @override
   Widget build(BuildContext context) {
@@ -82,15 +98,12 @@ class GlassContainer extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withValues(alpha: 0.15),
-            Colors.white.withValues(alpha: 0.05),
+            Colors.white.withOpacity(0.15),
+            Colors.white.withOpacity(0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
       child: child,
     );
@@ -112,23 +125,14 @@ class GlassChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.15),
-              width: 1,
-            ),
-          ),
-          child: child,
-        ),
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: Colors.white.withOpacity(0.15), width: 1),
       ),
+      child: child,
     );
   }
 }

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,16 +5,19 @@ import '../models/task.dart';
 import '../providers/tasks_provider.dart';
 import '../providers/ui_state_providers.dart';
 import '../theme/app_colors.dart';
+import 'glass_card.dart';
 
-/// Main task list panel showing tasks in a selected list - glassmorphism style
+/// Main task list panel - 3-column layout middle column
 class TaskListPanel extends ConsumerWidget {
   final String listId;
   final String listName;
+  final Function(Task)? onTaskSelected;
 
   const TaskListPanel({
     super.key,
     required this.listId,
     required this.listName,
+    this.onTaskSelected,
   });
 
   @override
@@ -26,9 +27,13 @@ class TaskListPanel extends ConsumerWidget {
 
     return Column(
       children: [
-        // Header with glass effect
+        // Header
         _buildHeader(context, ref),
-        // Task list with pull-to-refresh
+        // Stats strip
+        _StatsStrip(tasksAsync: tasksAsync),
+        // Add task input at TOP
+        _AddTaskInput(listId: listId),
+        // Task list
         Expanded(
           child: tasksAsync.when(
             data: (tasks) => _buildContent(context, ref, tasks, selectedTaskId),
@@ -36,47 +41,39 @@ class TaskListPanel extends ConsumerWidget {
             error: (e, _) => _buildError(context, ref, e),
           ),
         ),
-        // Add task input (always visible at bottom)
-        _AddTaskInput(listId: listId),
       ],
     );
   }
 
   Widget _buildHeader(BuildContext context, WidgetRef ref) {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppColors.bgSurface.withAlpha(128), // 50% opacity
-            border: const Border(
-              bottom: BorderSide(color: Colors.white10, width: 1),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppColors.glassBorderSubtle, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              listName,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  listName,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh, size: 20),
-                color: AppColors.textSecondary,
-                onPressed: () => ref
-                    .read(tasksNotifierProvider(listId).notifier)
-                    .syncFromRemote(),
-                tooltip: 'Refresh',
-              ),
-            ],
+          IconButton(
+            icon: const Icon(Icons.refresh, size: 20),
+            color: AppColors.textSecondary,
+            onPressed: () => ref
+                .read(tasksNotifierProvider(listId).notifier)
+                .syncFromRemote(),
+            tooltip: 'Refresh',
           ),
-        ),
+        ],
       ),
     );
   }
@@ -107,8 +104,10 @@ class TaskListPanel extends ConsumerWidget {
             child: _TaskRow(
               task: task,
               isSelected: selectedTaskId == task.id,
-              onTap: () =>
-                  ref.read(selectedTaskIdProvider.notifier).state = task.id,
+              onTap: () {
+                ref.read(selectedTaskIdProvider.notifier).state = task.id;
+                onTaskSelected?.call(task);
+              },
               onToggle: () => ref
                   .read(tasksNotifierProvider(listId).notifier)
                   .toggleComplete(task),
@@ -183,19 +182,19 @@ class TaskListPanel extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.task_alt, size: 64, color: AppColors.textHint),
-          const SizedBox(height: 16),
-          const Text(
+          Icon(Icons.task_alt, size: 64, color: AppColors.textHint),
+          SizedBox(height: 16),
+          Text(
             'No tasks yet',
             style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Add a task below',
+          SizedBox(height: 8),
+          Text(
+            'Add a task above',
             style: TextStyle(fontSize: 14, color: AppColors.textHint),
           ),
         ],
@@ -204,106 +203,221 @@ class TaskListPanel extends ConsumerWidget {
   }
 }
 
-/// Glassmorphism task row widget
-class _TaskRow extends StatelessWidget {
-  const _TaskRow({
-    required this.task,
-    required this.isSelected,
-    this.onTap,
-    this.onToggle,
-    this.onDelete,
+/// Stats strip showing task counts - glass card row
+class _StatsStrip extends StatelessWidget {
+  const _StatsStrip({required this.tasksAsync});
+
+  final AsyncValue<List<Task>> tasksAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    return tasksAsync.when(
+      data: (tasks) {
+        final total = tasks.where((t) => t.parentId == null).length;
+        final completed = tasks.where((t) => t.isCompleted && t.parentId == null).length;
+        final today = tasks.where((t) {
+          if (t.due == null || t.parentId != null) return false;
+          final today = DateTime.now();
+          return t.due!.year == today.year &&
+              t.due!.month == today.month &&
+              t.due!.day == today.day;
+        }).length;
+
+        if (total == 0) return const SizedBox.shrink();
+
+        return GlassCard(
+          margin: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _StatItem(
+                label: 'Tasks',
+                value: '$total',
+                icon: Icons.check_circle_outline,
+              ),
+              _StatItem(
+                label: 'Completed',
+                value: '$completed',
+                icon: Icons.check_circle,
+              ),
+              if (today > 0)
+                _StatItem(
+                  label: 'Due Today',
+                  value: '$today',
+                  icon: Icons.today,
+                  highlight: true,
+                ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.highlight = false,
   });
 
+  final String label;
+  final String value;
+  final IconData icon;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = highlight ? AppColors.primary : AppColors.textSecondary;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 6),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textHint,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Single task row with GlassCard styling
+class _TaskRow extends StatelessWidget {
   final Task task;
   final bool isSelected;
   final VoidCallback? onTap;
   final VoidCallback? onToggle;
   final VoidCallback? onDelete;
 
+  const _TaskRow({
+    required this.task,
+    this.isSelected = false,
+    this.onTap,
+    this.onToggle,
+    this.onDelete,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Dismissible(
-      key: Key(task.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
-        decoration: BoxDecoration(
-          color: AppColors.danger.withAlpha(179),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      confirmDismiss: (direction) async {
-        onDelete?.call();
-        return false;
-      },
-      child: Material(
-        color: isSelected
-            ? AppColors.primary.withAlpha(51) // 20% opacity
-            : Colors.white.withAlpha(13), // 5% opacity
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+    return GlassCard(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.all(12),
+      glowColor: isSelected ? AppColors.primary : null,
+      child: Row(
+        children: [
+          // Checkbox
+          GestureDetector(
+            onTap: onToggle,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: task.isCompleted
+                    ? AppColors.primary
+                    : Colors.transparent,
+                border: Border.all(
+                  color: task.isCompleted ? AppColors.primary : Colors.white38,
+                  width: 2,
+                ),
+              ),
+              child: task.isCompleted
+                  ? const Icon(Icons.check, size: 13, color: Colors.white)
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Task content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                InkWell(
-                  onTap: onToggle,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: task.isCompleted
-                            ? AppColors.primary
-                            : AppColors.textHint,
-                        width: 2,
-                      ),
-                      color: task.isCompleted
-                          ? AppColors.primary
-                          : Colors.transparent,
-                    ),
-                    child: task.isCompleted
-                        ? const Icon(Icons.check, size: 16, color: Colors.white)
+                Text(
+                  task.title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: task.isCompleted
+                        ? AppColors.textHint
+                        : AppColors.textPrimary,
+                    decoration: task.isCompleted
+                        ? TextDecoration.lineThrough
                         : null,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    task.title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      decoration: task.isCompleted
-                          ? TextDecoration.lineThrough
-                          : null,
-                      color: task.isCompleted
-                          ? AppColors.textHint
-                          : AppColors.textPrimary,
+                if (task.notes.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    task.notes,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                if (task.isStarred)
-                  const Icon(Icons.star, size: 20, color: Colors.amber),
+                ],
               ],
             ),
           ),
-        ),
+          // Due date
+          if (task.due != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                _formatDate(task.due!),
+                style: const TextStyle(fontSize: 11, color: AppColors.primary),
+              ),
+            ),
+          // Star
+          if (task.isStarred) ...[
+            const SizedBox(width: 8),
+            const Icon(Icons.star, size: 18, color: Colors.amber),
+          ],
+        ],
       ),
     );
   }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = date.difference(DateTime(now.year, now.month, now.day)).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Tomorrow';
+    if (diff == -1) return 'Yesterday';
+    if (diff > 0 && diff < 7) return 'In $diff days';
+    return '${date.month}/${date.day}';
+  }
 }
 
-/// Add task input widget - always visible at bottom with glass effect
+/// Add task input at TOP of list - GlassCard row
 class _AddTaskInput extends ConsumerStatefulWidget {
-  const _AddTaskInput({required this.listId});
-
   final String listId;
+
+  const _AddTaskInput({required this.listId});
 
   @override
   ConsumerState<_AddTaskInput> createState() => _AddTaskInputState();
@@ -311,13 +425,11 @@ class _AddTaskInput extends ConsumerStatefulWidget {
 
 class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
   final _controller = TextEditingController();
-  final _focusNode = FocusNode();
   bool _isLoading = false;
 
   @override
   void dispose() {
     _controller.dispose();
-    _focusNode.dispose();
     super.dispose();
   }
 
@@ -326,31 +438,17 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
     if (title.isEmpty || _isLoading) return;
 
     setState(() => _isLoading = true);
-
     try {
       final newTask = Task(
         id: '',
         title: title,
-        status: 'needsAction',
         updated: DateTime.now(),
         taskListId: widget.listId,
       );
-
       await ref
           .read(tasksNotifierProvider(widget.listId).notifier)
           .createTask(newTask);
-
       _controller.clear();
-      _focusNode.requestFocus();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed: $e'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -358,55 +456,49 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.bgSurface.withAlpha(179), // 70% opacity
-            border: const Border(
-              top: BorderSide(color: Colors.white10, width: 1),
-            ),
-          ),
-          child: Row(
-            children: [
-              _isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Padding(
-                        padding: EdgeInsets.all(4),
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    )
-                  : IconButton(
-                      icon: const Icon(Icons.add_circle_outline, size: 24),
-                      color: AppColors.textSecondary,
-                      onPressed: _addTask,
-                    ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  style: const TextStyle(color: AppColors.textPrimary),
-                  decoration: InputDecoration(
-                    hintText: 'Add a task',
-                    hintStyle: TextStyle(color: AppColors.textHint),
-                    border: InputBorder.none,
-                    isDense: true,
-                  ),
-                  onSubmitted: (_) => _addTask(),
-                  enabled: !_isLoading,
+    return GlassCard(
+      margin: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          if (_isLoading)
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: Padding(
+                padding: EdgeInsets.all(4),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
                 ),
               ),
-            ],
+            )
+          else
+            GestureDetector(
+              onTap: _addTask,
+              child: const Icon(
+                Icons.add,
+                size: 24,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              style: const TextStyle(color: AppColors.textPrimary),
+              decoration: const InputDecoration(
+                hintText: 'Add a task...',
+                hintStyle: TextStyle(color: AppColors.textHint),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onSubmitted: (_) => _addTask(),
+              enabled: !_isLoading,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

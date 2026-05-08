@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../models/task.dart';
 import '../theme/app_colors.dart';
+import 'glass_card.dart';
 
 /// Glassmorphism tile widget for displaying a task with checkbox and actions.
 class TaskTile extends StatelessWidget {
@@ -37,71 +37,93 @@ class TaskTile extends StatelessWidget {
         onDelete?.call();
         return false;
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: AppColors.glassWhite,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.glassBorder.withAlpha(64),
-            width: 1,
-          ),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(20),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  // Animated checkbox
-                  _AnimatedCheckbox(
-                    isCompleted: task.isCompleted,
-                    onTap: onToggle,
+      child: GlassCard(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            // Checkbox
+            GestureDetector(
+              onTap: () => onToggle?.call(),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: task.isCompleted
+                      ? AppColors.primary
+                      : Colors.transparent,
+                  border: Border.all(
+                    color: task.isCompleted
+                        ? AppColors.primary
+                        : Colors.white38,
+                    width: 2,
                   ),
-                  const SizedBox(width: 14),
-                  // Task content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title
-                        Text(
-                          task.title,
-                          style: GoogleFonts.manrope(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: task.isCompleted
-                                ? AppColors.textHint
-                                : AppColors.textPrimary,
-                            decoration: task.isCompleted
-                                ? TextDecoration.lineThrough
-                                : null,
+                  boxShadow: task.isCompleted
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.5),
+                            blurRadius: 10,
                           ),
-                        ),
-                        // Metadata chips (only show if any exist)
-                        if (task.hasDueDate ||
-                            task.hasRepeat ||
-                            task.hasReminder ||
-                            task.tags.isNotEmpty ||
-                            task.hasNotes ||
-                            task.steps.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          _MetadataChips(task: task),
-                        ],
-                      ],
+                        ]
+                      : [],
+                ),
+                child: task.isCompleted
+                    ? const Icon(Icons.check, size: 13, color: Colors.white)
+                    : null,
+              ),
+            ),
+            const SizedBox(width: 14),
+            // Task content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    style: TextStyle(
+                      color: task.isCompleted
+                          ? Colors.white.withOpacity(0.38)
+                          : Colors.white.withOpacity(0.92),
+                      decoration: task.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
+                      fontSize: 15,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Star icon
-                  if (task.isStarred)
-                    const Icon(Icons.star, size: 20, color: Colors.amber),
+                  // Notes preview if exists
+                  if (task.hasNotes) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      task.notes,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  // Metadata chips
+                  if (task.hasDueDate ||
+                      task.hasRepeat ||
+                      task.hasReminder ||
+                      task.tags.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    _MetadataChips(task: task),
+                  ],
                 ],
               ),
             ),
-          ),
+            // Due date chip
+            if (task.hasDueDate) _DueDateChip(dueDate: task.due!),
+            // Star icon
+            if (task.isStarred) ...[
+              const SizedBox(width: 8),
+              const Icon(Icons.star, size: 20, color: Colors.amber),
+            ],
+          ],
         ),
       ),
     );
@@ -118,127 +140,12 @@ class _MetadataChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final chips = <Widget>[];
 
-    // Due date chip
-    if (task.hasDueDate) {
-      chips.add(_DueDateChip(dueDate: task.due!));
-    }
-
-    // Repeat chip
-    if (task.hasRepeat) {
-      chips.add(_RepeatChip(repeat: task.repeat!));
-    }
-
-    // Reminder chip
-    if (task.hasReminder) {
-      chips.add(_ReminderChip(reminder: task.reminder!));
-    }
-
-    // Tags chip (first tag + count if more)
-    if (task.tags.isNotEmpty) {
-      chips.add(_TagsChip(tags: task.tags));
-    }
-
-    // Notes indicator
-    if (task.hasNotes) {
-      chips.add(_NotesIndicator());
-    }
-
-    // Steps progress
-    if (task.steps.isNotEmpty) {
-      chips.add(_StepsProgress(steps: task.steps));
-    }
+    if (task.hasDueDate) chips.add(_DueDateChip(dueDate: task.due!));
+    if (task.hasRepeat) chips.add(_RepeatChip(repeat: task.repeat!));
+    if (task.hasReminder) chips.add(_ReminderChip(reminder: task.reminder!));
+    if (task.tags.isNotEmpty) chips.add(_TagsChip(tags: task.tags));
 
     return Wrap(spacing: 6, runSpacing: 4, children: chips);
-  }
-}
-
-/// Animated circular checkbox.
-class _AnimatedCheckbox extends StatefulWidget {
-  const _AnimatedCheckbox({required this.isCompleted, this.onTap});
-
-  final bool isCompleted;
-  final VoidCallback? onTap;
-
-  @override
-  State<_AnimatedCheckbox> createState() => _AnimatedCheckboxState();
-}
-
-class _AnimatedCheckboxState extends State<_AnimatedCheckbox>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 280),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.2,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(_AnimatedCheckbox oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isCompleted != oldWidget.isCompleted) {
-      if (widget.isCompleted) {
-        _controller.forward().then((_) => _controller.reverse());
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 280),
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: widget.isCompleted
-                    ? AppColors.primary
-                    : Colors.transparent,
-                border: Border.all(
-                  color: widget.isCompleted
-                      ? AppColors.primary
-                      : AppColors.textHint,
-                  width: 2,
-                ),
-                boxShadow: widget.isCompleted
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withAlpha(140),
-                          blurRadius: 14,
-                          spreadRadius: 2,
-                        ),
-                      ]
-                    : [],
-              ),
-              child: widget.isCompleted
-                  ? const Icon(Icons.check, size: 14, color: Colors.white)
-                  : null,
-            ),
-          );
-        },
-      ),
-    );
   }
 }
 
@@ -282,7 +189,7 @@ class _DueDateChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             _formatDate(dueDate),
-            style: GoogleFonts.manrope(
+            style: TextStyle(
               fontSize: 11,
               color: textColor,
               fontWeight: isToday ? FontWeight.w600 : FontWeight.w400,
@@ -329,10 +236,7 @@ class _RepeatChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             _formatRepeat(repeat),
-            style: GoogleFonts.manrope(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -369,6 +273,22 @@ class _ReminderChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final diff = reminder.difference(now);
+
+    String label;
+    if (diff.isNegative) {
+      label = 'Overdue';
+    } else if (diff.inMinutes < 60) {
+      label = '${diff.inMinutes}m';
+    } else if (diff.inHours < 24) {
+      label = '${diff.inHours}h';
+    } else if (diff.inDays < 7) {
+      label = '${diff.inDays}d';
+    } else {
+      label = '${reminder.month}/${reminder.day}';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -380,27 +300,10 @@ class _ReminderChip extends StatelessWidget {
         children: [
           Icon(Icons.notifications, size: 12, color: AppColors.primary),
           const SizedBox(width: 4),
-          Text(
-            _formatReminder(reminder),
-            style: GoogleFonts.manrope(
-              fontSize: 11,
-              color: AppColors.primary,
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 11, color: AppColors.primary)),
         ],
       ),
     );
-  }
-
-  String _formatReminder(DateTime reminder) {
-    final now = DateTime.now();
-    final diff = reminder.difference(now);
-
-    if (diff.isNegative) return 'Overdue';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    if (diff.inDays < 7) return '${diff.inDays}d';
-    return '${reminder.month}/${reminder.day}';
   }
 }
 
@@ -428,65 +331,7 @@ class _TagsChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             remainingCount > 0 ? '$displayTag +$remainingCount' : displayTag,
-            style: GoogleFonts.manrope(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Notes indicator dot.
-class _NotesIndicator extends StatelessWidget {
-  const _NotesIndicator();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.primary,
-      ),
-    );
-  }
-}
-
-/// Steps progress indicator.
-class _StepsProgress extends StatelessWidget {
-  const _StepsProgress({required this.steps});
-
-  final List<TaskStep> steps;
-
-  @override
-  Widget build(BuildContext context) {
-    final completed = steps.where((s) => s.isCompleted).length;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.glassWhite,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.check_box_outlined,
-            size: 12,
-            color: AppColors.textSecondary,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '$completed/${steps.length} steps',
-            style: GoogleFonts.manrope(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
           ),
         ],
       ),

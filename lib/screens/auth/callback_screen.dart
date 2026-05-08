@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/auth/token_manager.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/gradients.dart';
 
 /// OAuth callback handler screen with glassmorphism loading animation.
 ///
@@ -79,7 +80,7 @@ class _CallbackScreenState extends ConsumerState<CallbackScreen>
           // Background gradient
           Container(
             decoration: const BoxDecoration(
-              gradient: AppColors.backgroundGradient,
+              gradient: AppGradients.screenBackground,
             ),
           ),
           // Loading content
