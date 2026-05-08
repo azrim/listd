@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../theme/app_colors.dart';
 
-/// A glass-styled text field with glow effect on focus
+/// Theme-aware text field with focus glow effect.
 class GlassTextField extends StatelessWidget {
   const GlassTextField({
     super.key,
@@ -29,6 +28,7 @@ class GlassTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return TextField(
       controller: controller,
       obscureText: obscureText,
@@ -36,35 +36,36 @@ class GlassTextField extends StatelessWidget {
       autofocus: autofocus,
       onChanged: onChanged,
       onSubmitted: onSubmitted,
-      cursorColor: AppColors.primary,
-      style: GoogleFonts.manrope(color: AppColors.textPrimary, fontSize: 14),
+      cursorColor: scheme.primary,
+      style: GoogleFonts.manrope(color: scheme.onSurface, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.manrope(color: AppColors.textHint, fontSize: 14),
+        hintStyle: GoogleFonts.manrope(
+          color: scheme.onSurfaceVariant,
+          fontSize: 14,
+        ),
         prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20)
+            ? Icon(prefixIcon, color: scheme.onSurfaceVariant, size: 20)
             : null,
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: Colors.white.withAlpha(15), // 6% white
+        fillColor: scheme.surfaceContainer,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withAlpha(31)),
+          borderSide: BorderSide(color: scheme.outlineVariant),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withAlpha(31)),
+          borderSide: BorderSide(color: scheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: scheme.primary, width: 2),
         ),
-        enabled: true,
-        // Focus overlay for glow effect
       ),
     );
   }
@@ -104,6 +105,7 @@ class _FocusedGlassTextFieldState extends State<FocusedGlassTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
@@ -111,7 +113,7 @@ class _FocusedGlassTextFieldState extends State<FocusedGlassTextField> {
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withAlpha(51),
+                  color: scheme.primary.withAlpha(48),
                   blurRadius: 10,
                   spreadRadius: 0,
                 ),
@@ -127,27 +129,26 @@ class _FocusedGlassTextFieldState extends State<FocusedGlassTextField> {
           autofocus: widget.autofocus,
           onChanged: widget.onChanged,
           onSubmitted: widget.onSubmitted,
-          cursorColor: AppColors.primary,
-          style: GoogleFonts.manrope(
-            color: AppColors.textPrimary,
-            fontSize: 14,
-          ),
+          cursorColor: scheme.primary,
+          style: GoogleFonts.manrope(color: scheme.onSurface, fontSize: 14),
           decoration: InputDecoration(
             hintText: widget.hint,
             hintStyle: GoogleFonts.manrope(
-              color: AppColors.textHint,
+              color: scheme.onSurfaceVariant,
               fontSize: 14,
             ),
             prefixIcon: widget.prefixIcon != null
                 ? Icon(
                     widget.prefixIcon,
-                    color: AppColors.textSecondary,
+                    color: scheme.onSurfaceVariant,
                     size: 20,
                   )
                 : null,
             suffixIcon: widget.suffixIcon,
             filled: true,
-            fillColor: Colors.white.withAlpha(_isFocused ? 25 : 15),
+            fillColor: _isFocused
+                ? scheme.surfaceContainerHigh
+                : scheme.surfaceContainer,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
@@ -155,19 +156,17 @@ class _FocusedGlassTextFieldState extends State<FocusedGlassTextField> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: _isFocused
-                    ? AppColors.primary
-                    : Colors.white.withAlpha(31),
+                color: _isFocused ? scheme.primary : scheme.outlineVariant,
                 width: _isFocused ? 2 : 1,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.white.withAlpha(31)),
+              borderSide: BorderSide(color: scheme.outlineVariant),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              borderSide: BorderSide(color: scheme.primary, width: 2),
             ),
           ),
         ),
