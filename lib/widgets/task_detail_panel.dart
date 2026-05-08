@@ -30,9 +30,16 @@ class TaskDetailPanel extends ConsumerStatefulWidget {
 }
 
 class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
+  /// Debounce for typed-in fields. Click-driven mutations (checkbox, star,
+  /// pickers) intentionally write through immediately — only keystrokes pay
+  /// the cost of waiting.
+  static const Duration _titleDebounce = Duration(milliseconds: 300);
+  static const Duration _notesDebounce = Duration(milliseconds: 600);
+
   late TextEditingController _titleController;
   late TextEditingController _notesController;
-  Timer? _notesDebounce;
+  Timer? _titleTimer;
+  Timer? _notesTimer;
 
   @override
   void initState() {
@@ -45,14 +52,33 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   void didUpdateWidget(TaskDetailPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.task.id != widget.task.id) {
+      // User selected a different task — flush any pending edits on the old
+      // one before swapping controller contents.
+      _flushTitle(oldWidget.task);
+      _flushNotes(oldWidget.task);
       _titleController.text = widget.task.title;
+      _notesController.text = widget.task.notes;
+      return;
+    }
+    // Same task, fresh data from the stream. Only sync the controller when the
+    // user isn't actively editing (text differs from both old AND new), to
+    // avoid clobbering an in-flight typing session.
+    if (oldWidget.task.title != widget.task.title &&
+        _titleController.text == oldWidget.task.title) {
+      _titleController.text = widget.task.title;
+    }
+    if (oldWidget.task.notes != widget.task.notes &&
+        _notesController.text == oldWidget.task.notes) {
       _notesController.text = widget.task.notes;
     }
   }
 
   @override
   void dispose() {
-    _notesDebounce?.cancel();
+    _flushTitle(widget.task);
+    _flushNotes(widget.task);
+    _titleTimer?.cancel();
+    _notesTimer?.cancel();
     _titleController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -78,14 +104,27 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 
   void _onTitleChanged(String value) {
-    _updateTask(widget.task.copyWith(title: value));
+    _titleTimer?.cancel();
+    _titleTimer = Timer(_titleDebounce, () => _flushTitle(widget.task));
   }
 
   void _onNotesChanged(String value) {
-    _notesDebounce?.cancel();
-    _notesDebounce = Timer(const Duration(milliseconds: 800), () {
-      _updateTask(widget.task.copyWith(notes: value));
-    });
+    _notesTimer?.cancel();
+    _notesTimer = Timer(_notesDebounce, () => _flushNotes(widget.task));
+  }
+
+  void _flushTitle(Task target) {
+    _titleTimer?.cancel();
+    final text = _titleController.text;
+    if (text == target.title) return;
+    _updateTask(target.copyWith(title: text));
+  }
+
+  void _flushNotes(Task target) {
+    _notesTimer?.cancel();
+    final text = _notesController.text;
+    if (text == target.notes) return;
+    _updateTask(target.copyWith(notes: text));
   }
 
   @override
