@@ -282,26 +282,10 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text('STEPS', style: _captionStyle(scheme)),
-            if (steps.isNotEmpty) ...[
-              const SizedBox(width: 8),
-              Text(
-                '$completedCount of ${steps.length}',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  height: 16 / 11,
-                  fontWeight: FontWeight.w400,
-                  color: scheme.onSurfaceVariant,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ],
-          ],
+        _SectionHeader(
+          label: 'STEPS',
+          trailing: steps.isEmpty ? null : '$completedCount of ${steps.length}',
         ),
-        const SizedBox(height: 8),
-        // Steps list
         ...steps.map(
           (step) => _StepItem(
             step: step,
@@ -316,27 +300,10 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
             },
           ),
         ),
-        InkWell(
-          onTap: () => _showAddStepDialog(),
-          borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              children: [
-                Icon(Icons.add, size: 14, color: scheme.onSurfaceVariant),
-                const SizedBox(width: 8),
-                Text(
-                  'Add step',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    height: 18 / 13,
-                    fontWeight: FontWeight.w400,
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        _AddRow(
+          label: 'Add step',
+          onTap: _showAddStepDialog,
+          color: scheme.onSurfaceVariant,
         ),
       ],
     );
@@ -391,7 +358,6 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 
   Widget _buildMetadataSection() {
-    final scheme = Theme.of(context).colorScheme;
     final lists =
         ref.watch(taskListsNotifierProvider).valueOrNull ?? const <TaskList>[];
     final owningList = lists
@@ -400,39 +366,34 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Folder
+        const _SectionHeader(label: 'DETAILS'),
         _MetadataRow(
           icon: Icons.folder_outlined,
           label: 'Folder',
           value: owningList?.title ?? 'Tasks',
           onTap: () => _showFolderPicker(lists, owningList),
         ),
-        // Reminder
         _MetadataRow(
           icon: Icons.notifications_outlined,
           label: 'Remind me',
           value: widget.task.hasReminder
               ? _formatTime(widget.task.reminder!)
               : null,
-          valueColor: scheme.primary,
+          placeholder: 'Set a reminder',
           onTap: () => _showReminderPicker(),
         ),
-        // Due date
         _MetadataRow(
           icon: Icons.calendar_today_outlined,
           label: 'Due date',
-          value: widget.task.hasDueDate
-              ? _formatDate(widget.task.due!)
-              : 'Add due date',
+          value: widget.task.hasDueDate ? _formatDate(widget.task.due!) : null,
+          placeholder: 'Pick a date',
           onTap: () => _showDueDatePicker(),
         ),
-        // Repeat
         _MetadataRow(
           icon: Icons.repeat,
           label: 'Repeat',
-          value: widget.task.hasRepeat
-              ? widget.task.repeat!.type.name
-              : 'No repeat',
+          value: widget.task.hasRepeat ? widget.task.repeat!.type.name : null,
+          placeholder: 'No repeat',
           onTap: () => _showRepeatPicker(),
         ),
       ],
@@ -585,63 +546,29 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('TAGS', style: _captionStyle(scheme)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            ...tags.map(
-              (tag) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: scheme.surface,
-                  borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-                  border: Border.all(color: scheme.outlineVariant),
+        const _SectionHeader(label: 'TAGS'),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (final tag in tags)
+                _InlineTag(
+                  label: tag,
+                  onRemove: () {
+                    final updatedTags = tags.where((t) => t != tag).toList();
+                    _updateTask(widget.task.copyWith(tags: updatedTags));
+                  },
                 ),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _showAddTagDialog,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      tag,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        height: 18 / 13,
-                        fontWeight: FontWeight.w400,
-                        color: scheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: () {
-                        final updatedTags = tags
-                            .where((t) => t != tag)
-                            .toList();
-                        _updateTask(widget.task.copyWith(tags: updatedTags));
-                      },
-                      child: Icon(
-                        Icons.close,
-                        size: 12,
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            InkWell(
-              onTap: _showAddTagDialog,
-              borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-                  border: Border.all(color: scheme.outlineVariant),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add, size: 12, color: scheme.onSurfaceVariant),
+                    Icon(Icons.add, size: 14, color: scheme.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
                       'Add tag',
@@ -655,8 +582,8 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -711,15 +638,9 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('NOTES', style: _captionStyle(scheme)),
-        const SizedBox(height: 8),
-        Container(
+        const _SectionHeader(label: 'NOTES'),
+        ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 96),
-          decoration: BoxDecoration(
-            color: scheme.surface,
-            borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-            border: Border.all(color: scheme.outlineVariant),
-          ),
           child: TextField(
             controller: _notesController,
             onChanged: _onNotesChanged,
@@ -730,7 +651,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
               color: scheme.onSurface,
             ),
             decoration: InputDecoration(
-              hintText: 'Notes',
+              hintText: 'Add notes…',
               hintStyle: GoogleFonts.inter(
                 fontSize: 15,
                 height: 22 / 15,
@@ -739,7 +660,9 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
-              contentPadding: const EdgeInsets.all(12),
+              filled: false,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 6),
             ),
           ),
         ),
@@ -760,14 +683,6 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     );
   }
 
-  TextStyle _captionStyle(ColorScheme scheme) => GoogleFonts.inter(
-    fontSize: 11,
-    height: 16 / 11,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.66,
-    color: scheme.onSurfaceVariant,
-  );
-
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
@@ -781,7 +696,94 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 }
 
-/// Step row inside the inspector. 32 px tall, 18 px circular checkbox.
+/// Caption header used above every section ("DETAILS", "STEPS", "TAGS",
+/// "NOTES"). 11 px, 600w, all-caps, with optional trailing meta (e.g. step
+/// progress count). Bottom padding sits the rows on the 4 px grid.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.label, this.trailing});
+
+  final String label;
+  final String? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              height: 16 / 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.66,
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: 8),
+            Text(
+              trailing!,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                height: 16 / 11,
+                fontWeight: FontWeight.w400,
+                color: scheme.onSurfaceVariant,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 36 px row used both for steps and metadata. No rounded ink, full-row
+/// hover fill of `surface-sunken` so the affordance reads like a sidebar
+/// item — same as the rest of the app.
+class _InspectorRow extends StatelessWidget {
+  const _InspectorRow({required this.child, this.onTap, this.divider = false});
+
+  final Widget child;
+  final VoidCallback? onTap;
+
+  /// Hairline at the bottom edge. Used between metadata rows so the section
+  /// reads as labeled fields rather than a free-form list.
+  final bool divider;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        hoverColor: scheme.surfaceContainerHighest,
+        // No borderRadius — rectangular hover fill that aligns with the
+        // bottom hairline.
+        child: Container(
+          height: 36,
+          decoration: divider
+              ? BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: scheme.outlineVariant),
+                  ),
+                )
+              : null,
+          alignment: Alignment.centerLeft,
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Step row inside the inspector. Uses `_InspectorRow` so it reads with
+/// the same height + hover affordance as metadata rows. 18 px circular
+/// checkbox to match the title row and the left list.
 class _StepItem extends StatelessWidget {
   final TaskStep step;
   final VoidCallback onToggle;
@@ -791,51 +793,136 @@ class _StepItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return InkWell(
+    return _InspectorRow(
       onTap: onToggle,
-      borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-      child: SizedBox(
-        height: 32,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                width: 16,
-                height: 16,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: step.isCompleted ? scheme.primary : Colors.transparent,
-                  border: Border.all(
-                    color: step.isCompleted ? scheme.primary : scheme.outline,
-                    width: 1.5,
-                  ),
-                ),
-                child: step.isCompleted
-                    ? Icon(Icons.check, size: 10, color: scheme.onPrimary)
-                    : null,
+      child: Row(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: step.isCompleted ? scheme.primary : Colors.transparent,
+              border: Border.all(
+                color: step.isCompleted ? scheme.primary : scheme.outline,
+                width: 1.5,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  step.title,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    height: 22 / 15,
-                    fontWeight: FontWeight.w400,
-                    color: step.isCompleted ? scheme.outline : scheme.onSurface,
-                    decoration: step.isCompleted
-                        ? TextDecoration.lineThrough
-                        : null,
-                    decorationColor: scheme.outline,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+            ),
+            child: step.isCompleted
+                ? Icon(Icons.check, size: 12, color: scheme.onPrimary)
+                : null,
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              step.title,
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                height: 22 / 15,
+                fontWeight: FontWeight.w400,
+                color: step.isCompleted ? scheme.outline : scheme.onSurface,
+                decoration: step.isCompleted
+                    ? TextDecoration.lineThrough
+                    : null,
+                decorationColor: scheme.outline,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "+ Add step" / "+ Add tag" affordance. Same row metrics as the rest
+/// of the section so the click target lines up.
+class _AddRow extends StatelessWidget {
+  const _AddRow({
+    required this.label,
+    required this.onTap,
+    required this.color,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return _InspectorRow(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(Icons.add, size: 14, color: color),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              height: 18 / 13,
+              fontWeight: FontWeight.w400,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Inline text tag — no border, no fill, no chip. Reads as a word with
+/// a hairline-color × on hover for removal.
+class _InlineTag extends StatefulWidget {
+  const _InlineTag({required this.label, required this.onRemove});
+
+  final String label;
+  final VoidCallback onRemove;
+
+  @override
+  State<_InlineTag> createState() => _InlineTagState();
+}
+
+class _InlineTagState extends State<_InlineTag> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            widget.label,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              height: 18 / 13,
+              fontWeight: FontWeight.w400,
+              color: scheme.onSurface,
+            ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeOut,
+            child: _hovered
+                ? Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: GestureDetector(
+                      onTap: widget.onRemove,
+                      child: Icon(
+                        Icons.close,
+                        size: 12,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
       ),
     );
   }
@@ -881,66 +968,62 @@ class _QuietIconButton extends StatelessWidget {
   }
 }
 
-/// Inspector metadata row. 96 px label gutter, no decorative chrome,
-/// 1 px hairline divider below.
+/// Inspector metadata row. 36 px tall (matches every other row in the
+/// inspector + the sidebar), 14 px icon, 96 px label gutter, hairline at
+/// the bottom edge so the section reads as a stack of labeled fields.
+/// Empty values render as `Add <label>` in the tertiary text color so the
+/// whole row reads as a single coherent unit.
 class _MetadataRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String? value;
-  final Color? valueColor;
+  final String? placeholder;
   final VoidCallback? onTap;
 
   const _MetadataRow({
     required this.icon,
     required this.label,
     this.value,
-    this.valueColor,
+    this.placeholder,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return InkWell(
+    final hasValue = value != null;
+    return _InspectorRow(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          children: [
-            Icon(icon, size: 14, color: scheme.onSurfaceVariant),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 96,
-              child: Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  height: 18 / 13,
-                  fontWeight: FontWeight.w400,
-                  color: scheme.onSurfaceVariant,
-                ),
+      divider: true,
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 96,
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                height: 18 / 13,
+                fontWeight: FontWeight.w400,
+                color: scheme.onSurfaceVariant,
               ),
             ),
-            Expanded(
-              child: Text(
-                value ?? '—',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  height: 18 / 13,
-                  fontWeight: value == null ? FontWeight.w400 : FontWeight.w500,
-                  color: value == null
-                      ? scheme.outline
-                      : (valueColor ?? scheme.onSurface),
-                ),
-                overflow: TextOverflow.ellipsis,
+          ),
+          Expanded(
+            child: Text(
+              hasValue ? value! : (placeholder ?? '—'),
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                height: 18 / 13,
+                fontWeight: hasValue ? FontWeight.w500 : FontWeight.w400,
+                color: hasValue ? scheme.onSurface : scheme.outline,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
