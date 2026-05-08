@@ -6,7 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/task_list.dart';
 import '../providers/task_lists_provider.dart';
 import '../providers/ui_state_providers.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_theme.dart' show ListdSurfaces;
+import 'app_logo.dart';
 
 export '../providers/ui_state_providers.dart'
     show selectedTaskListIdProvider, SpecialListIds;
@@ -17,18 +18,22 @@ class SidebarPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedListId = ref.watch(selectedTaskListIdProvider);
-    final taskListsAsync = ref.watch(taskListsStreamProvider);
+    final taskListsAsync = ref.watch(taskListsNotifierProvider);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final surfaces = theme.extension<ListdSurfaces>();
+    final divider = scheme.outlineVariant;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF0A1020),
-        border: Border(right: BorderSide(color: Color(0xFF1A2040), width: 1)),
+      decoration: BoxDecoration(
+        color: surfaces?.sidebar ?? scheme.surfaceContainerLow,
+        border: Border(right: BorderSide(color: divider, width: 1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildHeader(),
-          Container(height: 1, color: const Color(0xFF1A2040)),
+          _buildHeader(scheme),
+          Container(height: 1, color: divider),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -59,7 +64,7 @@ class SidebarPanel extends ConsumerWidget {
                           SpecialListIds.planned,
                 ),
                 const SizedBox(height: 16),
-                Container(height: 1, color: const Color(0xFF1A2040)),
+                Container(height: 1, color: divider),
                 const SizedBox(height: 8),
                 const _SectionHeader(title: 'MY LISTS'),
                 _SidebarItem(
@@ -103,10 +108,10 @@ class SidebarPanel extends ConsumerWidget {
               ],
             ),
           ),
-          Container(height: 1, color: const Color(0xFF1A2040)),
+          Container(height: 1, color: divider),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: _GlassButton(
+            child: _SidebarFooterButton(
               icon: Icons.add,
               label: 'New list',
               onPressed: () => _showNewListDialog(context, ref),
@@ -114,7 +119,7 @@ class SidebarPanel extends ConsumerWidget {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: _GlassButton(
+            child: _SidebarFooterButton(
               icon: Icons.settings_outlined,
               label: 'Settings',
               onPressed: () => context.push('/settings'),
@@ -125,31 +130,20 @@ class SidebarPanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
+  Widget _buildHeader(ColorScheme scheme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
       child: Row(
         children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(
-              Icons.check_circle_outline,
-              color: Colors.white,
-              size: 18,
-            ),
-          ),
+          const AppLogo(size: 28),
           const SizedBox(width: 12),
           Text(
             'Listd',
             style: GoogleFonts.manrope(
               fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              color: scheme.onSurface,
+              letterSpacing: -0.2,
             ),
           ),
         ],
@@ -161,36 +155,32 @@ class SidebarPanel extends ConsumerWidget {
     final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A2040),
-        title: Text(
-          'New list',
-          style: GoogleFonts.manrope(color: AppColors.textPrimary),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: GoogleFonts.manrope(color: AppColors.textPrimary),
-          decoration: InputDecoration(
-            hintText: 'List name',
-            hintStyle: GoogleFonts.manrope(color: AppColors.textHint),
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          title: Text(
+            'New list',
+            style: GoogleFonts.manrope(color: scheme.onSurface),
           ),
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.manrope(color: const Color(0xFF8C8A97)),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: GoogleFonts.manrope(color: scheme.onSurface),
+            decoration: const InputDecoration(hintText: 'List name'),
+            onSubmitted: (value) => Navigator.of(context).pop(value),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
             ),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text('Create', style: GoogleFonts.manrope()),
-          ),
-        ],
-      ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
     );
     if (result != null && result.isNotEmpty) {
       ref.read(taskListsNotifierProvider.notifier).createTaskList(result);
@@ -204,6 +194,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Text(
@@ -211,7 +202,7 @@ class _SectionHeader extends StatelessWidget {
         style: GoogleFonts.manrope(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF8C8A97).withValues(alpha: 0.5),
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
           letterSpacing: 1.5,
         ),
       ),
@@ -233,15 +224,18 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final selectedFg = scheme.onSurface;
+    final unselectedFg = scheme.onSurfaceVariant;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: isSelected
-            ? AppColors.primary.withValues(alpha: 0.15)
+            ? scheme.primary.withValues(alpha: 0.12)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         border: isSelected
-            ? Border(left: BorderSide(color: AppColors.primary, width: 3))
+            ? Border(left: BorderSide(color: scheme.primary, width: 3))
             : null,
       ),
       child: Material(
@@ -256,9 +250,7 @@ class _SidebarItem extends StatelessWidget {
                 Icon(
                   icon,
                   size: 20,
-                  color: isSelected
-                      ? Colors.white
-                      : const Color(0xFF8C8A97).withValues(alpha: 0.7),
+                  color: isSelected ? selectedFg : unselectedFg,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -268,10 +260,8 @@ class _SidebarItem extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: isSelected
                           ? FontWeight.w600
-                          : FontWeight.normal,
-                      color: isSelected
-                          ? Colors.white
-                          : const Color(0xFF8C8A97).withValues(alpha: 0.7),
+                          : FontWeight.w500,
+                      color: isSelected ? selectedFg : unselectedFg,
                     ),
                   ),
                 ),
@@ -296,15 +286,18 @@ class _TaskListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final selectedFg = scheme.onSurface;
+    final unselectedFg = scheme.onSurfaceVariant;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: isSelected
-            ? AppColors.primary.withValues(alpha: 0.15)
+            ? scheme.primary.withValues(alpha: 0.12)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         border: isSelected
-            ? Border(left: BorderSide(color: AppColors.primary, width: 3))
+            ? Border(left: BorderSide(color: scheme.primary, width: 3))
             : null,
       ),
       child: Material(
@@ -320,8 +313,8 @@ class _TaskListItem extends StatelessWidget {
                   taskList.isDefault ? Icons.star : Icons.list,
                   size: 20,
                   color: taskList.isDefault
-                      ? Colors.amber
-                      : const Color(0xFF8C8A97).withValues(alpha: 0.7),
+                      ? scheme.tertiary
+                      : (isSelected ? selectedFg : unselectedFg),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -331,10 +324,8 @@ class _TaskListItem extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: isSelected
                           ? FontWeight.w600
-                          : FontWeight.normal,
-                      color: isSelected
-                          ? Colors.white
-                          : const Color(0xFF8C8A97).withValues(alpha: 0.7),
+                          : FontWeight.w500,
+                      color: isSelected ? selectedFg : unselectedFg,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -348,8 +339,8 @@ class _TaskListItem extends StatelessWidget {
   }
 }
 
-class _GlassButton extends StatelessWidget {
-  const _GlassButton({
+class _SidebarFooterButton extends StatelessWidget {
+  const _SidebarFooterButton({
     required this.icon,
     required this.label,
     required this.onPressed,
@@ -360,11 +351,12 @@ class _GlassButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2040),
+        color: scheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF2A2A3A), width: 1),
+        border: Border.all(color: scheme.outlineVariant, width: 1),
       ),
       child: Material(
         color: Colors.transparent,
@@ -376,13 +368,14 @@ class _GlassButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 18, color: const Color(0xFF8C8A97)),
+                Icon(icon, size: 18, color: scheme.onSurfaceVariant),
                 const SizedBox(width: 8),
                 Text(
                   label,
                   style: GoogleFonts.manrope(
                     fontSize: 14,
-                    color: const Color(0xFF8C8A97),
+                    fontWeight: FontWeight.w500,
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
               ],

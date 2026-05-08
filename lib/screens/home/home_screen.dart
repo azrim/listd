@@ -6,7 +6,6 @@ import '../../models/task_list.dart';
 import '../../providers/task_lists_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../providers/ui_state_providers.dart';
-import '../../theme/app_colors.dart';
 import '../../widgets/sidebar_panel.dart';
 import '../../widgets/task_list_panel.dart';
 import '../../widgets/task_detail_panel.dart';
@@ -108,71 +107,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Check if detail panel should be shown
     final showDetailPanel = selectedTask != null;
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF060818), Color(0xFF0D1535), Color(0xFF162040)],
-          stops: [0.0, 0.5, 1.0],
-        ),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Row(
-          children: [
-            // Col 1: Sidebar (240px always visible)
-            const SizedBox(width: 240, child: SidebarPanel()),
-            // Vertical divider
-            Container(width: 1, color: AppColors.glassBorderSubtle),
+    final scheme = Theme.of(context).colorScheme;
+    final detailPanelBg = scheme.surfaceContainerLow;
+    return Scaffold(
+      backgroundColor: scheme.surface,
+      body: Row(
+        children: [
+          // Col 1: Sidebar (264px per Stitch design)
+          const SizedBox(width: 264, child: SidebarPanel()),
+          Container(width: 1, color: scheme.outlineVariant),
 
-            // Col 2: Task list - shrinks when detail panel opens
-            Expanded(
-              flex: showDetailPanel ? 1 : 1,
-              child: TaskListPanel(
-                listId: selectedListId ?? SpecialListIds.tasks,
-                listName: listName,
-                onTaskSelected: (task) {
-                  ref.read(selectedTaskIdProvider.notifier).state = task.id;
-                },
-              ),
+          // Col 2: Task list - shrinks when detail panel opens
+          Expanded(
+            child: TaskListPanel(
+              listId: selectedListId ?? SpecialListIds.tasks,
+              listName: listName,
+              onTaskSelected: (task) {
+                ref.read(selectedTaskIdProvider.notifier).state = task.id;
+              },
             ),
+          ),
 
-            // Col 3: Task detail panel - AnimatedContainer slides in/out
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              width: showDetailPanel ? 320 : 0,
-              child: showDetailPanel
-                  ? ClipRect(
-                      child: OverflowBox(
-                        maxWidth: 320,
-                        minWidth: 320,
-                        alignment: Alignment.centerRight,
-                        child: Container(
-                          width: 320,
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF0A1020), Color(0xFF0D1535)],
+          // Col 3: Task detail panel - AnimatedContainer slides in/out (360px per Stitch design)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            width: showDetailPanel ? 360 : 0,
+            child: showDetailPanel
+                ? ClipRect(
+                    child: OverflowBox(
+                      maxWidth: 360,
+                      minWidth: 360,
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        width: 360,
+                        decoration: BoxDecoration(
+                          color: detailPanelBg,
+                          border: Border(
+                            left: BorderSide(
+                              color: scheme.outlineVariant,
+                              width: 1,
                             ),
                           ),
-                          child: TaskDetailPanel(
-                            task: selectedTask,
-                            listId: selectedListId ?? SpecialListIds.tasks,
-                            onClose: () {
-                              ref.read(selectedTaskIdProvider.notifier).state =
-                                  null;
-                            },
-                          ),
+                        ),
+                        child: TaskDetailPanel(
+                          task: selectedTask,
+                          listId: selectedListId ?? SpecialListIds.tasks,
+                          onClose: () {
+                            ref.read(selectedTaskIdProvider.notifier).state =
+                                null;
+                          },
                         ),
                       ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
-        ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
       ),
     );
   }
