@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/task.dart';
 import '../../models/task_list.dart';
 import '../../providers/task_lists_provider.dart';
-import '../../providers/tasks_provider.dart';
 import '../../providers/ui_state_providers.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/sidebar_panel.dart';
 import '../../widgets/task_list_panel.dart';
 import '../../widgets/task_detail_panel.dart';
@@ -13,17 +13,17 @@ import '../../widgets/task_detail_panel.dart';
 /// Home screen with adaptive 2→3 column layout:
 ///
 /// Default (2 columns):
-///   Col 1: Sidebar (240px fixed)
-///   Col 2: Task list (fills remaining space with Expanded)
+///   Col 1: Sidebar (264px fixed)
+///   Col 2: Task list (Expanded)
 ///
 /// When task selected (3 columns):
-///   Col 1: Sidebar (240px fixed, unchanged)
-///   Col 2: Task list (shrinks - no longer Expanded, gets min width)
-///   Col 3: Task detail panel (320px, slides in from right)
+///   Col 1: Sidebar (264px, unchanged)
+///   Col 2: Task list (Expanded)
+///   Col 3: Inspector (360px, slides in from the right)
 ///
-/// Tapping a task: sets selectedTask → panel slides in
-/// Tapping X or Escape: clears selectedTask → panel slides out
-/// Tapping different task: swaps content in open panel (no close/reopen)
+/// The inspector entry is 200 ms cubic-bezier(0.2, 0, 0, 1). The previous
+/// task is kept rendered for the entire close animation so content slides
+/// out instead of vanishing first.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -56,8 +56,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final selectedListId = ref.watch(selectedTaskListIdProvider);
-    final selectedTaskId = ref.watch(selectedTaskIdProvider);
     final taskListsAsync = ref.watch(taskListsNotifierProvider);
+
+    // The selected task is resolved against the global task aggregate so the
+    // inspector stays in sync with edits regardless of whether we're on a real
+    // list or a synthetic one.
+    final selectedTask = ref.watch(selectedTaskProvider);
 
     // Listen for the first non-empty data load and auto-select the first list
     // (no postFrame; ref.listen runs after the build completes).
@@ -96,28 +100,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       };
     }
 
-    // Get selected task for detail panel
-    final selectedTask = selectedTaskId != null
-        ? _getTaskForDetail(
-            selectedTaskId,
-            selectedListId ?? SpecialListIds.tasks,
-          )
-        : null;
-
-    // Check if detail panel should be shown
-    final showDetailPanel = selectedTask != null;
-
     final scheme = Theme.of(context).colorScheme;
-    final detailPanelBg = scheme.surfaceContainerLow;
     return Scaffold(
       backgroundColor: scheme.surface,
       body: Row(
         children: [
-          // Col 1: Sidebar (264px per Stitch design)
+          // Col 1: Sidebar
           const SizedBox(width: 264, child: SidebarPanel()),
           Container(width: 1, color: scheme.outlineVariant),
 
-          // Col 2: Task list - shrinks when detail panel opens
+          // Col 2: Task list
           Expanded(
             child: TaskListPanel(
               listId: selectedListId ?? SpecialListIds.tasks,
@@ -128,50 +120,139 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // Col 3: Task detail panel — 200 ms cubic-bezier(0.2, 0, 0, 1) per spec.
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: const Cubic(0.2, 0, 0, 1),
-            width: showDetailPanel ? 360 : 0,
-            child: showDetailPanel
-                ? ClipRect(
-                    child: OverflowBox(
-                      maxWidth: 360,
-                      minWidth: 360,
-                      alignment: Alignment.centerRight,
-                      child: Container(
-                        width: 360,
-                        decoration: BoxDecoration(
-                          color: detailPanelBg,
-                          border: Border(
-                            left: BorderSide(
-                              color: scheme.outlineVariant,
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        child: TaskDetailPanel(
-                          task: selectedTask,
-                          listId: selectedListId ?? SpecialListIds.tasks,
-                          onClose: () {
-                            ref.read(selectedTaskIdProvider.notifier).state =
-                                null;
-                          },
-                        ),
-                      ),
-                    ),
-                  )
-                : const SizedBox.shrink(),
+          // Col 3: Inspector — owns its own animation so close has a slide-out.
+          _InspectorSlide(
+            task: selectedTask,
+            listId: selectedListId ?? SpecialListIds.tasks,
+            onClose: () {
+              ref.read(selectedTaskIdProvider.notifier).state = null;
+            },
           ),
         ],
       ),
     );
   }
+}
 
-  Task? _getTaskForDetail(String taskId, String listId) {
-    final tasksAsync = ref.read(tasksNotifierProvider(listId));
-    return tasksAsync.whenOrNull(
-      data: (tasks) => tasks.where((t) => t.id == taskId).firstOrNull,
+/// 360 px inspector that animates in from the right over 200 ms with the
+/// design-system curve. Keeps the previously displayed task mounted for the
+/// duration of the close animation so content slides out instead of vanishing
+/// before the container collapses.
+class _InspectorSlide extends StatefulWidget {
+  const _InspectorSlide({
+    required this.task,
+    required this.listId,
+    required this.onClose,
+  });
+
+  final Task? task;
+  final String listId;
+  final VoidCallback onClose;
+
+  @override
+  State<_InspectorSlide> createState() => _InspectorSlideState();
+}
+
+class _InspectorSlideState extends State<_InspectorSlide>
+    with SingleTickerProviderStateMixin {
+  static const double _width = 360;
+  static const Duration _entry = Duration(milliseconds: 200);
+  static const Cubic _curve = Cubic(0.2, 0, 0, 1);
+
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
+  Task? _displayTask;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: _entry,
+      value: widget.task != null ? 1.0 : 0.0,
+    );
+    _animation = CurvedAnimation(parent: _controller, curve: _curve);
+    _displayTask = widget.task;
+  }
+
+  @override
+  void didUpdateWidget(_InspectorSlide oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newTask = widget.task;
+    if (newTask != null) {
+      // Either an open or a swap. Always render the freshest task; if we were
+      // closed, animate in.
+      if (_displayTask?.id != newTask.id || _displayTask == null) {
+        setState(() => _displayTask = newTask);
+      } else {
+        // Same task with refreshed data — no setState; child watches its own
+        // props via widget identity equality below.
+        _displayTask = newTask;
+      }
+      if (_controller.status != AnimationStatus.completed &&
+          _controller.status != AnimationStatus.forward) {
+        _controller.forward();
+      }
+    } else if (oldWidget.task != null) {
+      _controller.reverse().then((_) {
+        if (mounted && widget.task == null) {
+          setState(() => _displayTask = null);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final detailPanelBg =
+        theme.extension<ListdSurfaces>()?.detailPanel ??
+        scheme.surfaceContainerLow;
+
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        final visible = _animation.value;
+        // Width-driven slide: container clips, child stays full-width pinned
+        // to the right so the right edge is anchored as it slides in/out.
+        return SizedBox(
+          width: _width * visible,
+          child: visible == 0 ? const SizedBox.shrink() : child,
+        );
+      },
+      child: ClipRect(
+        child: OverflowBox(
+          maxWidth: _width,
+          minWidth: _width,
+          alignment: Alignment.centerRight,
+          child: Container(
+            width: _width,
+            decoration: BoxDecoration(
+              color: detailPanelBg,
+              border: Border(
+                left: BorderSide(color: scheme.outlineVariant, width: 1),
+              ),
+            ),
+            child: _displayTask == null
+                ? const SizedBox.shrink()
+                : TaskDetailPanel(
+                    // Keying by id so widget identity changes on swap and
+                    // controllers reset cleanly without us threading flushes.
+                    key: ValueKey<String>(_displayTask!.id),
+                    task: _displayTask!,
+                    listId: widget.listId,
+                    onClose: widget.onClose,
+                  ),
+          ),
+        ),
+      ),
     );
   }
 }
