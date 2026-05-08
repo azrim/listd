@@ -2,8 +2,13 @@ import 'package:drift/drift.dart';
 
 /// Drift table definition for tasks.
 ///
-/// This table stores task entities with all their attributes including
-/// sync status for tracking changes that need to be pushed to Supabase.
+/// This table is the **local-first source of truth** for tasks. The full
+/// task domain model is mirrored here so the UI can render and mutate
+/// tasks entirely against Drift, without waiting on Supabase.
+///
+/// `syncStatus` records whether each row is `synced`, `created`,
+/// `updated`, or `deleted`. Background sync drains pending rows into
+/// Supabase and reconciles remote changes back into this table.
 @DataClassName('TaskEntry')
 class Tasks extends Table {
   /// Unique identifier
@@ -35,6 +40,24 @@ class Tasks extends Table {
 
   /// Whether this task is starred/favorited
   BoolColumn get isStarred => boolean().withDefault(const Constant(false))();
+
+  /// Reminder timestamp as ISO8601 string (null if no reminder)
+  TextColumn get reminder => text().nullable()();
+
+  /// Repeat configuration as JSON string (null if not repeating)
+  TextColumn get repeatConfig => text().nullable()();
+
+  /// Tags encoded as a JSON array string (null/[] if no tags)
+  TextColumn get tags => text().nullable()();
+
+  /// Steps/subtasks encoded as a JSON array string (null/[] if no steps)
+  TextColumn get steps => text().nullable()();
+
+  /// Completion timestamp as ISO8601 string (null if not completed)
+  TextColumn get completedAt => text().nullable()();
+
+  /// Owning Supabase user id (for RLS), '' before auth is known.
+  TextColumn get userId => text().withDefault(const Constant(''))();
 
   /// Sync status: 0=synced, 1=created, 2=updated, 3=deleted
   IntColumn get syncStatus => integer().withDefault(const Constant(0))();

@@ -2,8 +2,9 @@ import 'package:drift/drift.dart';
 
 /// Drift table definition for task lists.
 ///
-/// This table stores task list entities with sync status for tracking
-/// changes that need to be pushed to Supabase.
+/// Local-first source of truth for task lists. `syncStatus` records
+/// whether each row is `synced`, `created`, `updated`, or `deleted` so
+/// that background sync can drain pending rows into Supabase.
 @DataClassName('TaskListEntry')
 class TaskLists extends Table {
   /// Unique identifier
@@ -20,6 +21,12 @@ class TaskLists extends Table {
 
   /// Whether this is the user's default task list
   BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
+
+  /// Owning Supabase user id (for RLS), '' before auth is known.
+  TextColumn get userId => text().withDefault(const Constant(''))();
+
+  /// Position within the sidebar for ordering
+  IntColumn get position => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {id};

@@ -24,17 +24,20 @@ class SupabaseTasksProvider implements ITaskProvider {
     canCreateTaskLists: true,
     canUpdateTaskLists: true,
     canDeleteTaskLists: true,
-    supportsOfflineSync: false, // TODO: implement with Drift cache
+    supportsOfflineSync: true,
   );
 
   /// Get current user ID (throws if not authenticated).
   String get currentUserId {
     final user = _client.auth.currentUser;
     if (user == null) {
-      throw UnauthorizedException('Not authenticated');
+      throw const UnauthorizedException('Not authenticated');
     }
     return user.id;
   }
+
+  /// Whether a user session currently exists.
+  bool get isAuthenticated => _client.auth.currentUser != null;
 
   @override
   Future<List<TaskList>> getTaskLists() async {
@@ -73,6 +76,25 @@ class SupabaseTasksProvider implements ITaskProvider {
     }
   }
 
+  /// Fetches every task owned by the current user, across all lists.
+  /// Used by the local-first sync to populate Drift in one round-trip.
+  Future<List<Task>> getAllTasks() async {
+    try {
+      final response = await _client
+          .from('tasks')
+          .select()
+          .eq('user_id', currentUserId)
+          .order('task_list_id,position');
+
+      return (response as List).map((row) => _mapToTask(row)).toList();
+    } on PostgrestException catch (e) {
+      if (e.code == '401') {
+        throw UnauthorizedException(e.message);
+      }
+      throw ServerException(e.message);
+    }
+  }
+
   @override
   Future<Task> createTask(String taskListId, Task task) async {
     try {
@@ -80,7 +102,8 @@ class SupabaseTasksProvider implements ITaskProvider {
       // does NOT exist server-side. Including it crashes the INSERT with
       // "column tasks.sync_status does not exist" and leaves TasksNotifier
       // in an error state (which surfaces as "Failed to load tasks").
-      final data = {
+      final data = <String, dynamic>{
+        'id': task.id,
         'user_id': currentUserId,
         'task_list_id': taskListId,
         'title': task.title,
@@ -93,10 +116,11 @@ class SupabaseTasksProvider implements ITaskProvider {
         'parent_id': task.parentId,
         'completed_at': task.completedAt?.toIso8601String(),
         'reminder': task.reminder?.toIso8601String(),
-        'repeat_config': task.repeat?.toJson() != null
-            ? jsonEncode(task.repeat!.toJson())
-            : null,
+        'repeat_config': task.repeat == null
+            ? null
+            : jsonEncode(task.repeat!.toJson()),
         'tags': task.tags,
+        'steps': task.steps.map((s) => s.toJson()).toList(),
       };
 
       final response = await _client
@@ -117,7 +141,8 @@ class SupabaseTasksProvider implements ITaskProvider {
   @override
   Future<Task> updateTask(String taskListId, Task task) async {
     try {
-      final data = {
+      final data = <String, dynamic>{
+        'task_list_id': taskListId,
         'title': task.title,
         'notes': task.notes,
         'due': task.due?.toIso8601String(),
@@ -128,10 +153,11 @@ class SupabaseTasksProvider implements ITaskProvider {
         'completed_at': task.completedAt?.toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
         'reminder': task.reminder?.toIso8601String(),
-        'repeat_config': task.repeat?.toJson() != null
-            ? jsonEncode(task.repeat!.toJson())
-            : null,
+        'repeat_config': task.repeat == null
+            ? null
+            : jsonEncode(task.repeat!.toJson()),
         'tags': task.tags,
+        'steps': task.steps.map((s) => s.toJson()).toList(),
       };
 
       final response = await _client
@@ -172,39 +198,26 @@ class SupabaseTasksProvider implements ITaskProvider {
     List<TaskList> localTaskLists,
     Map<String, List<Task>> localTasks,
   ) async {
-    // TODO: Implement sync with Drift local cache
-    // For now, just return current remote state
     final taskLists = await getTaskLists();
-
-    // Fetch all tasks in one query to avoid N+1 problem
-    final allTasksResponse = await _client
-        .from('tasks')
-        .select()
-        .eq('user_id', currentUserId)
-        .order('task_list_id,position');
-
+    final allTasks = await getAllTasks();
     final tasks = <String, List<Task>>{};
-    for (final row in allTasksResponse as List) {
-      final task = _mapToTask(row);
-      if (!tasks.containsKey(task.taskListId)) {
-        tasks[task.taskListId] = [];
-      }
-      tasks[task.taskListId]!.add(task);
+    for (final task in allTasks) {
+      tasks.putIfAbsent(task.taskListId, () => <Task>[]).add(task);
     }
-
     return SyncResult(taskLists: taskLists, tasks: tasks);
   }
 
   // ── Task List Operations ──
 
   /// Creates a new task list.
-  Future<TaskList> createTaskList(String title) async {
+  Future<TaskList> createTaskList(TaskList taskList) async {
     try {
-      final data = {
+      final data = <String, dynamic>{
+        'id': taskList.id,
         'user_id': currentUserId,
-        'title': title,
-        'is_default': false,
-        'position': 0,
+        'title': taskList.title,
+        'is_default': taskList.isDefault,
+        'position': taskList.position,
       };
 
       final response = await _client
@@ -225,9 +238,10 @@ class SupabaseTasksProvider implements ITaskProvider {
   /// Updates an existing task list.
   Future<TaskList> updateTaskList(TaskList taskList) async {
     try {
-      final data = {
+      final data = <String, dynamic>{
         'title': taskList.title,
         'is_default': taskList.isDefault,
+        'position': taskList.position,
         'updated_at': DateTime.now().toIso8601String(),
       };
 
@@ -272,45 +286,61 @@ class SupabaseTasksProvider implements ITaskProvider {
       title: row['title'] as String,
       updated: DateTime.parse(row['updated_at'] as String),
       isDefault: row['is_default'] as bool? ?? false,
+      userId: row['user_id'] as String? ?? '',
+      position: row['position'] as int? ?? 0,
     );
   }
 
   Task _mapToTask(Map<String, dynamic> row) {
-    // Parse repeat config from JSON string
+    // Parse repeat config; supports both legacy JSON-string and
+    // jsonb shapes.
     RepeatConfig? repeat;
-    if (row['repeat_config'] != null) {
+    final rawRepeat = row['repeat_config'];
+    if (rawRepeat != null) {
       try {
-        final json =
-            jsonDecode(row['repeat_config'] as String) as Map<String, dynamic>;
+        final json = rawRepeat is String
+            ? jsonDecode(rawRepeat) as Map<String, dynamic>
+            : Map<String, dynamic>.from(rawRepeat as Map);
         repeat = RepeatConfig.fromJson(json);
       } catch (_) {
         repeat = null;
       }
     }
 
-    // Parse tags from array
-    List<String> tags = [];
-    if (row['tags'] != null) {
-      if (row['tags'] is List) {
-        tags = (row['tags'] as List).cast<String>();
-      }
+    // Parse tags from array.
+    List<String> tags = const [];
+    final rawTags = row['tags'];
+    if (rawTags is List) {
+      tags = rawTags.map((e) => e.toString()).toList();
+    } else if (rawTags is String && rawTags.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawTags);
+        if (decoded is List) {
+          tags = decoded.map((e) => e.toString()).toList();
+        }
+      } catch (_) {}
     }
 
-    // Parse steps from JSON array
-    List<TaskStep> steps = [];
-    if (row['steps'] != null && row['steps'] is List) {
-      steps = (row['steps'] as List).map((s) {
+    // Parse steps from a JSON column. Supports a JSON-string shape
+    // (older clients) and a JSONB array shape (current schema).
+    List<TaskStep> steps = const [];
+    final rawSteps = row['steps'];
+    if (rawSteps is List) {
+      steps = rawSteps.whereType<Object>().map((s) {
         if (s is Map) {
-          return TaskStep.fromJson(s as Map<String, dynamic>);
+          return TaskStep.fromJson(Map<String, dynamic>.from(s));
         }
         return TaskStep(id: s.toString(), title: s.toString());
       }).toList();
-    }
-
-    // Parse sync status from integer
-    SyncStatus syncStatus = SyncStatus.synced;
-    if (row['sync_status'] != null) {
-      syncStatus = SyncStatus.fromValue(row['sync_status']);
+    } else if (rawSteps is String && rawSteps.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawSteps);
+        if (decoded is List) {
+          steps = decoded.whereType<Map>().map((s) {
+            return TaskStep.fromJson(Map<String, dynamic>.from(s));
+          }).toList();
+        }
+      } catch (_) {}
     }
 
     return Task(
@@ -329,11 +359,12 @@ class SupabaseTasksProvider implements ITaskProvider {
       repeat: repeat,
       tags: tags,
       steps: steps,
-      parentId: row['parent_id'],
+      parentId: row['parent_id'] as String?,
       completedAt: row['completed_at'] != null
           ? DateTime.parse(row['completed_at'] as String)
           : null,
-      syncStatus: syncStatus,
+      userId: row['user_id'] as String? ?? '',
+      syncStatus: SyncStatus.synced,
     );
   }
 }
@@ -347,7 +378,7 @@ class UnauthorizedException implements Exception {
   String toString() => 'UnauthorizedException: $message';
 }
 
-/// Exception for server/database errors.
+/// Exception for server errors.
 class ServerException implements Exception {
   const ServerException(this.message);
   final String message;

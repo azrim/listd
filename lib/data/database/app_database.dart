@@ -17,7 +17,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
@@ -26,7 +26,19 @@ class AppDatabase extends _$AppDatabase {
         await m.createAll();
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        // Future schema migrations go here
+        if (from < 2) {
+          // v2: extend Tasks/TaskLists to mirror the full domain model so
+          // Drift can be the local-first source of truth (rather than a
+          // partial cache).
+          await m.addColumn(tasks, tasks.reminder);
+          await m.addColumn(tasks, tasks.repeatConfig);
+          await m.addColumn(tasks, tasks.tags);
+          await m.addColumn(tasks, tasks.steps);
+          await m.addColumn(tasks, tasks.completedAt);
+          await m.addColumn(tasks, tasks.userId);
+          await m.addColumn(taskLists, taskLists.userId);
+          await m.addColumn(taskLists, taskLists.position);
+        }
       },
       beforeOpen: (details) async {
         // Enable foreign keys for data integrity

@@ -68,7 +68,11 @@ class TaskListPanel extends ConsumerWidget {
         children: [
           _buildHeader(context, ref),
           _StatsStrip(tasksAsync: tasksAsync),
-          _AddTaskInput(listId: listId),
+          // Virtual lists ("@my-day", "@important", etc.) don't own rows of
+          // their own; new tasks created from them would have to be assigned
+          // to *some* real list, which is confusing. Hide the input so the
+          // user creates tasks from the owning list explicitly.
+          if (!_isVirtual) _AddTaskInput(listId: listId),
           Expanded(
             child: tasksAsync.when(
               data: (tasks) =>
@@ -551,6 +555,16 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
           .read(tasksNotifierProvider(targetListId).notifier)
           .createTask(newTask);
       _controller.clear();
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Task added'),
+              duration: Duration(milliseconds: 1400),
+            ),
+          );
+      }
     } catch (e) {
       // Mutation errors no longer wipe out the loaded task list — surface
       // them inline instead so the user knows what happened and can retry.

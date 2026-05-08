@@ -94,6 +94,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     await _client.auth.signOut();
   }
+
+  /// Updates the user's display name in Supabase user metadata.
+  Future<void> updateDisplayName(String name) async {
+    await _client.auth.updateUser(UserAttributes(data: {'name': name}));
+  }
 }
 
 /// Provider for authentication state.
