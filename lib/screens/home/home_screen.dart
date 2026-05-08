@@ -62,17 +62,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Listen for the first non-empty data load and auto-select the first list
     // (no postFrame; ref.listen runs after the build completes).
-    ref.listen<AsyncValue<List<TaskList>>>(
-      taskListsNotifierProvider,
-      (previous, next) {
-        next.whenData((taskLists) {
-          if (taskLists.isEmpty) return;
-          if (ref.read(selectedTaskListIdProvider) != null) return;
-          ref.read(selectedTaskListIdProvider.notifier).state =
-              taskLists.first.id;
-        });
-      },
-    );
+    ref.listen<AsyncValue<List<TaskList>>>(taskListsNotifierProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((taskLists) {
+        if (taskLists.isEmpty) return;
+        if (ref.read(selectedTaskListIdProvider) != null) return;
+        ref.read(selectedTaskListIdProvider.notifier).state =
+            taskLists.first.id;
+      });
+    });
 
     // Get list name
     String listName = 'Tasks';

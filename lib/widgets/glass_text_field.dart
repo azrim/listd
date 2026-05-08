@@ -37,16 +37,10 @@ class GlassTextField extends StatelessWidget {
       onChanged: onChanged,
       onSubmitted: onSubmitted,
       cursorColor: AppColors.primary,
-      style: GoogleFonts.manrope(
-        color: AppColors.textPrimary,
-        fontSize: 14,
-      ),
+      style: GoogleFonts.manrope(color: AppColors.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.manrope(
-          color: AppColors.textHint,
-          fontSize: 14,
-        ),
+        hintStyle: GoogleFonts.manrope(color: AppColors.textHint, fontSize: 14),
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20)
             : null,

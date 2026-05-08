@@ -7,11 +7,7 @@ import 'package:flutter/material.dart';
 /// auth screen, sidebar header, and anywhere else the product wordmark
 /// would be appropriate.
 class AppLogo extends StatelessWidget {
-  const AppLogo({
-    super.key,
-    this.size = 48,
-    this.semanticLabel = 'Listd',
-  });
+  const AppLogo({super.key, this.size = 48, this.semanticLabel = 'Listd'});
 
   final double size;
   final String semanticLabel;
