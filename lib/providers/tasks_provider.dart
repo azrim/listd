@@ -45,26 +45,17 @@ final tasksStreamProvider = StreamProvider.family<List<Task>, String>((
     return;
   }
 
-  print('tasksStreamProvider: Getting tasks for list $taskListId');
-
   try {
     final provider = ref.read(supabaseTasksProviderProvider);
     final remoteTasks = await provider.getTasks(taskListId);
-    print('tasksStreamProvider: Got ${remoteTasks.length} tasks');
 
     if (remoteTasks.isNotEmpty) {
       await dao.upsertTasks(remoteTasks);
     }
 
     yield remoteTasks;
-  } catch (e) {
-    print('tasksStreamProvider: Error - $e');
-    try {
-      final localTasks = await dao.getTasksByListId(taskListId);
-      yield localTasks.map((e) => e.toDomain()).toList();
-    } catch (_) {
-      yield [];
-    }
+  } catch (_) {
+    yield [];
   }
 });
 
@@ -126,11 +117,9 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
   }
 
   Future<void> createTask(Task task) async {
-    print('TasksNotifier.createTask: ${task.title}');
     try {
       final authState = _ref.read(authNotifierProvider);
       if (authState is! AuthAuthenticated) {
-        print('TasksNotifier: Not authenticated');
         return;
       }
 
@@ -140,7 +129,6 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
 
       final provider = _ref.read(supabaseTasksProviderProvider);
       await provider.createTask(taskListId, taskWithId);
-      print('TasksNotifier: Created task');
 
       // Trigger stream refresh
       _ref.read(tasksRefreshProvider(taskListId).notifier).state++;
@@ -148,7 +136,6 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<Task>>> {
       // Also refresh this notifier
       await _syncFromRemote();
     } catch (e, st) {
-      print('TasksNotifier.createTask error: $e');
       state = AsyncValue.error(e, st);
     }
   }

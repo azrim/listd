@@ -289,7 +289,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
 }
 
 class TaskEntry extends DataClass implements Insertable<TaskEntry> {
-  /// Unique identifier (Google Tasks API format)
+  /// Unique identifier
   final String id;
 
   /// Task title/text
@@ -823,7 +823,7 @@ class $TaskListsTable extends TaskLists
 }
 
 class TaskListEntry extends DataClass implements Insertable<TaskListEntry> {
-  /// Unique identifier (Google Tasks API format)
+  /// Unique identifier
   final String id;
 
   /// Display title of the task list

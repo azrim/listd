@@ -63,7 +63,7 @@ class TaskTile extends StatelessWidget {
                   boxShadow: task.isCompleted
                       ? [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.5),
+                            color: AppColors.primary.withValues(alpha: 0.5),
                             blurRadius: 10,
                           ),
                         ]
@@ -84,8 +84,8 @@ class TaskTile extends StatelessWidget {
                     task.title,
                     style: TextStyle(
                       color: task.isCompleted
-                          ? Colors.white.withOpacity(0.38)
-                          : Colors.white.withOpacity(0.92),
+                          ? Colors.white.withValues(alpha: 0.38)
+                          : Colors.white.withValues(alpha: 0.92),
                       decoration: task.isCompleted
                           ? TextDecoration.lineThrough
                           : null,
@@ -98,7 +98,7 @@ class TaskTile extends StatelessWidget {
                     Text(
                       task.notes,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 12,
                       ),
                       maxLines: 1,

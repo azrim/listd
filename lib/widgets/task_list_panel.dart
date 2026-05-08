@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../models/task.dart';
 import '../providers/tasks_provider.dart';
 import '../providers/ui_state_providers.dart';
 import '../theme/app_colors.dart';
-import 'glass_card.dart';
 
 /// Main task list panel - 3-column layout middle column
 class TaskListPanel extends ConsumerWidget {
@@ -47,7 +47,7 @@ class TaskListPanel extends ConsumerWidget {
 
   Widget _buildHeader(BuildContext context, WidgetRef ref) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.glassBorderSubtle, width: 1),
@@ -59,8 +59,8 @@ class TaskListPanel extends ConsumerWidget {
             child: Text(
               listName,
               style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -214,7 +214,9 @@ class _StatsStrip extends StatelessWidget {
     return tasksAsync.when(
       data: (tasks) {
         final total = tasks.where((t) => t.parentId == null).length;
-        final completed = tasks.where((t) => t.isCompleted && t.parentId == null).length;
+        final completed = tasks
+            .where((t) => t.isCompleted && t.parentId == null)
+            .length;
         final today = tasks.where((t) {
           if (t.due == null || t.parentId != null) return false;
           final today = DateTime.now();
@@ -225,9 +227,17 @@ class _StatsStrip extends StatelessWidget {
 
         if (total == 0) return const SizedBox.shrink();
 
-        return GlassCard(
+        return Container(
           margin: const EdgeInsets.symmetric(horizontal: 12),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A2040),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.15),
+              width: 1,
+            ),
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -290,10 +300,7 @@ class _StatItem extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textHint,
-          ),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF8C8A97)),
         ),
       ],
     );
@@ -318,86 +325,114 @@ class _TaskRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      padding: const EdgeInsets.all(12),
-      glowColor: isSelected ? AppColors.primary : null,
-      child: Row(
-        children: [
-          // Checkbox
-          GestureDetector(
-            onTap: onToggle,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: task.isCompleted
-                    ? AppColors.primary
-                    : Colors.transparent,
-                border: Border.all(
-                  color: task.isCompleted ? AppColors.primary : Colors.white38,
-                  width: 2,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2040),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected
+              ? AppColors.primary
+              : AppColors.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                  blurRadius: 12,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-              child: task.isCompleted
-                  ? const Icon(Icons.check, size: 13, color: Colors.white)
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Task content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               children: [
-                Text(
-                  task.title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: task.isCompleted
-                        ? AppColors.textHint
-                        : AppColors.textPrimary,
-                    decoration: task.isCompleted
-                        ? TextDecoration.lineThrough
+                // Checkbox
+                GestureDetector(
+                  onTap: onToggle,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: task.isCompleted
+                          ? AppColors.primary
+                          : Colors.transparent,
+                      border: Border.all(
+                        color: task.isCompleted
+                            ? AppColors.primary
+                            : const Color(0xFF5C5C5C),
+                        width: 2,
+                      ),
+                      boxShadow: task.isCompleted
+                          ? [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.4),
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: task.isCompleted
+                        ? const Icon(Icons.check, size: 13, color: Colors.white)
                         : null,
                   ),
                 ),
-                if (task.notes.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    task.notes,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                const SizedBox(width: 12),
+                // Task content
+                Expanded(
+                  child: Text(
+                    task.title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: task.isCompleted
+                          ? AppColors.textHint
+                          : const Color(0xFFEBEBEB),
+                      decoration: task.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
                     ),
-                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
+                ),
+                // Due date
+                if (task.due != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _formatDate(task.due!),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                // Star
+                if (task.isStarred) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.star, size: 18, color: Colors.amber),
                 ],
               ],
             ),
           ),
-          // Due date
-          if (task.due != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _formatDate(task.due!),
-                style: const TextStyle(fontSize: 11, color: AppColors.primary),
-              ),
-            ),
-          // Star
-          if (task.isStarred) ...[
-            const SizedBox(width: 8),
-            const Icon(Icons.star, size: 18, color: Colors.amber),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -439,8 +474,9 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
 
     setState(() => _isLoading = true);
     try {
+      final id = const Uuid().v4();
       final newTask = Task(
-        id: '',
+        id: id,
         title: title,
         updated: DateTime.now(),
         taskListId: widget.listId,
@@ -456,9 +492,17 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return Container(
       margin: const EdgeInsets.all(12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2040),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
       child: Row(
         children: [
           if (_isLoading)

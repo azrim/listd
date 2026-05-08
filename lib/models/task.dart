@@ -160,6 +160,7 @@ class Task {
     this.reminder,
     this.repeat,
     this.tags = const [],
+    this.userId = '',
   }) : assert(id.isNotEmpty, 'Task ID cannot be empty'),
        assert(title.isNotEmpty, 'Task title cannot be empty');
 
@@ -211,6 +212,9 @@ class Task {
   /// Tags associated with this task
   final List<String> tags;
 
+  /// User ID (for RLS in Supabase)
+  final String userId;
+
   /// Whether this task is completed
   bool get isCompleted => status == 'completed';
 
@@ -256,6 +260,7 @@ class Task {
     RepeatConfig? repeat,
     bool clearRepeat = false,
     List<String>? tags,
+    String? userId,
   }) {
     return Task(
       id: id ?? this.id,
@@ -274,6 +279,7 @@ class Task {
       reminder: clearReminder ? null : (reminder ?? this.reminder),
       repeat: clearRepeat ? null : (repeat ?? this.repeat),
       tags: tags ?? this.tags,
+      userId: userId ?? this.userId,
     );
   }
 
@@ -296,7 +302,8 @@ class Task {
         _listEqualsSteps(other.steps, steps) &&
         other.reminder == reminder &&
         other.repeat == repeat &&
-        _listEquals(other.tags, tags);
+        _listEquals(other.tags, tags) &&
+        other.userId == userId;
   }
 
   @override
@@ -317,6 +324,7 @@ class Task {
     reminder,
     repeat,
     tags,
+    userId,
   );
 
   static bool _listEquals<T>(List<T>? a, List<T>? b) {

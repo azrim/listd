@@ -20,22 +20,20 @@ class SidebarPanel extends ConsumerWidget {
     final taskListsAsync = ref.watch(taskListsStreamProvider);
 
     return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF0A1020),
-        border: const Border(
-          right: BorderSide(color: AppColors.glassBorderSubtle, width: 1),
-        ),
+      decoration: const BoxDecoration(
+        color: Color(0xFF0A1020),
+        border: Border(right: BorderSide(color: Color(0xFF1A2040), width: 1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHeader(),
-          Container(height: 1, color: AppColors.glassBorderSubtle),
+          Container(height: 1, color: const Color(0xFF1A2040)),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
-                _SectionHeader(title: 'MY DAY'),
+                const _SectionHeader(title: 'MY DAY'),
                 _SidebarItem(
                   icon: Icons.wb_sunny_outlined,
                   title: 'My Day',
@@ -61,9 +59,9 @@ class SidebarPanel extends ConsumerWidget {
                           SpecialListIds.planned,
                 ),
                 const SizedBox(height: 16),
-                Container(height: 1, color: AppColors.glassBorderSubtle),
+                Container(height: 1, color: const Color(0xFF1A2040)),
                 const SizedBox(height: 8),
-                _SectionHeader(title: 'MY LISTS'),
+                const _SectionHeader(title: 'MY LISTS'),
                 _SidebarItem(
                   icon: Icons.inbox,
                   title: 'Tasks',
@@ -98,16 +96,16 @@ class SidebarPanel extends ConsumerWidget {
                     padding: EdgeInsets.all(16),
                     child: Text(
                       'Failed to load lists',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: Color(0xFF8C8A97)),
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          Container(height: 1, color: AppColors.glassBorderSubtle),
+          Container(height: 1, color: const Color(0xFF1A2040)),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: _GlassButton(
               icon: Icons.add,
               label: 'New list',
@@ -130,23 +128,19 @@ class SidebarPanel extends ConsumerWidget {
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white10)),
-      ),
       child: Row(
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primaryContainer, AppColors.secondary],
-              ),
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(6),
             ),
             child: const Icon(
               Icons.check_circle_outline,
               color: Colors.white,
-              size: 20,
+              size: 18,
             ),
           ),
           const SizedBox(width: 12),
@@ -155,7 +149,7 @@ class SidebarPanel extends ConsumerWidget {
             style: GoogleFonts.manrope(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: Colors.white,
             ),
           ),
         ],
@@ -168,7 +162,7 @@ class SidebarPanel extends ConsumerWidget {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.bgContainerHigh,
+        backgroundColor: const Color(0xFF1A2040),
         title: Text(
           'New list',
           style: GoogleFonts.manrope(color: AppColors.textPrimary),
@@ -188,7 +182,7 @@ class SidebarPanel extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Cancel',
-              style: GoogleFonts.manrope(color: AppColors.textSecondary),
+              style: GoogleFonts.manrope(color: const Color(0xFF8C8A97)),
             ),
           ),
           FilledButton(
@@ -217,8 +211,8 @@ class _SectionHeader extends StatelessWidget {
         style: GoogleFonts.manrope(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: AppColors.textHint,
-          letterSpacing: 1.2,
+          color: const Color(0xFF8C8A97).withValues(alpha: 0.5),
+          letterSpacing: 1.5,
         ),
       ),
     );
@@ -240,9 +234,10 @@ class _SidebarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: isSelected
-            ? AppColors.primary.withOpacity(0.15)
+            ? AppColors.primary.withValues(alpha: 0.15)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         border: isSelected
@@ -253,6 +248,7 @@ class _SidebarItem extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
@@ -261,8 +257,8 @@ class _SidebarItem extends StatelessWidget {
                   icon,
                   size: 20,
                   color: isSelected
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
+                      ? Colors.white
+                      : const Color(0xFF8C8A97).withValues(alpha: 0.7),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -274,8 +270,8 @@ class _SidebarItem extends StatelessWidget {
                           ? FontWeight.w600
                           : FontWeight.normal,
                       color: isSelected
-                          ? AppColors.textPrimary
-                          : AppColors.textSecondary,
+                          ? Colors.white
+                          : const Color(0xFF8C8A97).withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -300,39 +296,51 @@ class _TaskListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: isSelected
-          ? AppColors.secondaryContainer.withAlpha(77)
-          : Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            children: [
-              Icon(
-                taskList.isDefault ? Icons.star : Icons.list,
-                size: 20,
-                color: taskList.isDefault
-                    ? AppColors.primaryLight
-                    : AppColors.textSecondary,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  taskList.title,
-                  style: GoogleFonts.manrope(
-                    fontSize: 14,
-                    fontWeight: isSelected
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                    color: isSelected
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? AppColors.primary.withValues(alpha: 0.15)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: isSelected
+            ? Border(left: BorderSide(color: AppColors.primary, width: 3))
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                Icon(
+                  taskList.isDefault ? Icons.star : Icons.list,
+                  size: 20,
+                  color: taskList.isDefault
+                      ? Colors.amber
+                      : const Color(0xFF8C8A97).withValues(alpha: 0.7),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    taskList.title,
+                    style: GoogleFonts.manrope(
+                      fontSize: 14,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xFF8C8A97).withValues(alpha: 0.7),
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -352,31 +360,33 @@ class _GlassButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.glassWhite,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onPressed,
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2040),
         borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.glassBorderSubtle),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: AppColors.textSecondary),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: GoogleFonts.manrope(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
+        border: Border.all(color: const Color(0xFF2A2A3A), width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 18, color: const Color(0xFF8C8A97)),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: GoogleFonts.manrope(
+                    fontSize: 14,
+                    color: const Color(0xFF8C8A97),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

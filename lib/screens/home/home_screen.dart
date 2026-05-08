@@ -122,7 +122,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Container(width: 1, color: AppColors.glassBorderSubtle),
 
             // Col 2: Task list - shrinks when detail panel opens
-            // Use a flexible container instead of Expanded when panel is open
             Expanded(
               flex: showDetailPanel ? 1 : 1,
               child: TaskListPanel(
@@ -140,21 +139,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               curve: Curves.easeInOut,
               width: showDetailPanel ? 320 : 0,
               child: showDetailPanel
-                  ? Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF0A1020), Color(0xFF0D1535)],
+                  ? ClipRect(
+                      child: OverflowBox(
+                        maxWidth: 320,
+                        minWidth: 320,
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          width: 320,
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF0A1020), Color(0xFF0D1535)],
+                            ),
+                          ),
+                          child: TaskDetailPanel(
+                            task: selectedTask,
+                            listId: selectedListId ?? SpecialListIds.tasks,
+                            onClose: () {
+                              ref.read(selectedTaskIdProvider.notifier).state =
+                                  null;
+                            },
+                          ),
                         ),
-                      ),
-                      child: TaskDetailPanel(
-                        task: selectedTask,
-                        listId: selectedListId ?? SpecialListIds.tasks,
-                        onClose: () {
-                          ref.read(selectedTaskIdProvider.notifier).state =
-                              null;
-                        },
                       ),
                     )
                   : const SizedBox.shrink(),

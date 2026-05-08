@@ -138,7 +138,7 @@ class FoldersScreen extends ConsumerWidget {
         return GlassCard(
           child: Center(
             child: CircularProgressIndicator(
-              color: AppColors.primary.withOpacity(0.5),
+              color: AppColors.primary.withValues(alpha: 0.5),
               strokeWidth: 2,
             ),
           ),
@@ -279,7 +279,7 @@ class _FolderCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.15),
+                      color: accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(Icons.folder, color: accentColor, size: 24),
@@ -329,14 +329,14 @@ class _CreateFolderCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.textSecondary.withOpacity(0.3),
+            color: AppColors.textSecondary.withValues(alpha: 0.3),
             width: 2,
             strokeAlign: BorderSide.strokeAlignInside,
           ),
         ),
         child: CustomPaint(
           painter: _DashedBorderPainter(
-            color: AppColors.textSecondary.withOpacity(0.3),
+            color: AppColors.textSecondary.withValues(alpha: 0.3),
           ),
           child: Center(
             child: Column(

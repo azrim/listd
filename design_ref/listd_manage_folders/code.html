@@ -1,0 +1,294 @@
+<!DOCTYPE html><html class="light zomyhygdy efyokqeibj" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Listd - Folders</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-primary": "#c3c0ff",
+                        "background": "#f7f9fb",
+                        "tertiary-fixed": "#dbe1ff",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#5654a8",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-surface": "#191c1e",
+                        "tertiary": "#172245",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "on-secondary-fixed": "#07006c",
+                        "primary-container": "#312e81",
+                        "secondary-fixed": "#e1e0ff",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#bac5f0",
+                        "on-background": "#191c1e",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary-fixed-variant": "#3e3c8f",
+                        "on-tertiary-fixed-variant": "#3a456a",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f7f9fb",
+                        "secondary": "#4648d4",
+                        "on-surface-variant": "#474651",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "primary": "#1a146b",
+                        "outline": "#777682",
+                        "on-primary-fixed": "#100563",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-container": "#eceef0",
+                        "surface": "#f7f9fb",
+                        "on-primary-container": "#9c9af4",
+                        "inverse-surface": "#2d3133",
+                        "on-tertiary-container": "#97a2cc",
+                        "on-tertiary-fixed": "#0d1a3c",
+                        "secondary-container": "#6063ee",
+                        "surface-dim": "#d8dadc",
+                        "outline-variant": "#c8c5d3",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "on-secondary-container": "#fffbff",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#2d385c",
+                        "primary-fixed": "#e2dfff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "stack-lg": "24px",
+                        "inset-squish": "8px 16px",
+                        "stack-sm": "4px",
+                        "inset-stretch": "16px 24px",
+                        "margin-page": "40px",
+                        "stack-md": "12px",
+                        "container-max": "1200px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "display": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "h2": ["Manrope"],
+                        "h1": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "h3": ["Manrope"],
+                        "body-sm": ["Manrope"],
+                        "label-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "display": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "h2": ["24px", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "h1": ["32px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "h3": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #f7f9fb; }
+    </style>
+</head>
+<body class="text-on-background font-body-md text-body-md flex h-screen overflow-hidden">
+<!-- SideNavBar (WEB) -->
+<aside class="hidden md:flex flex-col h-screen py-gutter bg-surface-container-low dark:bg-surface-container-lowest docked left-0 w-64 border-r border-outline-variant dark:border-outline shadow-sm shrink-0">
+<div class="px-gutter mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg flex items-center justify-center text-on-primary font-h2 text-h2 overflow-hidden bg-transparent"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsskh6sOJFhl9NRjqKfdasGzxhmlB1dskJzCiZuwTvD-2OX0PugPyF9YAziHb98mGyRG3EnuJXLN79nAkG_sb1MIDaHmlCDcmXO8kMAqEmn6afHIuBitW5t34Uh-2r_UXaPgFyTL5egftym8OeceFbapMYT8LjiNv2bw_hmFBOEs3m94XBZYhppSli08s3gYpWeO7Aqiw9F1b9jQrNPO8WXJBO9UxdO3ey9J5lDw3RMo4vwtLjFLTWELSUPpEQB-LnrFsNXITVtTk" alt="Listd Logo" class="w-full h-full object-contain rounded-lg"></div>
+<div>
+<h1 class="font-h2 text-h2 font-bold text-primary dark:text-primary-fixed leading-none">Listd</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Productivity</p>
+</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-primary-container text-on-primary flex items-center justify-center gap-2 py-3 rounded-lg font-h3 text-h3 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined">add</span>
+                New Task
+            </button>
+</div>
+<nav class="flex-1 px-2 space-y-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">today</span>
+                My Day
+            </a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">star</span>
+                Important
+            </a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+                Planned
+            </a>
+<a class="flex items-center gap-3 px-4 py-2 bg-secondary-container dark:bg-primary-container text-on-secondary-container dark:text-on-primary-container font-semibold rounded-lg mx-2 scale-98 transition-transform font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">folder</span>
+                Folders
+            </a>
+</nav>
+<div class="px-2 mt-auto pt-4 border-t border-outline-variant/30 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+                Help
+            </a>
+</div>
+</aside>
+<!-- TopAppBar (MOBILE) -->
+<header class="md:hidden flex justify-between items-center w-full px-base h-16 bg-surface-container-lowest dark:bg-background border-b border-outline-variant dark:border-outline shadow-sm docked full-width top-0 fixed z-50">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-transparent flex items-center justify-center overflow-hidden"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsskh6sOJFhl9NRjqKfdasGzxhmlB1dskJzCiZuwTvD-2OX0PugPyF9YAziHb98mGyRG3EnuJXLN79nAkG_sb1MIDaHmlCDcmXO8kMAqEmn6afHIuBitW5t34Uh-2r_UXaPgFyTL5egftym8OeceFbapMYT8LjiNv2bw_hmFBOEs3m94XBZYhppSli08s3gYpWeO7Aqiw9F1b9jQrNPO8WXJBO9UxdO3ey9J5lDw3RMo4vwtLjFLTWELSUPpEQB-LnrFsNXITVtTk" alt="Listd Logo" class="w-full h-full object-contain rounded-lg"></div>
+<div class="font-h2 text-h2 font-bold text-primary dark:text-primary-fixed leading-none">Listd</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-primary dark:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-primary dark:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors rounded-full">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<img alt="User profile" class="w-8 h-8 rounded-full border border-outline-variant object-cover" data-alt="A close-up studio portrait of a professional individual with soft, even lighting against a neutral background. The subject has a calm, approachable expression, suitable for a corporate or productivity app profile picture. The overall tone is modern, clean, and high-quality, fitting a polished user interface design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHhQmDfds2KpsEP3ShB_jEs5WuPxpzqQsMuaGX89kJoXcRzJfIqnippEjvEHol-d1VpKaJtuRcpVW9pguXpnmQMKql3LhXVIOO69zx-h0MS1NmeJGpdZh2Y0jW-LU7VZMx3IFGZKr2nrewnI_sotV2igLw0Cp4QGnTgY9h4AohKARvFO4ibZ8TKUmMSXPNjyWv5JILfet83zf3E1XRUu4wAKKZbO3RTlqQ2gZ6ohuz5okhxf8L4GqMv-7xGw_D2Vd5yK_Oa4xAkz0">
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto w-full pt-16 md:pt-0 pb-20 md:pb-0">
+<div class="max-w-[1200px] mx-auto px-margin-page py-margin-page">
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
+<div>
+<h2 class="font-h1 text-h1 text-on-background mb-1">Folders</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Organize your tasks across different projects and contexts.</p>
+</div>
+<button class="bg-primary-container text-on-primary hover:bg-primary-container/90 transition-colors px-inset-stretch py-2 rounded-lg font-h3 text-h3 flex items-center gap-2 shadow-sm shrink-0">
+<span class="material-symbols-outlined">create_new_folder</span>
+                    Create New Folder
+                </button>
+</div>
+<!-- Folders Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Folder Card: Work -->
+<div class="group bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-6 hover:shadow-[0_10px_15px_-3px_rgba(49,46,129,0.05)] transition-all duration-200 relative overflow-hidden flex flex-col h-48">
+<div class="absolute top-0 left-0 w-full h-1 bg-secondary"></div>
+<div class="flex justify-between items-start mb-auto">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low flex items-center justify-center text-secondary mb-4">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">work</span>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div>
+<h3 class="font-h2 text-h2 text-on-background mb-1">Work</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">24 Active Tasks</p>
+</div>
+</div>
+<!-- Folder Card: Personal -->
+<div class="group bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-6 hover:shadow-[0_10px_15px_-3px_rgba(49,46,129,0.05)] transition-all duration-200 relative overflow-hidden flex flex-col h-48">
+<div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
+<div class="flex justify-between items-start mb-auto">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low flex items-center justify-center text-emerald-600 mb-4">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div>
+<h3 class="font-h2 text-h2 text-on-background mb-1">Personal</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">8 Active Tasks</p>
+</div>
+</div>
+<!-- Folder Card: Shopping -->
+<div class="group bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-6 hover:shadow-[0_10px_15px_-3px_rgba(49,46,129,0.05)] transition-all duration-200 relative overflow-hidden flex flex-col h-48">
+<div class="absolute top-0 left-0 w-full h-1 bg-amber-500"></div>
+<div class="flex justify-between items-start mb-auto">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low flex items-center justify-center text-amber-600 mb-4">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">shopping_cart</span>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div>
+<h3 class="font-h2 text-h2 text-on-background mb-1">Shopping</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">15 Active Tasks</p>
+</div>
+</div>
+<!-- Folder Card: Fitness -->
+<div class="group bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-6 hover:shadow-[0_10px_15px_-3px_rgba(49,46,129,0.05)] transition-all duration-200 relative overflow-hidden flex flex-col h-48">
+<div class="absolute top-0 left-0 w-full h-1 bg-rose-500"></div>
+<div class="flex justify-between items-start mb-auto">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low flex items-center justify-center text-rose-600 mb-4">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div>
+<h3 class="font-h2 text-h2 text-on-background mb-1">Fitness</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">4 Active Tasks</p>
+</div>
+</div>
+<!-- Folder Card: Projects -->
+<div class="group bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-6 hover:shadow-[0_10px_15px_-3px_rgba(49,46,129,0.05)] transition-all duration-200 relative overflow-hidden flex flex-col h-48 md:col-span-2 lg:col-span-1">
+<div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+<div class="flex justify-between items-start mb-auto">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low flex items-center justify-center text-primary mb-4">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div>
+<h3 class="font-h2 text-h2 text-on-background mb-1">Projects</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">32 Active Tasks</p>
+</div>
+</div>
+<!-- Add New Folder Ghost Card -->
+<button class="border-2 border-dashed border-outline-variant/50 rounded-xl p-6 hover:border-primary hover:bg-surface-container-low/50 transition-all duration-200 flex flex-col items-center justify-center h-48 group">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-primary-fixed group-hover:text-primary transition-colors mb-3">
+<span class="material-symbols-outlined text-2xl">add</span>
+</div>
+<span class="font-h3 text-h3 text-on-surface-variant group-hover:text-primary transition-colors">Create Folder</span>
+</button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (MOBILE) - Contextual suppression not applied as this is a top level dest -->
+<nav class="md:hidden fixed bottom-0 w-full bg-surface-container-lowest dark:bg-background border-t border-outline-variant dark:border-outline flex justify-around items-center h-16 pb-safe z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+<a class="flex flex-col items-center justify-center w-full h-full text-on-surface-variant" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]">today</span>
+<span class="font-label-md text-[10px]">My Day</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-on-surface-variant" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]">star</span>
+<span class="font-label-md text-[10px]">Important</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-primary font-bold" href="#">
+<div class="px-4 py-1 rounded-full bg-secondary-container mb-1">
+<span class="material-symbols-outlined text-[24px] text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">folder</span>
+</div>
+<span class="font-label-md text-[10px]">Folders</span>
+</a>
+</nav>
+
+
+</body></html>

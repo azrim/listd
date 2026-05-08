@@ -1,0 +1,340 @@
+<!DOCTYPE html><html class="light wtssjhgu tdpbjehzl" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Listd - Work Folder</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts: Manrope for Typography -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+        /* Base styles to ensure proper rendering of Material Symbols */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom Checkbox styles matching 'Structured Clarity' */
+        .task-checkbox {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid theme('colors.outline-variant');
+            border-radius: theme('borderRadius.DEFAULT');
+            outline: none;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease-in-out;
+            background-color: transparent;
+        }
+        .task-checkbox:checked {
+            background-color: theme('colors.secondary-container');
+            border-color: theme('colors.secondary-container');
+        }
+        .task-checkbox:checked::after {
+            content: 'check';
+            font-family: 'Material Symbols Outlined';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: theme('colors.on-secondary-container');
+            font-size: 14px;
+            font-weight: 700;
+        }
+        
+        /* Task Row Interaction */
+        .task-row:has(.task-checkbox:checked) .task-text {
+            text-decoration: line-through;
+            color: theme('colors.on-surface-variant');
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#f7f9fb",
+                        "secondary": "#4648d4",
+                        "on-primary-container": "#9c9af4",
+                        "outline-variant": "#c8c5d3",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#3a456a",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-container-highest": "#e0e3e5",
+                        "secondary-fixed": "#e1e0ff",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-surface-variant": "#474651",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "tertiary-fixed-dim": "#bac5f0",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-primary-fixed-variant": "#3e3c8f",
+                        "tertiary-fixed": "#dbe1ff",
+                        "secondary-container": "#6063ee",
+                        "on-tertiary-fixed": "#0d1a3c",
+                        "tertiary": "#172245",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "inverse-surface": "#2d3133",
+                        "tertiary-container": "#2d385c",
+                        "background": "#f7f9fb",
+                        "on-primary-fixed": "#100563",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "on-background": "#191c1e",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "primary": "#1a146b",
+                        "surface-dim": "#d8dadc",
+                        "on-surface": "#191c1e",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#c3c0ff",
+                        "primary-container": "#312e81",
+                        "outline": "#777682",
+                        "primary-fixed": "#e2dfff",
+                        "on-tertiary-container": "#97a2cc",
+                        "on-secondary-container": "#fffbff",
+                        "surface-tint": "#5654a8",
+                        "surface": "#f7f9fb",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#07006c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-sm": "4px",
+                        "stack-lg": "24px",
+                        "container-max": "1200px",
+                        "base": "8px",
+                        "margin-page": "40px",
+                        "inset-stretch": "16px 24px",
+                        "stack-md": "12px",
+                        "inset-squish": "8px 16px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "h3": ["Manrope"],
+                        "body-sm": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "h1": ["Manrope"],
+                        "display": ["Manrope"],
+                        "h2": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "h3": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "h1": ["32px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "display": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "h2": ["24px", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface-bright text-on-surface h-screen w-full flex overflow-hidden font-body-md text-body-md">
+<!-- SideNavBar (Hidden on Mobile, Visible on Desktop) -->
+<nav class="hidden md:flex flex-col h-screen py-gutter w-64 bg-surface-container-low shadow-sm border-r border-outline-variant flex-shrink-0 z-20">
+<!-- Header -->
+<div class="px-gutter mb-stack-lg flex items-center gap-stack-md">
+<img alt="Listd Workspace" class="w-10 h-10 shadow-sm rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsskh6sOJFhl9NRjqKfdasGzxhmlB1dskJzCiZuwTvD-2OX0PugPyF9YAziHb98mGyRG3EnuJXLN79nAkG_sb1MIDaHmlCDcmXO8kMAqEmn6afHIuBitW5t34Uh-2r_UXaPgFyTL5egftym8OeceFbapMYT8LjiNv2bw_hmFBOEs3m94XBZYhppSli08s3gYpWeO7Aqiw9F1b9jQrNPO8WXJBO9UxdO3ey9J5lDw3RMo4vwtLjFLTWELSUPpEQB-LnrFsNXITVtTk">
+<div>
+<h2 class="font-h2 text-h2 font-bold text-primary">Listd</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Productivity</p>
+</div>
+</div>
+<!-- CTA -->
+<div class="px-gutter mb-stack-lg">
+<button class="w-full bg-primary-container text-on-primary-container font-label-md text-label-md py-3 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Task
+            </button>
+</div>
+<!-- Primary Navigation -->
+<div class="flex-1 overflow-y-auto px-2 space-y-1">
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-high transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">today</span>
+<span class="font-body-md text-body-md">My Day</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-high transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">star</span>
+<span class="font-body-md text-body-md">Important</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-high transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">calendar_month</span>
+<span class="font-body-md text-body-md">Planned</span>
+</a>
+<!-- Active State: Folders -->
+<a class="flex items-center justify-between bg-secondary-container text-on-secondary-container font-semibold rounded-lg mx-2 px-4 py-2 shadow-sm scale-98 transition-transform" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">folder</span>
+<span class="font-body-md text-body-md">Folders</span>
+</div>
+<span class="material-symbols-outlined text-[18px]">expand_more</span>
+</a>
+<!-- Sub-folder (simulated hierarchy for context) -->
+<div class="pl-12 pr-4 py-2 mt-1">
+<a class="flex items-center gap-2 text-primary font-body-sm text-body-sm font-semibold" href="#">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                    Work
+                </a>
+</div>
+</div>
+<!-- Footer Navigation -->
+<div class="px-2 mt-auto pt-stack-lg space-y-1 border-t border-outline-variant/30">
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-high transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-high transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">help_outline</span>
+<span class="font-body-md text-body-md">Help</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 bg-surface-bright relative">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-base h-16 bg-surface-container-lowest shadow-sm flex-shrink-0 z-10 sticky top-0">
+<!-- Left Area: Mobile Brand Logo & Desktop Search -->
+<div class="flex items-center gap-stack-md flex-1">
+<button class="md:hidden p-2 text-on-surface-variant">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsskh6sOJFhl9NRjqKfdasGzxhmlB1dskJzCiZuwTvD-2OX0PugPyF9YAziHb98mGyRG3EnuJXLN79nAkG_sb1MIDaHmlCDcmXO8kMAqEmn6afHIuBitW5t34Uh-2r_UXaPgFyTL5egftym8OeceFbapMYT8LjiNv2bw_hmFBOEs3m94XBZYhppSli08s3gYpWeO7Aqiw9F1b9jQrNPO8WXJBO9UxdO3ey9J5lDw3RMo4vwtLjFLTWELSUPpEQB-LnrFsNXITVtTk" alt="Listd Logo" class="md:hidden w-10 h-10 shadow-sm rounded-lg ml-2">
+<!-- Search Bar (on_left) -->
+<div class="hidden md:flex items-center bg-surface-container-low rounded-full px-4 py-2 ml-4 w-64 border border-transparent focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/10 transition-all">
+<span class="material-symbols-outlined text-outline text-[20px] mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm font-body-sm text-on-surface w-full placeholder:text-outline-variant p-0" placeholder="Search tasks..." type="text">
+</div>
+</div>
+<!-- Right Area: Trailing Actions -->
+<div class="flex items-center gap-2">
+<button aria-label="notifications" class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button aria-label="help" class="hidden sm:block p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full">
+<span class="material-symbols-outlined">help</span>
+</button>
+<button aria-label="settings" class="hidden sm:block p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="ml-2 pl-2 border-l border-outline-variant h-8 flex items-center">
+<button class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant shadow-sm hover:ring-2 hover:ring-secondary transition-all">
+<img alt="User profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0w9ZmP1CEGvY_M2bhukIPNVjFvH4kVhQHtyqJNdCOjdkQ-wgpJb1AAleUkcckW5yPcoOgprvhHcY12c-UBoeB6Lw2_A1zK3ERv9wec5SiZTkKxzQ8EPntYIxktOvyZrTdPszDqfC0pnHAGz_fTPMm7FGxaM6z4HEKqtwD-OY3kfVQMtLMQlbjscgwHjursVcW0yTlz17sieN_Ix2VUd2gN38D4Y6afXBm2w9TirQ9cXAdccvHFBB99NzpOMvmt3IwWP9S6W-yx_0">
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas (Deep Work Area) -->
+<main class="flex-1 overflow-y-auto p-gutter md:p-margin-page">
+<div class="max-w-[800px] mx-auto w-full">
+<!-- Folder Header Area -->
+<div class="mb-8 md:mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+<div>
+<div class="flex items-center gap-3 text-secondary mb-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">folder</span>
+<span class="font-label-md text-label-md uppercase tracking-wider">Folder</span>
+</div>
+<h1 class="font-display text-display text-on-surface">Work</h1>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm py-2 px-3 rounded-lg hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-[18px]">share</span>
+                            Share
+                        </button>
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm py-2 px-3 rounded-lg hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Task Entry Input (Bento-style isolated card) -->
+<div class="bg-surface-container-lowest rounded-xl p-2 mb-stack-lg shadow-sm border border-outline-variant flex items-center focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/10 transition-all">
+<span class="material-symbols-outlined text-outline ml-3 mr-2">add</span>
+<input class="flex-1 bg-transparent border-none focus:ring-0 font-body-md text-body-md text-on-surface placeholder:text-outline-variant py-3 px-2" placeholder="Add a task to 'Work'..." type="text">
+</div>
+<!-- Task List -->
+<div class="space-y-1">
+<!-- Task Item 1 -->
+<div class="task-row group flex items-center justify-between p-3 md:p-4 rounded-xl hover:bg-surface-container-low transition-colors border-b border-surface-container-high hover:border-transparent">
+<div class="flex items-center gap-4 flex-1">
+<input class="task-checkbox shrink-0" type="checkbox">
+<div class="flex flex-col flex-1 min-w-0">
+<span class="task-text font-body-md text-body-md text-on-surface truncate">Update Q3 Marketing Deck</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px] text-error">flag</span>
+                                    Due Tomorrow
+                                </span>
+</div>
+</div>
+<button class="p-2 text-outline hover:text-secondary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all ml-4">
+<span class="material-symbols-outlined">star</span>
+</button>
+</div>
+<!-- Task Item 2 -->
+<div class="task-row group flex items-center justify-between p-3 md:p-4 rounded-xl hover:bg-surface-container-low transition-colors border-b border-surface-container-high hover:border-transparent">
+<div class="flex items-center gap-4 flex-1">
+<input class="task-checkbox shrink-0" type="checkbox">
+<div class="flex flex-col flex-1 min-w-0">
+<span class="task-text font-body-md text-body-md text-on-surface truncate">Review vendor proposals</span>
+<div class="flex items-center gap-2 mt-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-md text-[10px]">Budget</span>
+</div>
+</div>
+</div>
+<button class="p-2 text-secondary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all ml-4">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</button>
+</div>
+<!-- Task Item 3 -->
+<div class="task-row group flex items-center justify-between p-3 md:p-4 rounded-xl hover:bg-surface-container-low transition-colors border-b border-surface-container-high hover:border-transparent">
+<div class="flex items-center gap-4 flex-1">
+<input class="task-checkbox shrink-0" type="checkbox">
+<div class="flex flex-col flex-1 min-w-0">
+<span class="task-text font-body-md text-body-md text-on-surface truncate">Draft all-hands meeting agenda</span>
+</div>
+</div>
+<button class="p-2 text-outline hover:text-secondary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all ml-4">
+<span class="material-symbols-outlined">star</span>
+</button>
+</div>
+<!-- Task Item 4 (Completed State Simulation) -->
+<div class="task-row group flex items-center justify-between p-3 md:p-4 rounded-xl hover:bg-surface-container-low transition-colors border-b border-surface-container-high hover:border-transparent">
+<div class="flex items-center gap-4 flex-1">
+<input checked="" class="task-checkbox shrink-0" type="checkbox">
+<div class="flex flex-col flex-1 min-w-0">
+<span class="task-text font-body-md text-body-md text-on-surface truncate">Approve expense reports for July</span>
+</div>
+</div>
+<button class="p-2 text-outline hover:text-secondary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all ml-4">
+<span class="material-symbols-outlined">star</span>
+</button>
+</div>
+</div>
+<!-- Empty State padding -->
+<div class="h-32"></div>
+</div>
+</main>
+</div>
+
+
+</body></html>

@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../config/app_config.dart';
+
 /// Service for initializing and accessing Supabase client.
 class SupabaseClientService {
   SupabaseClientService._();
@@ -10,9 +12,8 @@ class SupabaseClientService {
   /// Initialize Supabase. Call this before runApp().
   static Future<void> initialize() async {
     await Supabase.initialize(
-      url: 'https://vkigvohwlgvhudlwhlyh.supabase.co',
-      anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZraWd2b2h3bGd2aHVkbHdobHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzM4NzQsImV4cCI6MjA5Mzc0OTg3NH0.jll8L5D-KB3zc1U7k23OVUDI2_wCM3loSdncFBi-dJM',
+      url: AppConfig.supabaseUrl,
+      anonKey: AppConfig.supabaseAnonKey,
     );
     _client = Supabase.instance.client;
   }

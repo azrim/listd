@@ -43,15 +43,11 @@ final taskListsStreamProvider = StreamProvider<List<TaskList>>((ref) async* {
     return;
   }
 
-  print('taskListsStreamProvider: Syncing from Supabase');
-
   try {
     final provider = ref.read(supabaseTasksProviderProvider);
     final remoteLists = await provider.getTaskLists();
-    print('taskListsStreamProvider: Got ${remoteLists.length} lists');
     yield remoteLists;
   } catch (e) {
-    print('taskListsStreamProvider: Error - $e');
     yield [];
   }
 });
@@ -114,7 +110,6 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
   }
 
   Future<void> createTaskList(String title) async {
-    print('TaskListsNotifier.createTaskList: $title');
     try {
       final authState = _ref.read(authNotifierProvider);
       if (authState is! AuthAuthenticated) {
@@ -122,9 +117,7 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
       }
 
       final provider = _ref.read(supabaseTasksProviderProvider);
-      print('TaskListsNotifier: Creating via Supabase...');
       await provider.createTaskList(title);
-      print('TaskListsNotifier: Created');
 
       // Trigger stream refresh
       _ref.read(taskListsRefreshProvider.notifier).state++;
@@ -132,7 +125,6 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
       // Also refresh state
       await _syncFromRemote();
     } catch (e) {
-      print('TaskListsNotifier: Error - $e');
       await refresh();
     }
   }

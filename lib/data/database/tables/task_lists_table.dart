@@ -3,10 +3,10 @@ import 'package:drift/drift.dart';
 /// Drift table definition for task lists.
 ///
 /// This table stores task list entities with sync status for tracking
-/// changes that need to be pushed to Google Tasks API.
+/// changes that need to be pushed to Supabase.
 @DataClassName('TaskListEntry')
 class TaskLists extends Table {
-  /// Unique identifier (Google Tasks API format)
+  /// Unique identifier
   TextColumn get id => text()();
 
   /// Display title of the task list

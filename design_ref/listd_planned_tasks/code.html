@@ -1,0 +1,355 @@
+<!DOCTYPE html><html lang="en" class=" oaope wwslx"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Listd - Planned</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#07006c",
+                        "secondary-fixed": "#e1e0ff",
+                        "on-surface": "#191c1e",
+                        "on-primary": "#ffffff",
+                        "primary": "#1a146b",
+                        "surface": "#f7f9fb",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary-container": "#6063ee",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "on-surface-variant": "#474651",
+                        "tertiary-container": "#2d385c",
+                        "surface-variant": "#e0e3e5",
+                        "outline": "#777682",
+                        "on-primary-container": "#9c9af4",
+                        "on-primary-fixed": "#100563",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#dbe1ff",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed-dim": "#bac5f0",
+                        "inverse-primary": "#c3c0ff",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-error": "#ffffff",
+                        "tertiary": "#172245",
+                        "primary-container": "#312e81",
+                        "on-background": "#191c1e",
+                        "surface-tint": "#5654a8",
+                        "on-tertiary-fixed": "#0d1a3c",
+                        "on-tertiary-container": "#97a2cc",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "inverse-surface": "#2d3133",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-container-high": "#e6e8ea",
+                        "primary-fixed": "#e2dfff",
+                        "on-tertiary-fixed-variant": "#3a456a",
+                        "on-primary-fixed-variant": "#3e3c8f",
+                        "surface-dim": "#d8dadc",
+                        "surface-bright": "#f7f9fb",
+                        "secondary": "#4648d4",
+                        "outline-variant": "#c8c5d3",
+                        "on-secondary-container": "#fffbff",
+                        "on-error-container": "#93000a",
+                        "background": "#f7f9fb",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-md": "12px",
+                        "base": "8px",
+                        "stack-lg": "24px",
+                        "stack-sm": "4px",
+                        "inset-stretch": "16px 24px",
+                        "container-max": "1200px",
+                        "margin-page": "40px",
+                        "gutter": "24px",
+                        "inset-squish": "8px 16px"
+                    },
+                    "fontFamily": {
+                        "h1": ["Manrope"],
+                        "h3": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "body-sm": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "h2": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "h1": ["32px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "h3": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "display": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "h2": ["24px", {"lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .custom-checkbox input:checked + div {
+            background-color: #6366F1;
+            border-color: #6366F1;
+        }
+        .custom-checkbox input:checked + div span {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-screen py-gutter bg-surface-container-low border-r border-outline-variant shadow-sm w-64 shrink-0">
+<div class="px-gutter mb-stack-lg">
+<div class="flex items-center gap-stack-md">
+<div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center p-1 shadow-sm">
+    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsskh6sOJFhl9NRjqKfdasGzxhmlB1dskJzCiZuwTvD-2OX0PugPyF9YAziHb98mGyRG3EnuJXLN79nAkG_sb1MIDaHmlCDcmXO8kMAqEmn6afHIuBitW5t34Uh-2r_UXaPgFyTL5egftym8OeceFbapMYT8LjiNv2bw_hmFBOEs3m94XBZYhppSli08s3gYpWeO7Aqiw9F1b9jQrNPO8WXJBO9UxdO3ey9J5lDw3RMo4vwtLjFLTWELSUPpEQB-LnrFsNXITVtTk" alt="Listd Logo" class="w-full h-full object-contain p-0.5">
+</div>
+<div>
+<h1 class="font-h2 text-h2 font-bold text-primary">Listd</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Productivity</p>
+</div>
+</div>
+</div>
+<div class="px-gutter mb-stack-lg">
+<button class="w-full bg-primary-container text-on-primary rounded-lg py-3 flex items-center justify-center gap-2 hover:bg-opacity-90 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+<span class="font-body-md text-body-md font-semibold">New Task</span>
+</button>
+</div>
+<ul class="flex-1 px-base space-y-1">
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">today</span>
+<span class="">My Day</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">star</span>
+<span class="">Important</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 bg-secondary-container text-on-secondary-container font-semibold rounded-lg mx-2 px-4 py-2 scale-98 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="">Planned</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">folder</span>
+<span class="">Folders</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto px-base border-t border-outline-variant pt-stack-md">
+<ul class="space-y-1">
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="">Settings</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="">Help</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col h-full overflow-hidden">
+<!-- TopAppBar (Web version since Mobile is hidden) -->
+<header class="flex justify-between items-center w-full px-base h-16 bg-surface-container-lowest border-b border-outline-variant shadow-sm shrink-0">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-on-surface-variant p-2">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="font-h2 text-h2 font-bold text-primary md:hidden">Listd</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors hidden md:block">
+<span class="material-symbols-outlined">help</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors hidden md:block">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="User profile" data-alt="A professional headshot of a person, conveying a calm and competent demeanor suitable for a productivity app context. High-key lighting, modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsm_UrKsRQFa7KHBmeN_xY6CGILbGezxkk_J0XDnsRDee9DzwneL-ZyfS_w2mE5fhO9u407dAnu05-E8fE6iId3K1scGuyMeLNxKNijhsF7WGiTV5YfMIErnk6dNGJmw3tya_qCgYouUZzjVKL06MCFFterKQ5h3d_OMhsSZ6mSptP4JcdMUqB-vMXrQG3p_LhI6h7sacXL2GdSW_81I1p-AKA71mZ0cC8japd9mFd7Xgx3rd1jsz_P_Wl40bEJN1sTpeyYJgPymo">
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 overflow-y-auto p-margin-page bg-background">
+<div class="max-w-container-max mx-auto">
+<h2 class="font-h1 text-h1 text-primary mb-stack-lg">Planned</h2>
+<!-- Overdue Section -->
+<section class="mb-10">
+<h3 class="font-h3 text-h3 text-error mb-stack-md flex items-center gap-2 border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined text-error">warning</span>
+                        Overdue
+                    </h3>
+<div class="space-y-2">
+<!-- Task Item -->
+<div class="group flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-lowest transition-colors border-b border-outline-variant hover:border-transparent cursor-pointer">
+<div class="flex items-center gap-4">
+<label class="custom-checkbox relative cursor-pointer">
+<input class="sr-only" type="checkbox">
+<div class="w-5 h-5 border-2 border-outline rounded flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-white text-[14px] hidden">check</span>
+</div>
+</label>
+<div>
+<p class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Submit quarterly financial report</p>
+<div class="flex items-center gap-3 mt-1">
+<span class="font-body-sm text-body-sm text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                                            Yesterday
+                                        </span>
+<span class="font-label-md text-label-md bg-surface-container px-2 py-1 rounded text-on-surface-variant">Finance</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Today Section -->
+<section class="mb-10">
+<h3 class="font-h3 text-h3 text-primary mb-stack-md flex items-center gap-2 border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined text-primary">today</span>
+                        Today
+                    </h3>
+<div class="space-y-2">
+<!-- Task Item -->
+<div class="group flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-lowest transition-colors border-b border-outline-variant hover:border-transparent cursor-pointer">
+<div class="flex items-center gap-4">
+<label class="custom-checkbox relative cursor-pointer">
+<input class="sr-only" type="checkbox">
+<div class="w-5 h-5 border-2 border-outline rounded flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-white text-[14px] hidden">check</span>
+</div>
+</label>
+<div>
+<p class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Review Q3 Marketing Strategy</p>
+<div class="flex items-center gap-3 mt-1">
+<span class="font-body-sm text-body-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                                            Today, 2:00 PM
+                                        </span>
+<span class="font-label-md text-label-md bg-[#EEF2FF] px-2 py-1 rounded text-primary-container">Marketing</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Task Item -->
+<div class="group flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-lowest transition-colors border-b border-outline-variant hover:border-transparent cursor-pointer">
+<div class="flex items-center gap-4">
+<label class="custom-checkbox relative cursor-pointer">
+<input class="sr-only" type="checkbox">
+<div class="w-5 h-5 border-2 border-outline rounded flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-white text-[14px] hidden">check</span>
+</div>
+</label>
+<div>
+<p class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Call with design team regarding new components</p>
+<div class="flex items-center gap-3 mt-1">
+<span class="font-body-sm text-body-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                                            Today, 4:30 PM
+                                        </span>
+<span class="font-label-md text-label-md bg-surface-container px-2 py-1 rounded text-on-surface-variant">Design</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Tomorrow Section -->
+<section class="mb-10">
+<h3 class="font-h3 text-h3 text-on-surface mb-stack-md flex items-center gap-2 border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined text-on-surface-variant">event</span>
+                        Tomorrow
+                    </h3>
+<div class="space-y-2">
+<!-- Task Item -->
+<div class="group flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-lowest transition-colors border-b border-outline-variant hover:border-transparent cursor-pointer">
+<div class="flex items-center gap-4">
+<label class="custom-checkbox relative cursor-pointer">
+<input class="sr-only" type="checkbox">
+<div class="w-5 h-5 border-2 border-outline rounded flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-white text-[14px] hidden">check</span>
+</div>
+</label>
+<div>
+<p class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Finalize presentation deck for all-hands</p>
+<div class="flex items-center gap-3 mt-1">
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                                            Tomorrow
+                                        </span>
+<span class="font-label-md text-label-md bg-[#EEF2FF] px-2 py-1 rounded text-primary-container">Company</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Next 7 Days Section -->
+<section>
+<h3 class="font-h3 text-h3 text-on-surface mb-stack-md flex items-center gap-2 border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined text-on-surface-variant">date_range</span>
+                        Next 7 Days
+                    </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Bento style task card for upcoming -->
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-2">
+<div class="font-label-md text-label-md bg-[#EEF2FF] px-2 py-1 rounded text-primary-container inline-block">Product</div>
+<span class="material-symbols-outlined text-outline-variant cursor-pointer hover:text-primary transition-colors">more_horiz</span>
+</div>
+<h4 class="font-body-lg text-body-lg text-on-surface mb-2 font-semibold">Update user onboarding flow documentation</h4>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<span class="font-body-sm text-body-sm">Oct 24</span>
+</div>
+</div>
+<!-- Bento style task card for upcoming -->
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-2">
+<div class="font-label-md text-label-md bg-surface-container px-2 py-1 rounded text-on-surface-variant inline-block">Personal</div>
+<span class="material-symbols-outlined text-outline-variant cursor-pointer hover:text-primary transition-colors">more_horiz</span>
+</div>
+<h4 class="font-body-lg text-body-lg text-on-surface mb-2 font-semibold">Dentist Appointment</h4>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<span class="font-body-sm text-body-sm">Oct 26, 9:00 AM</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+
+
+</body></html>

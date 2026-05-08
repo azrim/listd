@@ -7,8 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/task.dart';
 import '../providers/tasks_provider.dart';
 import '../theme/app_colors.dart';
-import '../widgets/glass_card.dart';
-import '../widgets/glass_text_field.dart';
 
 /// Task detail panel - 3rd column in 3-column layout.
 class TaskDetailPanel extends ConsumerStatefulWidget {
@@ -91,11 +89,11 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0A1020), Color(0xFF0D1535)],
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F1629),
+        border: const Border(
+          left: BorderSide(color: Color(0xFF5C6BC0), width: 1),
         ),
       ),
       child: SafeArea(
@@ -133,25 +131,23 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.glassBorderSubtle)),
+        border: Border(bottom: BorderSide(color: Color(0xFF1A2040), width: 1)),
       ),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.close),
+            icon: const Icon(Icons.close, color: Color(0xFF8C8A97)),
             onPressed: widget.onClose,
-            color: AppColors.textSecondary,
           ),
           const Spacer(),
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete_outline, color: Color(0xFFEF5350)),
             onPressed: () {
               ref
                   .read(tasksNotifierProvider(widget.listId).notifier)
                   .deleteTask(widget.task.id);
               widget.onClose?.call();
             },
-            color: AppColors.danger,
           ),
         ],
       ),
@@ -175,9 +171,17 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
               border: Border.all(
                 color: widget.task.isCompleted
                     ? AppColors.primary
-                    : Colors.white38,
+                    : const Color(0xFF5C5C5C),
                 width: 2,
               ),
+              boxShadow: widget.task.isCompleted
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                      ),
+                    ]
+                  : null,
             ),
             child: widget.task.isCompleted
                 ? const Icon(Icons.check, size: 14, color: Colors.white)
@@ -193,7 +197,9 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
             style: GoogleFonts.manrope(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: widget.task.isCompleted
+                  ? AppColors.textHint
+                  : AppColors.textPrimary,
               decoration: widget.task.isCompleted
                   ? TextDecoration.lineThrough
                   : null,
@@ -234,16 +240,16 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
             const Icon(
               Icons.check_box_outlined,
               size: 18,
-              color: AppColors.textSecondary,
+              color: Color(0xFF8C8A97),
             ),
             const SizedBox(width: 8),
             Text(
-              'Steps',
+              'STEPS',
               style: GoogleFonts.manrope(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-                letterSpacing: 0.5,
+                color: const Color(0xFF8C8A97),
+                letterSpacing: 1.2,
               ),
             ),
             if (steps.isNotEmpty) ...[
@@ -251,7 +257,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
               Text(
                 '$completedCount/${steps.length}',
                 style: GoogleFonts.manrope(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: AppColors.textHint,
                 ),
               ),
@@ -281,13 +287,13 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
-                const Icon(Icons.add, size: 18, color: AppColors.textSecondary),
+                const Icon(Icons.add, size: 18, color: Color(0xFF8C8A97)),
                 const SizedBox(width: 8),
                 Text(
                   'Add step',
                   style: GoogleFonts.manrope(
                     fontSize: 14,
-                    color: AppColors.textSecondary,
+                    color: const Color(0xFF8C8A97),
                   ),
                 ),
               ],
@@ -303,7 +309,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.bgSurface,
+        backgroundColor: const Color(0xFF1A2040),
         title: Text(
           'Add step',
           style: GoogleFonts.manrope(color: AppColors.textPrimary),
@@ -418,10 +424,9 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 
   void _showRepeatPicker() {
-    // Simple repeat options
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.bgSurface,
+      backgroundColor: const Color(0xFF1A2040),
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -478,10 +483,10 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
         Text(
           'TAGS',
           style: GoogleFonts.manrope(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
-            letterSpacing: 0.5,
+            color: const Color(0xFF8C8A97),
+            letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 8),
@@ -490,10 +495,15 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
           runSpacing: 8,
           children: [
             ...tags.map(
-              (tag) => GlassChip(
+              (tag) => Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
                   vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.primary, width: 1),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -502,7 +512,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                       tag,
                       style: GoogleFonts.manrope(
                         fontSize: 12,
-                        color: AppColors.textPrimary,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -516,7 +526,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                       child: const Icon(
                         Icons.close,
                         size: 14,
-                        color: AppColors.textSecondary,
+                        color: Color(0xFF8C8A97),
                       ),
                     ),
                   ],
@@ -532,23 +542,19 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.glassBorder),
+                  border: Border.all(color: const Color(0xFF5C5C5C)),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.add,
-                      size: 14,
-                      color: AppColors.textSecondary,
-                    ),
+                    const Icon(Icons.add, size: 14, color: Color(0xFF8C8A97)),
                     const SizedBox(width: 4),
                     Text(
                       'Add tag',
                       style: GoogleFonts.manrope(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: const Color(0xFF8C8A97),
                       ),
                     ),
                   ],
@@ -566,7 +572,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.bgSurface,
+        backgroundColor: const Color(0xFF1A2040),
         title: Text(
           'Add tag',
           style: GoogleFonts.manrope(color: AppColors.textPrimary),
@@ -610,18 +616,38 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
         Text(
           'NOTES',
           style: GoogleFonts.manrope(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
-            letterSpacing: 0.5,
+            color: const Color(0xFF8C8A97),
+            letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 8),
-        FocusedGlassTextField(
-          controller: _notesController,
-          hint: 'Add a note...',
-          maxLines: 4,
-          onChanged: _onNotesChanged,
+        Container(
+          constraints: const BoxConstraints(minHeight: 80),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A2040),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.2),
+              width: 1,
+            ),
+          ),
+          child: TextField(
+            controller: _notesController,
+            onChanged: _onNotesChanged,
+            maxLines: null,
+            style: GoogleFonts.manrope(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Add a note...',
+              hintStyle: GoogleFonts.manrope(color: AppColors.textHint),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.all(12),
+            ),
+          ),
         ),
       ],
     );
@@ -673,7 +699,7 @@ class _StepItem extends StatelessWidget {
                 border: Border.all(
                   color: step.isCompleted
                       ? AppColors.primary
-                      : AppColors.textSecondary,
+                      : const Color(0xFF5C5C5C),
                   width: 1.5,
                 ),
               ),
@@ -694,6 +720,7 @@ class _StepItem extends StatelessWidget {
                       ? TextDecoration.lineThrough
                       : null,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -721,15 +748,18 @@ class _MetadataRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A2040),
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: AppColors.textSecondary),
+            Icon(icon, size: 18, color: const Color(0xFF8C8A97)),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -738,10 +768,15 @@ class _MetadataRow extends StatelessWidget {
                   fontSize: 14,
                   color: valueColor ?? AppColors.textPrimary,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             if (value != null)
-              Icon(Icons.chevron_right, size: 18, color: AppColors.textHint),
+              const Icon(
+                Icons.chevron_right,
+                size: 18,
+                color: AppColors.textHint,
+              ),
           ],
         ),
       ),
