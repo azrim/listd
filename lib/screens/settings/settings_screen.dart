@@ -494,8 +494,9 @@ class _AccountContent extends ConsumerWidget {
                     ),
                   ),
                   Switch(
-                    value: true,
-                    onChanged: (value) {},
+                    value: ref.watch(autoSyncProvider),
+                    onChanged: (value) =>
+                        ref.read(autoSyncProvider.notifier).setEnabled(value),
                     activeThumbColor: AppColors.primary,
                   ),
                 ],
