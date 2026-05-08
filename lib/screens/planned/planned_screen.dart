@@ -7,6 +7,7 @@ import '../../providers/task_lists_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/glass_card.dart';
+import '../../widgets/task_detail_panel.dart';
 
 /// Provider for all tasks across all lists (for planned view)
 final allTasksProvider = FutureProvider<List<Task>>((ref) async {
@@ -29,12 +30,34 @@ final allTasksProvider = FutureProvider<List<Task>>((ref) async {
   );
 });
 
+/// Provider for selected task in planned view
+final plannedSelectedTaskProvider = StateProvider<Task?>((ref) => null);
+
 /// Planned screen with date groupings.
-class PlannedScreen extends ConsumerWidget {
+class PlannedScreen extends ConsumerStatefulWidget {
   const PlannedScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PlannedScreen> createState() => _PlannedScreenState();
+}
+
+class _PlannedScreenState extends ConsumerState<PlannedScreen> {
+  Task? _selectedTask;
+
+  void _onTaskSelected(Task task) {
+    setState(() {
+      _selectedTask = task;
+    });
+  }
+
+  void _closeDetailPanel() {
+    setState(() {
+      _selectedTask = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final tasksAsync = ref.watch(allTasksProvider);
 
     return Scaffold(
@@ -52,16 +75,35 @@ class PlannedScreen extends ConsumerWidget {
             children: [
               _buildHeader(),
               Expanded(
-                child: tasksAsync.when(
-                  data: (tasks) => _buildContent(tasks),
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(
-                    child: Text(
-                      'Error: $e',
-                      style: TextStyle(color: AppColors.danger),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: tasksAsync.when(
+                        data: (tasks) => _buildContent(tasks),
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                        error: (e, _) => Center(
+                          child: Text(
+                            'Error: $e',
+                            style: TextStyle(color: AppColors.danger),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    // Detail panel
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                      width: _selectedTask != null ? 320 : 0,
+                      child: _selectedTask != null
+                          ? TaskDetailPanel(
+                              task: _selectedTask!,
+                              listId: _selectedTask!.taskListId,
+                              onClose: _closeDetailPanel,
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -146,6 +188,8 @@ class PlannedScreen extends ConsumerWidget {
               iconColor: AppColors.danger,
               title: 'Overdue',
               tasks: overdue,
+              onTaskSelected: _onTaskSelected,
+              selectedTaskId: _selectedTask?.id,
             ),
             const SizedBox(height: 24),
           ],
@@ -155,6 +199,8 @@ class PlannedScreen extends ConsumerWidget {
               iconColor: AppColors.primary,
               title: 'Today',
               tasks: todayTasks,
+              onTaskSelected: _onTaskSelected,
+              selectedTaskId: _selectedTask?.id,
             ),
             const SizedBox(height: 24),
           ],
@@ -164,6 +210,8 @@ class PlannedScreen extends ConsumerWidget {
               iconColor: AppColors.textPrimary,
               title: 'Tomorrow',
               tasks: tomorrowTasks,
+              onTaskSelected: _onTaskSelected,
+              selectedTaskId: _selectedTask?.id,
             ),
             const SizedBox(height: 24),
           ],
@@ -174,6 +222,8 @@ class PlannedScreen extends ConsumerWidget {
               title: 'Next 7 Days',
               tasks: nextWeekTasks,
               isGrid: true,
+              onTaskSelected: _onTaskSelected,
+              selectedTaskId: _selectedTask?.id,
             ),
             const SizedBox(height: 24),
           ],
@@ -183,6 +233,8 @@ class PlannedScreen extends ConsumerWidget {
               iconColor: AppColors.textHint,
               title: 'Later',
               tasks: laterTasks,
+              onTaskSelected: _onTaskSelected,
+              selectedTaskId: _selectedTask?.id,
             ),
           ],
         ],
@@ -226,6 +278,8 @@ class _DateSection extends StatelessWidget {
   final String title;
   final List<Task> tasks;
   final bool isGrid;
+  final Function(Task) onTaskSelected;
+  final String? selectedTaskId;
 
   const _DateSection({
     required this.icon,
@@ -233,6 +287,8 @@ class _DateSection extends StatelessWidget {
     required this.title,
     required this.tasks,
     this.isGrid = false,
+    required this.onTaskSelected,
+    this.selectedTaskId,
   });
 
   @override
@@ -258,7 +314,11 @@ class _DateSection extends StatelessWidget {
               childAspectRatio: 3,
             ),
             itemCount: tasks.length,
-            itemBuilder: (context, index) => _TaskCard(task: tasks[index]),
+            itemBuilder: (context, index) => _TaskCard(
+              task: tasks[index],
+              isSelected: selectedTaskId == tasks[index].id,
+              onTap: () => onTaskSelected(tasks[index]),
+            ),
           ),
         ],
       );
@@ -277,7 +337,11 @@ class _DateSection extends StatelessWidget {
         ...tasks.map(
           (task) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: _TaskCard(task: task),
+            child: _TaskCard(
+              task: task,
+              isSelected: selectedTaskId == task.id,
+              onTap: () => onTaskSelected(task),
+            ),
           ),
         ),
       ],
@@ -328,29 +392,48 @@ class _SectionHeader extends StatelessWidget {
 }
 
 /// Task card for planned view
-class _TaskCard extends StatelessWidget {
+class _TaskCard extends ConsumerWidget {
   final Task task;
+  final bool isSelected;
+  final VoidCallback onTap;
 
-  const _TaskCard({required this.task});
+  const _TaskCard({
+    required this.task,
+    this.isSelected = false,
+    required this.onTap,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      glowColor: isSelected ? AppColors.primary : null,
+      onTap: onTap,
       child: Row(
         children: [
           // Checkbox
           GestureDetector(
             onTap: () {
-              // Toggle completion
+              ref
+                  .read(tasksNotifierProvider(task.taskListId).notifier)
+                  .toggleComplete(task);
             },
             child: Container(
               width: 20,
               height: 20,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white38, width: 2),
+                color: task.isCompleted
+                    ? AppColors.primary
+                    : Colors.transparent,
+                border: Border.all(
+                  color: task.isCompleted ? AppColors.primary : Colors.white38,
+                  width: 2,
+                ),
               ),
+              child: task.isCompleted
+                  ? const Icon(Icons.check, size: 12, color: Colors.white)
+                  : null,
             ),
           ),
           const SizedBox(width: 12),
@@ -360,7 +443,12 @@ class _TaskCard extends StatelessWidget {
               task.title,
               style: GoogleFonts.manrope(
                 fontSize: 14,
-                color: AppColors.textPrimary,
+                color: task.isCompleted
+                    ? AppColors.textHint
+                    : AppColors.textPrimary,
+                decoration: task.isCompleted
+                    ? TextDecoration.lineThrough
+                    : null,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -382,6 +470,11 @@ class _TaskCard extends StatelessWidget {
                 ),
               ),
             ),
+          // Star
+          if (task.isStarred) ...[
+            const SizedBox(width: 8),
+            const Icon(Icons.star, size: 16, color: Colors.amber),
+          ],
         ],
       ),
     );
