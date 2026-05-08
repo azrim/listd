@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/auth/google_auth_service.dart';
+import '../../services/auth/token_manager.dart';
 import '../../services/supabase/supabase_client_service.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/glass_card.dart';
@@ -51,8 +53,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       final client = ref.read(supabaseClientProvider);
       final authService = GoogleAuthService(client);
       await authService.authorize();
-
-      // Supabase handles the rest - auth state will update automatically
+      // After authorize completes, auth state should be updated
+      // The widget will rebuild due to authNotifierProvider change
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -61,9 +63,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             backgroundColor: AppColors.danger,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
         setState(() => _isLoading = false);
       }
     }
@@ -71,31 +70,38 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Watch auth state - navigate to home when authenticated
+    final authState = ref.watch(authNotifierProvider);
+
+    if (authState is AuthAuthenticated) {
+      // Auth succeeded, navigate to home
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.go('/');
+        }
+      });
+    }
+
     return Scaffold(
       body: Stack(
         children: [
-          // Background gradient
           Container(
             decoration: const BoxDecoration(
               gradient: AppColors.backgroundGradient,
             ),
           ),
-          // Animated orbs
           _buildOrbs(),
-          // Content
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo with glow
                   _buildLogo()
                       .animate()
                       .fadeIn(duration: 600.ms)
                       .scale(begin: const Offset(0.8, 0.8)),
                   const SizedBox(height: 24),
-                  // Title
                   Text(
                         'listd',
                         style: GoogleFonts.spaceGrotesk(
@@ -109,7 +115,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                       .fadeIn(delay: 200.ms, duration: 400.ms)
                       .slideY(begin: 0.1),
                   const SizedBox(height: 8),
-                  // Subtitle
                   Text(
                     'Your tasks, beautifully organized',
                     style: GoogleFonts.spaceGrotesk(
@@ -119,16 +124,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     ),
                   ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
                   const SizedBox(height: 48),
-                  // Sign in card
                   GlassCard(
                         padding: const EdgeInsets.all(24),
                         child: Column(
                           children: [
                             GradientButton(
-                              label: 'Continue with Google',
+                              label: _isLoading
+                                  ? 'Signing in...'
+                                  : 'Continue with Google',
                               icon: Icons.g_mobiledata,
                               isLoading: _isLoading,
-                              onPressed: _signInWithGoogle,
+                              onPressed: _isLoading ? null : _signInWithGoogle,
                               width: 260,
                             ),
                             const SizedBox(height: 16),
@@ -157,7 +163,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   Widget _buildOrbs() {
     return Stack(
       children: [
-        // Top orb
         Positioned(
           top: -100,
           left: 0,
@@ -186,7 +191,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             ),
           ),
         ),
-        // Bottom right orb
         Positioned(
           bottom: -150,
           right: -100,

@@ -8,24 +8,33 @@ import '../screens/auth/callback_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/settings/settings_screen.dart';
 
+/// Provider that forces router refresh when auth changes
+final _authRefreshProvider = Provider<void>((ref) {
+  // This provider depends on authNotifierProvider
+  // Any change to auth will cause this to be re-evaluated
+  ref.watch(authNotifierProvider);
+  return;
+});
+
 /// The main router configuration for the application.
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authNotifierProvider);
+  // Depend on auth refresh to force router rebuild
+  ref.watch(_authRefreshProvider);
 
   return GoRouter(
     initialLocation: '/',
+    debugLogDiagnostics: true,
     redirect: (context, state) {
+      final authState = ref.read(authNotifierProvider);
       final isAuthenticated = authState is AuthAuthenticated;
       final isAuthRoute =
           state.matchedLocation == '/auth' ||
           state.matchedLocation == '/auth/callback';
 
-      // If not authenticated and not on auth route, redirect to auth
       if (!isAuthenticated && !isAuthRoute) {
         return '/auth';
       }
 
-      // If authenticated and on auth route, redirect to home
       if (isAuthenticated && isAuthRoute) {
         return '/';
       }
