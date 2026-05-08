@@ -50,7 +50,7 @@ class TaskListTile extends StatelessWidget {
               children: [
                 Text(
                   taskList.title,
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: taskList.isDefault
                         ? FontWeight.w600
@@ -61,7 +61,7 @@ class TaskListTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   _formatUpdatedDate(taskList.updated),
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppColors.textHint,
                   ),

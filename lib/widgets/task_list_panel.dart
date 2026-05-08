@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/task.dart';
@@ -7,6 +8,7 @@ import '../models/task_list.dart';
 import '../providers/task_lists_provider.dart';
 import '../providers/tasks_provider.dart';
 import '../providers/ui_state_providers.dart';
+import '../theme/app_theme.dart';
 
 /// Filter the aggregate task stream into the slice that belongs to a virtual
 /// list (My Day / Important / Planned / Tasks).
@@ -37,7 +39,13 @@ TaskList? _resolveTargetList(List<TaskList> lists) {
   return defaults.isNotEmpty ? defaults.first : lists.first;
 }
 
-/// Main task list panel - 3-column layout middle column
+/// Listd 2026 list pane.
+///
+/// The list pane is the bright surface and reads as a single sheet of
+/// paper. The header is a 22 px H2 title plus a quiet refresh icon.
+/// Below it sits the borderless capture input on `surface-sunken`.
+/// Rows are 44 px tall with hairline separators between them — no
+/// rounded chips, no shadows.
 class TaskListPanel extends ConsumerWidget {
   final String listId;
   final String listName;
@@ -65,19 +73,27 @@ class TaskListPanel extends ConsumerWidget {
     return ColoredBox(
       color: scheme.surface,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildHeader(context, ref),
-          _StatsStrip(tasksAsync: tasksAsync),
-          // Virtual lists ("@my-day", "@important", etc.) don't own rows of
-          // their own; new tasks created from them would have to be assigned
-          // to *some* real list, which is confusing. Hide the input so the
-          // user creates tasks from the owning list explicitly.
-          if (!_isVirtual) _AddTaskInput(listId: listId),
+          _buildHeader(context, ref, tasksAsync),
+          if (!_isVirtual)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: _AddTaskInput(listId: listId),
+            )
+          else
+            const SizedBox(height: 4),
           Expanded(
             child: tasksAsync.when(
               data: (tasks) =>
                   _buildContent(context, ref, tasks, selectedTaskId),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(
+                child: SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                ),
+              ),
               error: (e, _) => _buildError(context, ref, e),
             ),
           ),
@@ -101,31 +117,54 @@ class TaskListPanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, WidgetRef ref) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
-      ),
+  Widget _buildHeader(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<Task>> tasksAsync,
+  ) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final count = tasksAsync.valueOrNull
+        ?.where((t) => t.parentId == null && !t.isCompleted)
+        .length;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            child: Text(
-              listName,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: scheme.onSurface,
-                letterSpacing: -0.2,
-              ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Flexible(
+                  child: Text(
+                    listName,
+                    style: theme.textTheme.headlineSmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (count != null && count > 0) ...[
+                  const SizedBox(width: 10),
+                  Text(
+                    '$count',
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      height: 22 / 15,
+                      fontWeight: FontWeight.w400,
+                      color: scheme.onSurfaceVariant,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh, size: 20),
-            color: scheme.onSurfaceVariant,
-            onPressed: () => _refresh(ref),
+          _QuietIconButton(
+            icon: Icons.refresh,
             tooltip: 'Refresh',
+            onPressed: () => _refresh(ref),
           ),
         ],
       ),
@@ -144,31 +183,32 @@ class TaskListPanel extends ConsumerWidget {
       return _buildEmptyState(context);
     }
 
+    final scheme = Theme.of(context).colorScheme;
+
     return RefreshIndicator(
       onRefresh: () => _refresh(ref),
-      color: Theme.of(context).colorScheme.primary,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      color: scheme.primary,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: mainTasks.length,
+        separatorBuilder: (_, _) =>
+            Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
         itemBuilder: (context, index) {
           final task = mainTasks[index];
           // Mutations always target the task's real owning list, not the
           // virtual screen the user happens to be viewing.
           final ownerListId = task.taskListId;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: _TaskRow(
-              task: task,
-              isSelected: selectedTaskId == task.id,
-              onTap: () {
-                ref.read(selectedTaskIdProvider.notifier).state = task.id;
-                onTaskSelected?.call(task);
-              },
-              onToggle: () => ref
-                  .read(tasksNotifierProvider(ownerListId).notifier)
-                  .toggleComplete(task),
-              onDelete: () => _confirmDelete(context, ref, task),
-            ),
+          return _TaskRow(
+            task: task,
+            isSelected: selectedTaskId == task.id,
+            onTap: () {
+              ref.read(selectedTaskIdProvider.notifier).state = task.id;
+              onTaskSelected?.call(task);
+            },
+            onToggle: () => ref
+                .read(tasksNotifierProvider(ownerListId).notifier)
+                .toggleComplete(task),
+            onDelete: () => _confirmDelete(context, ref, task),
           );
         },
       ),
@@ -213,22 +253,22 @@ class TaskListPanel extends ConsumerWidget {
   }
 
   Widget _buildError(BuildContext context, WidgetRef ref, Object error) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 48, color: scheme.error),
-          const SizedBox(height: 16),
           Text(
-            'Failed to load tasks',
-            style: TextStyle(color: scheme.onSurface),
+            'Couldn\'t load tasks',
+            style: theme.textTheme.titleMedium?.copyWith(color: scheme.error),
           ),
+          const SizedBox(height: 8),
+          Text('$error', style: theme.textTheme.bodySmall),
           const SizedBox(height: 16),
-          FilledButton.icon(
+          OutlinedButton(
             onPressed: () => _refresh(ref),
-            icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            child: const Text('Retry'),
           ),
         ],
       ),
@@ -236,133 +276,71 @@ class TaskListPanel extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.task_alt, size: 64, color: scheme.onSurfaceVariant),
-          const SizedBox(height: 16),
-          Text(
-            'No tasks yet',
-            style: TextStyle(fontSize: 16, color: scheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Add a task above',
-            style: TextStyle(fontSize: 14, color: scheme.onSurfaceVariant),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(48),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Nothing here yet',
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Capture your first task with the input above.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Stats strip showing task counts - glass card row
-class _StatsStrip extends StatelessWidget {
-  const _StatsStrip({required this.tasksAsync});
-
-  final AsyncValue<List<Task>> tasksAsync;
-
-  @override
-  Widget build(BuildContext context) {
-    return tasksAsync.when(
-      data: (tasks) {
-        final total = tasks.where((t) => t.parentId == null).length;
-        final completed = tasks
-            .where((t) => t.isCompleted && t.parentId == null)
-            .length;
-        final today = tasks.where((t) {
-          if (t.due == null || t.parentId != null) return false;
-          final today = DateTime.now();
-          return t.due!.year == today.year &&
-              t.due!.month == today.month &&
-              t.due!.day == today.day;
-        }).length;
-
-        if (total == 0) return const SizedBox.shrink();
-
-        final scheme = Theme.of(context).colorScheme;
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 12),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: scheme.surfaceContainer,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: scheme.outlineVariant, width: 1),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _StatItem(
-                label: 'Tasks',
-                value: '$total',
-                icon: Icons.check_circle_outline,
-              ),
-              _StatItem(
-                label: 'Completed',
-                value: '$completed',
-                icon: Icons.check_circle,
-              ),
-              if (today > 0)
-                _StatItem(
-                  label: 'Due Today',
-                  value: '$today',
-                  icon: Icons.today,
-                  highlight: true,
-                ),
-            ],
-          ),
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
-    );
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  const _StatItem({
-    required this.label,
-    required this.value,
+/// 32×32 quiet icon button — no border, hover fills `surface-sunken`.
+class _QuietIconButton extends StatelessWidget {
+  const _QuietIconButton({
     required this.icon,
-    this.highlight = false,
+    required this.onPressed,
+    this.tooltip,
   });
 
-  final String label;
-  final String value;
   final IconData icon;
-  final bool highlight;
+  final VoidCallback? onPressed;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = highlight ? scheme.primary : scheme.onSurfaceVariant;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 6),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: color,
+    return SizedBox(
+      width: AppTheme.controlHeight,
+      height: AppTheme.controlHeight,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+          child: Tooltip(
+            message: tooltip ?? '',
+            child: Icon(icon, size: 18, color: scheme.onSurfaceVariant),
           ),
         ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
-        ),
-      ],
+      ),
     );
   }
 }
 
-/// Single task row with GlassCard styling
-class _TaskRow extends StatelessWidget {
+/// 44 px task row — 18 px circular checkbox + title + meta cluster +
+/// optional star. Hover fills `surface-sunken`. Selected gets
+/// `accent-soft` fill + 2 px accent left bar.
+class _TaskRow extends StatefulWidget {
   final Task task;
   final bool isSelected;
   final VoidCallback? onTap;
@@ -378,97 +356,101 @@ class _TaskRow extends StatelessWidget {
   });
 
   @override
+  State<_TaskRow> createState() => _TaskRowState();
+}
+
+class _TaskRowState extends State<_TaskRow> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? scheme.primary : scheme.outlineVariant,
-          width: 1,
-        ),
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: scheme.primary.withValues(alpha: 0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
-      ),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final task = widget.task;
+    final isSelected = widget.isSelected;
+
+    Color rowColor;
+    if (isSelected) {
+      rowColor = scheme.primaryContainer;
+    } else if (_hovered) {
+      rowColor = scheme.surfaceContainerHighest;
+    } else {
+      rowColor = Colors.transparent;
+    }
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
       child: Material(
-        color: Colors.transparent,
+        color: rowColor,
         child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: onToggle,
+          onTap: widget.onTap,
+          child: Stack(
+            children: [
+              if (isSelected)
+                Positioned(
+                  left: 0,
+                  top: 8,
+                  bottom: 8,
                   child: Container(
-                    width: 24,
-                    height: 24,
+                    width: 2,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: task.isCompleted
-                          ? scheme.primary
-                          : Colors.transparent,
-                      border: Border.all(
-                        color: task.isCompleted
-                            ? scheme.primary
-                            : scheme.outline,
-                        width: 2,
+                      color: scheme.primary,
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                ),
+              SizedBox(
+                height: 44,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      _Checkbox(
+                        completed: task.isCompleted,
+                        onTap: widget.onToggle,
                       ),
-                    ),
-                    child: task.isCompleted
-                        ? Icon(Icons.check, size: 13, color: scheme.onPrimary)
-                        : null,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          task.title,
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            height: 22 / 15,
+                            fontWeight: FontWeight.w400,
+                            color: task.isCompleted
+                                ? scheme.outline
+                                : scheme.onSurface,
+                            decoration: task.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                            decorationColor: scheme.outline,
+                            decorationThickness: 1,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      if (task.due != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatDate(task.due!),
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                      if (task.isStarred) ...[
+                        const SizedBox(width: 10),
+                        Icon(
+                          Icons.star,
+                          size: 14,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    task.title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: task.isCompleted
-                          ? scheme.onSurfaceVariant
-                          : scheme.onSurface,
-                      decoration: task.isCompleted
-                          ? TextDecoration.lineThrough
-                          : null,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ),
-                if (task.due != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: scheme.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _formatDate(task.due!),
-                      style: TextStyle(fontSize: 11, color: scheme.primary),
-                    ),
-                  ),
-                if (task.isStarred) ...[
-                  const SizedBox(width: 8),
-                  Icon(Icons.star, size: 18, color: scheme.tertiary),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -486,7 +468,42 @@ class _TaskRow extends StatelessWidget {
   }
 }
 
-/// Add task input at TOP of list - GlassCard row
+/// 18 px circular checkbox. Empty: 1 px outline. Completed: filled
+/// accent + white check.
+class _Checkbox extends StatelessWidget {
+  const _Checkbox({required this.completed, required this.onTap});
+
+  final bool completed;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: 18,
+        height: 18,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: completed ? scheme.primary : Colors.transparent,
+          border: Border.all(
+            color: completed ? scheme.primary : scheme.outline,
+            width: 1.5,
+          ),
+        ),
+        child: completed
+            ? Icon(Icons.check, size: 12, color: scheme.onPrimary)
+            : null,
+      ),
+    );
+  }
+}
+
+/// Borderless capture input — sits on `surface-sunken`, 32 px tall,
+/// 8 px radius, no border. Focus ring: 2 px accent outset on focus.
 class _AddTaskInput extends ConsumerStatefulWidget {
   final String listId;
 
@@ -498,11 +515,24 @@ class _AddTaskInput extends ConsumerStatefulWidget {
 
 class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
   bool _isLoading = false;
+  bool _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus != _focused) {
+        setState(() => _focused = _focusNode.hasFocus);
+      }
+    });
+  }
 
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -510,9 +540,6 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
     final title = _controller.text.trim();
     if (title.isEmpty || _isLoading) return;
 
-    // Resolve the real list to write into. Synthetic list IDs are not valid
-    // foreign keys for the tasks table, so always route to a real list and
-    // apply the right metadata so the task still surfaces in the virtual view.
     String targetListId = widget.listId;
     DateTime? defaultDue;
     bool defaultStarred = false;
@@ -566,8 +593,6 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
           );
       }
     } catch (e) {
-      // Mutation errors no longer wipe out the loaded task list — surface
-      // them inline instead so the user knows what happened and can retry.
       if (mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -581,42 +606,51 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      height: AppTheme.controlHeight,
       decoration: BoxDecoration(
-        color: scheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: scheme.outlineVariant, width: 1),
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+        border: Border.all(
+          color: _focused ? scheme.primary : Colors.transparent,
+          width: 2,
+        ),
       ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
           if (_isLoading)
             SizedBox(
-              width: 24,
-              height: 24,
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: scheme.primary,
-                ),
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                color: scheme.primary,
               ),
             )
           else
-            GestureDetector(
-              onTap: _addTask,
-              child: Icon(Icons.add, size: 24, color: scheme.onSurfaceVariant),
-            ),
-          const SizedBox(width: 12),
+            Icon(Icons.add, size: 16, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 10),
           Expanded(
             child: TextField(
               controller: _controller,
-              style: TextStyle(color: scheme.onSurface),
+              focusNode: _focusNode,
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                height: 22 / 15,
+                color: scheme.onSurface,
+              ),
               decoration: InputDecoration(
-                hintText: 'Add a task...',
-                hintStyle: TextStyle(color: scheme.onSurfaceVariant),
+                hintText: 'Add a task',
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 15,
+                  height: 22 / 15,
+                  color: scheme.outline,
+                ),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),

@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// A theme-aware primary call-to-action button.
-class GradientButton extends StatefulWidget {
+import '../theme/app_theme.dart';
+
+/// Primary call-to-action button.
+///
+/// In the 2026 system this is a flat filled accent button — there is no
+/// gradient and no pulsing glow. The class name is preserved so existing
+/// auth/empty-state call sites keep compiling.
+class GradientButton extends StatelessWidget {
   const GradientButton({
     super.key,
     required this.label,
@@ -19,74 +25,29 @@ class GradientButton extends StatefulWidget {
   final double? width;
 
   @override
-  State<GradientButton> createState() => _GradientButtonState();
-}
-
-class _GradientButtonState extends State<GradientButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Container(
-          width: widget.width,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: scheme.primary.withAlpha(
-                  (90 * (0.4 + _pulseAnimation.value * 0.3)).round(),
-                ),
-                blurRadius: 18,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: child,
-        );
-      },
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: scheme.primary,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: widget.isLoading ? null : widget.onPressed,
-            borderRadius: BorderRadius.circular(14),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              child: widget.isLoading
+    final disabled = isLoading || onPressed == null;
+    return SizedBox(
+      width: width,
+      height: AppTheme.controlHeight,
+      child: Material(
+        color: disabled
+            ? scheme.primary.withValues(alpha: 0.55)
+            : scheme.primary,
+        borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+        child: InkWell(
+          onTap: disabled ? null : onPressed,
+          borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Center(
+              child: isLoading
                   ? SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: 14,
+                      height: 14,
                       child: CircularProgressIndicator(
-                        strokeWidth: 2,
+                        strokeWidth: 1.5,
                         valueColor: AlwaysStoppedAnimation<Color>(
                           scheme.onPrimary,
                         ),
@@ -96,16 +57,17 @@ class _GradientButtonState extends State<GradientButton>
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        if (widget.icon != null) ...[
-                          Icon(widget.icon, color: scheme.onPrimary, size: 18),
-                          const SizedBox(width: 8),
+                        if (icon != null) ...[
+                          Icon(icon, color: scheme.onPrimary, size: 16),
+                          const SizedBox(width: 6),
                         ],
                         Text(
-                          widget.label,
-                          style: GoogleFonts.manrope(
+                          label,
+                          style: GoogleFonts.inter(
                             color: scheme.onPrimary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            height: 22 / 15,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -118,7 +80,7 @@ class _GradientButtonState extends State<GradientButton>
   }
 }
 
-/// A simple outlined button with glass effect
+/// Secondary outlined button — 32 px tall, hairline border, no glass.
 class GlassOutlinedButton extends StatelessWidget {
   const GlassOutlinedButton({
     super.key,
@@ -136,22 +98,37 @@ class GlassOutlinedButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final effectiveColor = color ?? scheme.onSurface;
-
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: effectiveColor,
-        side: BorderSide(color: effectiveColor.withAlpha(77)),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[Icon(icon, size: 18), const SizedBox(width: 8)],
-          Text(label, style: GoogleFonts.manrope(fontWeight: FontWeight.w500)),
-        ],
+    final fg = color ?? scheme.onSurface;
+    return SizedBox(
+      height: AppTheme.controlHeight,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: fg,
+          side: BorderSide(color: scheme.outlineVariant),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          minimumSize: const Size(0, AppTheme.controlHeight),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 16),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                height: 22 / 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

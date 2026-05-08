@@ -3,26 +3,26 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
-/// Application theme configuration using Material 3 + Stitch indigo tokens.
+/// Listd 2026 theme.
 ///
-/// Both schemes are constructed explicitly from the design tokens in
-/// `stitch_listd_indigo_task_manager/listd*/DESIGN.md` (no
-/// `ColorScheme.fromSeed`) so what ships matches the mocks pixel for pixel.
+/// One typeface (Inter), one accent, two surfaces, hairline borders.
+/// All metrics derive from the 4 px base grid:
+///   - control radius: 8 px
+///   - card radius:    12 px
+///   - control height: 32 px (button, input, sync pill)
+///   - row height:     44 px (task tile)
+///   - sidebar item:   36 px
 class AppTheme {
   AppTheme._();
+
+  static const double controlRadius = 8;
+  static const double cardRadius = 12;
+  static const double controlHeight = 32;
 
   static ThemeData get darkTheme => _buildTheme(AppColors.darkScheme);
   static ThemeData get lightTheme => _buildTheme(AppColors.lightScheme);
 
   static ThemeData _buildTheme(ColorScheme scheme) {
-    final isDark = scheme.brightness == Brightness.dark;
-
-    final cardRadius = isDark ? 16.0 : 8.0;
-    final controlRadius = isDark ? 8.0 : 4.0;
-    final chipRadius = isDark ? 12.0 : 999.0;
-
-    final surfaceTint = scheme.primary;
-
     return ThemeData(
       useMaterial3: true,
       brightness: scheme.brightness,
@@ -41,16 +41,18 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         foregroundColor: scheme.onSurface,
-        titleTextStyle: GoogleFonts.manrope(
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 22,
+          height: 28 / 22,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.22,
           color: scheme.onSurface,
         ),
-        iconTheme: IconThemeData(color: scheme.onSurface),
+        iconTheme: IconThemeData(color: scheme.onSurface, size: 20),
       ),
 
       cardTheme: CardThemeData(
-        color: scheme.surfaceContainer,
+        color: scheme.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -60,23 +62,31 @@ class AppTheme {
       ),
 
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: scheme.primaryContainer,
-        foregroundColor: scheme.onPrimaryContainer,
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
         elevation: 0,
+        focusElevation: 0,
+        hoverElevation: 0,
+        highlightElevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(cardRadius),
+          borderRadius: BorderRadius.circular(controlRadius),
         ),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: scheme.surfaceContainerLow,
-        hintStyle: GoogleFonts.manrope(color: scheme.outline),
-        labelStyle: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+        fillColor: scheme.surface,
+        hintStyle: GoogleFonts.inter(
+          fontSize: 15,
+          height: 22 / 15,
+          color: scheme.outline,
         ),
+        labelStyle: GoogleFonts.inter(
+          fontSize: 13,
+          height: 18 / 13,
+          color: scheme.onSurfaceVariant,
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(controlRadius),
           borderSide: BorderSide(color: scheme.outlineVariant),
@@ -99,18 +109,22 @@ class AppTheme {
         ),
       ),
 
+      // Buttons — 32 px tall, 12 px horizontal padding, 8 px radius,
+      // body-emphasized text. One primary surface per screen.
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          minimumSize: const Size(0, controlHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
           ),
-          textStyle: GoogleFonts.manrope(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+          textStyle: GoogleFonts.inter(
+            fontSize: 15,
+            height: 22 / 15,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
@@ -119,36 +133,46 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          minimumSize: const Size(0, controlHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
           ),
-          textStyle: GoogleFonts.manrope(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+          textStyle: GoogleFonts.inter(
+            fontSize: 15,
+            height: 22 / 15,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: scheme.primary,
+          foregroundColor: scheme.onSurface,
           side: BorderSide(color: scheme.outlineVariant),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          minimumSize: const Size(0, controlHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
           ),
-          textStyle: GoogleFonts.manrope(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+          textStyle: GoogleFonts.inter(
+            fontSize: 15,
+            height: 22 / 15,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: scheme.primary,
-          textStyle: GoogleFonts.manrope(fontWeight: FontWeight.w600),
+          foregroundColor: scheme.onSurface,
+          minimumSize: const Size(0, controlHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          textStyle: GoogleFonts.inter(
+            fontSize: 15,
+            height: 22 / 15,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
 
@@ -161,7 +185,7 @@ class AppTheme {
         ),
       ),
 
-      iconTheme: IconThemeData(color: scheme.onSurfaceVariant),
+      iconTheme: IconThemeData(color: scheme.onSurfaceVariant, size: 18),
 
       dividerTheme: DividerThemeData(
         color: scheme.outlineVariant,
@@ -170,8 +194,12 @@ class AppTheme {
       ),
 
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: scheme.surfaceContainerHigh,
-        contentTextStyle: GoogleFonts.manrope(color: scheme.onSurface),
+        backgroundColor: scheme.inverseSurface,
+        contentTextStyle: GoogleFonts.inter(
+          fontSize: 14,
+          height: 20 / 14,
+          color: scheme.onInverseSurface,
+        ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(controlRadius),
@@ -179,58 +207,63 @@ class AppTheme {
       ),
 
       dialogTheme: DialogThemeData(
-        backgroundColor: scheme.surfaceContainerHigh,
+        backgroundColor: scheme.surface,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: GoogleFonts.manrope(
-          fontSize: 20,
+        elevation: 0,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 22,
+          height: 28 / 22,
           fontWeight: FontWeight.w600,
+          letterSpacing: -0.22,
           color: scheme.onSurface,
         ),
-        contentTextStyle: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
+        contentTextStyle: GoogleFonts.inter(
+          fontSize: 15,
+          height: 22 / 15,
+          color: scheme.onSurfaceVariant,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(cardRadius),
+          side: BorderSide(color: scheme.outlineVariant),
         ),
       ),
 
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: scheme.primary,
-        linearTrackColor: scheme.surfaceContainerHigh,
-        circularTrackColor: scheme.surfaceContainerHigh,
-        linearMinHeight: 4,
+        linearTrackColor: scheme.surfaceContainer,
+        circularTrackColor: scheme.surfaceContainer,
+        linearMinHeight: 2,
       ),
 
       chipTheme: ChipThemeData(
-        backgroundColor: isDark
-            ? scheme.surfaceContainerHighest
-            : scheme.primaryContainer.withAlpha(36),
-        labelStyle: GoogleFonts.manrope(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: isDark ? scheme.onSurfaceVariant : scheme.primary,
+        backgroundColor: scheme.surfaceContainer,
+        labelStyle: GoogleFonts.inter(
+          fontSize: 13,
+          height: 18 / 13,
+          fontWeight: FontWeight.w500,
+          color: scheme.onSurfaceVariant,
         ),
-        side: BorderSide.none,
+        side: BorderSide(color: scheme.outlineVariant),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(chipRadius),
+          borderRadius: BorderRadius.circular(controlRadius),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
 
       checkboxTheme: CheckboxThemeData(
-        side: BorderSide(color: scheme.outline, width: 2),
+        side: BorderSide(color: scheme.outline, width: 1.5),
         fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return scheme.primary;
-          }
+          if (states.contains(WidgetState.selected)) return scheme.primary;
           return Colors.transparent;
         }),
         checkColor: WidgetStateProperty.all(scheme.onPrimary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
 
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return scheme.onPrimary;
-          return scheme.outline;
+          return scheme.surface;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return scheme.primary;
@@ -244,18 +277,22 @@ class AppTheme {
           color: scheme.inverseSurface,
           borderRadius: BorderRadius.circular(controlRadius),
         ),
-        textStyle: GoogleFonts.manrope(
+        textStyle: GoogleFonts.inter(
           fontSize: 12,
+          height: 16 / 12,
           color: scheme.onInverseSurface,
         ),
       ),
 
-      cardColor: scheme.surfaceContainer,
+      cardColor: scheme.surface,
       hintColor: scheme.outline,
       shadowColor: scheme.shadow,
-      splashColor: scheme.primary.withAlpha(20),
-      highlightColor: scheme.primary.withAlpha(12),
+      // No coloured splash/highlight — selection is instant + flat.
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: scheme.surfaceContainer,
       visualDensity: VisualDensity.standard,
+
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
@@ -264,106 +301,97 @@ class AppTheme {
           TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
         },
       ),
+
       extensions: <ThemeExtension<dynamic>>[
         ListdSurfaces(
+          // Rail and inspector sit on the elevated surface so the list
+          // pane (the page) reads as the bright surface.
           sidebar: scheme.surfaceContainerLow,
           detailPanel: scheme.surfaceContainerLow,
-          surfaceTint: surfaceTint,
+          surfaceTint: scheme.primary,
         ),
       ],
     );
   }
 
+  /// Type ramp from the design spec.
+  ///
+  /// | Role            | Size | Line | Weight | Tracking |
+  /// | Display H1      | 32   | 40   | 600    | -0.02 em |
+  /// | Title H2        | 22   | 28   | 600    | -0.01 em |
+  /// | Body            | 15   | 22   | 400    | 0        |
+  /// | Body emphasized | 15   | 22   | 500    | 0        |
+  /// | Meta            | 13   | 18   | 400    | 0        |
+  /// | Caption         | 11   | 16   | 600    | 0.06 em  |
   static TextTheme _buildTextTheme(
     Color textPrimary,
     Color textSecondary,
     Color textHint,
   ) {
+    TextStyle inter({
+      required double size,
+      required double line,
+      required FontWeight weight,
+      double tracking = 0,
+      Color? color,
+    }) => GoogleFonts.inter(
+      fontSize: size,
+      height: line / size,
+      fontWeight: weight,
+      letterSpacing: tracking * size,
+      color: color ?? textPrimary,
+    );
+
+    final h1 = inter(
+      size: 32,
+      line: 40,
+      weight: FontWeight.w600,
+      tracking: -0.02,
+    );
+    final h2 = inter(
+      size: 22,
+      line: 28,
+      weight: FontWeight.w600,
+      tracking: -0.01,
+    );
+    final body = inter(size: 15, line: 22, weight: FontWeight.w400);
+    final bodyEm = inter(size: 15, line: 22, weight: FontWeight.w500);
+    final meta = inter(
+      size: 13,
+      line: 18,
+      weight: FontWeight.w400,
+      color: textSecondary,
+    );
+    final caption = inter(
+      size: 11,
+      line: 16,
+      weight: FontWeight.w600,
+      tracking: 0.06,
+      color: textHint,
+    );
+
     return TextTheme(
-      displayLarge: GoogleFonts.manrope(
-        fontSize: 48,
-        fontWeight: FontWeight.w800,
-        color: textPrimary,
-      ),
-      displayMedium: GoogleFonts.manrope(
-        fontSize: 40,
-        fontWeight: FontWeight.w700,
-        color: textPrimary,
-      ),
-      displaySmall: GoogleFonts.manrope(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-        color: textPrimary,
-      ),
-      headlineLarge: GoogleFonts.manrope(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-        color: textPrimary,
-      ),
-      headlineMedium: GoogleFonts.manrope(
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-        color: textPrimary,
-      ),
-      headlineSmall: GoogleFonts.manrope(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: textPrimary,
-      ),
-      titleLarge: GoogleFonts.manrope(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: textPrimary,
-      ),
-      titleMedium: GoogleFonts.manrope(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: textPrimary,
-      ),
-      titleSmall: GoogleFonts.manrope(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: textSecondary,
-      ),
-      bodyLarge: GoogleFonts.manrope(
-        fontSize: 18,
-        fontWeight: FontWeight.w400,
-        color: textPrimary,
-      ),
-      bodyMedium: GoogleFonts.manrope(
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        color: textPrimary,
-      ),
-      bodySmall: GoogleFonts.manrope(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        color: textSecondary,
-      ),
-      labelLarge: GoogleFonts.manrope(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: textPrimary,
-      ),
-      labelMedium: GoogleFonts.manrope(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.05,
-        color: textSecondary,
-      ),
-      labelSmall: GoogleFonts.manrope(
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.02,
-        color: textHint,
-      ),
+      displayLarge: h1,
+      displayMedium: h1,
+      displaySmall: h2,
+      headlineLarge: h1,
+      headlineMedium: h2,
+      headlineSmall: h2,
+      titleLarge: h2,
+      titleMedium: bodyEm,
+      titleSmall: bodyEm.copyWith(color: textSecondary),
+      bodyLarge: body,
+      bodyMedium: body,
+      bodySmall: meta,
+      labelLarge: bodyEm,
+      labelMedium: meta,
+      labelSmall: caption,
     );
   }
 }
 
 /// Listd-specific surface roles that don't have a direct Material 3
-/// equivalent (sidebar tint, detail panel tint, etc.). Pull these via
-/// `Theme.of(context).extension<ListdSurfaces>()`.
+/// equivalent (sidebar tint, inspector tint).
 class ListdSurfaces extends ThemeExtension<ListdSurfaces> {
   const ListdSurfaces({
     required this.sidebar,

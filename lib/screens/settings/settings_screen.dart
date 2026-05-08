@@ -97,7 +97,7 @@ class _Header extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             'Settings',
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 32,
               fontWeight: FontWeight.w800,
               color: scheme.onSurface,
@@ -180,7 +180,7 @@ class _CategoryItem extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 category.label,
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected ? scheme.primary : scheme.onSurface,
@@ -247,7 +247,7 @@ class _SectionTitle extends StatelessWidget {
       children: [
         Text(
           title,
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 22,
             fontWeight: FontWeight.w700,
             color: scheme.onSurface,
@@ -257,7 +257,7 @@ class _SectionTitle extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             subtitle!,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 14,
               color: scheme.onSurfaceVariant,
             ),
@@ -299,7 +299,7 @@ class _AppearanceContent extends ConsumerWidget {
                       children: [
                         Text(
                           'Dark Mode',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: scheme.onSurface,
@@ -308,7 +308,7 @@ class _AppearanceContent extends ConsumerWidget {
                         const SizedBox(height: 4),
                         Text(
                           'Switch to a darker interface for low-light environments.',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 13,
                             color: scheme.onSurfaceVariant,
                           ),
@@ -329,7 +329,7 @@ class _AppearanceContent extends ConsumerWidget {
               const SizedBox(height: 24),
               Text(
                 'Theme Color',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: scheme.onSurface,
@@ -342,7 +342,7 @@ class _AppearanceContent extends ConsumerWidget {
               const SizedBox(height: 24),
               Text(
                 'Font Size',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: scheme.onSurface,
@@ -353,7 +353,7 @@ class _AppearanceContent extends ConsumerWidget {
                 children: [
                   Text(
                     'Aa',
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 14,
                       color: scheme.onSurfaceVariant,
                     ),
@@ -370,7 +370,7 @@ class _AppearanceContent extends ConsumerWidget {
                   ),
                   Text(
                     'Aa',
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 20,
                       color: scheme.onSurfaceVariant,
                     ),
@@ -481,7 +481,7 @@ class _ProfileDetailsCard extends ConsumerWidget {
               const SizedBox(width: 8),
               Text(
                 'Profile Details',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: scheme.onSurface,
@@ -509,7 +509,7 @@ class _ProfileDetailsCard extends ConsumerWidget {
                   children: [
                     Text(
                       name.isEmpty ? 'User' : name,
-                      style: GoogleFonts.manrope(
+                      style: GoogleFonts.inter(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: scheme.onSurface,
@@ -518,7 +518,7 @@ class _ProfileDetailsCard extends ConsumerWidget {
                     if (email.isNotEmpty)
                       Text(
                         email,
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           color: scheme.onSurfaceVariant,
                         ),
@@ -535,7 +535,7 @@ class _ProfileDetailsCard extends ConsumerWidget {
               onPressed: () => _showEditProfileDialog(context, ref, name),
               child: Text(
                 'Edit Profile',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 13,
                   color: scheme.primary,
                   fontWeight: FontWeight.w600,
@@ -619,7 +619,7 @@ class _AlertPreferencesCard extends ConsumerWidget {
               const SizedBox(width: 8),
               Text(
                 'Alert Preferences',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: scheme.onSurface,
@@ -642,10 +642,7 @@ class _AlertPreferencesCard extends ConsumerWidget {
               const SizedBox(width: 8),
               Text(
                 'Email Summaries',
-                style: GoogleFonts.manrope(
-                  fontSize: 14,
-                  color: scheme.onSurface,
-                ),
+                style: GoogleFonts.inter(fontSize: 14, color: scheme.onSurface),
               ),
             ],
           ),
@@ -664,10 +661,7 @@ class _AlertPreferencesCard extends ConsumerWidget {
               const SizedBox(width: 8),
               Text(
                 'Push Notifications',
-                style: GoogleFonts.manrope(
-                  fontSize: 14,
-                  color: scheme.onSurface,
-                ),
+                style: GoogleFonts.inter(fontSize: 14, color: scheme.onSurface),
               ),
             ],
           ),
@@ -680,7 +674,7 @@ class _AlertPreferencesCard extends ConsumerWidget {
                       SettingsCategory.notifications,
               child: Text(
                 'Manage All',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 13,
                   color: scheme.primary,
                   fontWeight: FontWeight.w600,
@@ -737,7 +731,7 @@ class _AccountContent extends ConsumerWidget {
                           (user?.userMetadata?['name'] as String?) ??
                               user?.email ??
                               'User',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: scheme.onSurface,
@@ -746,7 +740,7 @@ class _AccountContent extends ConsumerWidget {
                         if (user?.email != null)
                           Text(
                             user!.email!,
-                            style: GoogleFonts.manrope(
+                            style: GoogleFonts.inter(
                               fontSize: 13,
                               color: scheme.onSurfaceVariant,
                             ),
@@ -769,7 +763,7 @@ class _AccountContent extends ConsumerWidget {
                       children: [
                         Text(
                           'Auto-sync',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: scheme.onSurface,
@@ -777,7 +771,7 @@ class _AccountContent extends ConsumerWidget {
                         ),
                         Text(
                           'Automatically sync your tasks with the cloud',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 12,
                             color: scheme.onSurfaceVariant,
                           ),
@@ -802,7 +796,7 @@ class _AccountContent extends ConsumerWidget {
             children: [
               Text(
                 'Danger Zone',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: scheme.error,
@@ -811,7 +805,7 @@ class _AccountContent extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 'Sign out of your account. Your data will remain synced to the cloud.',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 13,
                   color: scheme.onSurfaceVariant,
                 ),
@@ -841,11 +835,11 @@ class _AccountContent extends ConsumerWidget {
         return AlertDialog(
           title: Text(
             'Sign out',
-            style: GoogleFonts.manrope(color: scheme.onSurface),
+            style: GoogleFonts.inter(color: scheme.onSurface),
           ),
           content: Text(
             'Are you sure you want to sign out?',
-            style: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
+            style: GoogleFonts.inter(color: scheme.onSurfaceVariant),
           ),
           actions: [
             TextButton(
@@ -944,7 +938,7 @@ class _NotificationToggle extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: scheme.onSurface,
@@ -952,7 +946,7 @@ class _NotificationToggle extends StatelessWidget {
               ),
               Text(
                 subtitle,
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 12,
                   color: scheme.onSurfaceVariant,
                 ),
@@ -988,7 +982,7 @@ class _WorkspaceContent extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Workspace customization is coming soon.',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     color: scheme.onSurfaceVariant,
                   ),

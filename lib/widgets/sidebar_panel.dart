@@ -6,13 +6,19 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/task_list.dart';
 import '../providers/task_lists_provider.dart';
 import '../providers/ui_state_providers.dart';
-import '../theme/app_theme.dart' show ListdSurfaces;
+import '../theme/app_theme.dart' show AppTheme, ListdSurfaces;
 import 'app_logo.dart';
 import 'sync_status_pill.dart';
 
 export '../providers/ui_state_providers.dart'
     show selectedTaskListIdProvider, SpecialListIds;
 
+/// Listd 2026 sidebar.
+///
+/// Lives on the elevated surface (`surfaceContainerLow`) so the list
+/// pane reads as the bright surface. Items are 36 px tall with 18 px
+/// icons and 15 px labels. Selected items get an `accent-soft` fill +
+/// 2 px accent left bar — no rounded selection chip, no glow.
 class SidebarPanel extends ConsumerWidget {
   const SidebarPanel({super.key});
 
@@ -28,18 +34,17 @@ class SidebarPanel extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: surfaces?.sidebar ?? scheme.surfaceContainerLow,
-        border: Border(right: BorderSide(color: divider, width: 1)),
+        border: Border(right: BorderSide(color: divider)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHeader(scheme),
-          Container(height: 1, color: divider),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
-                const _SectionHeader(title: 'MY DAY'),
+                const _SectionHeader(title: 'My day'),
                 _SidebarItem(
                   icon: Icons.wb_sunny_outlined,
                   title: 'My Day',
@@ -65,11 +70,9 @@ class SidebarPanel extends ConsumerWidget {
                           SpecialListIds.planned,
                 ),
                 const SizedBox(height: 16),
-                Container(height: 1, color: divider),
-                const SizedBox(height: 8),
-                const _SectionHeader(title: 'MY LISTS'),
+                const _SectionHeader(title: 'Lists'),
                 _SidebarItem(
-                  icon: Icons.inbox,
+                  icon: Icons.inbox_outlined,
                   title: 'Tasks',
                   isSelected: selectedListId == SpecialListIds.tasks,
                   onTap: () =>
@@ -93,16 +96,18 @@ class SidebarPanel extends ConsumerWidget {
                         .toList(),
                   ),
                   loading: () => const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(strokeWidth: 1.5),
                     ),
                   ),
-                  error: (_, _) => const Padding(
-                    padding: EdgeInsets.all(16),
+                  error: (_, _) => Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                     child: Text(
                       'Failed to load lists',
-                      style: TextStyle(color: Color(0xFF8C8A97)),
+                      style: theme.textTheme.bodySmall,
                     ),
                   ),
                 ),
@@ -131,7 +136,7 @@ class SidebarPanel extends ConsumerWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
             child: _SidebarFooterButton(
               icon: Icons.settings_outlined,
               label: 'Settings',
@@ -145,18 +150,19 @@ class SidebarPanel extends ConsumerWidget {
 
   Widget _buildHeader(ColorScheme scheme) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
       child: Row(
         children: [
-          const AppLogo(size: 28),
-          const SizedBox(width: 12),
+          const AppLogo(size: 22),
+          const SizedBox(width: 10),
           Text(
             'Listd',
-            style: GoogleFonts.manrope(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+            style: GoogleFonts.inter(
+              fontSize: 17,
+              height: 22 / 17,
+              fontWeight: FontWeight.w600,
               color: scheme.onSurface,
-              letterSpacing: -0.2,
+              letterSpacing: -0.34,
             ),
           ),
         ],
@@ -169,16 +175,11 @@ class SidebarPanel extends ConsumerWidget {
     final result = await showDialog<String>(
       context: context,
       builder: (context) {
-        final scheme = Theme.of(context).colorScheme;
         return AlertDialog(
-          title: Text(
-            'New list',
-            style: GoogleFonts.manrope(color: scheme.onSurface),
-          ),
+          title: const Text('New list'),
           content: TextField(
             controller: controller,
             autofocus: true,
-            style: GoogleFonts.manrope(color: scheme.onSurface),
             decoration: const InputDecoration(hintText: 'List name'),
             onSubmitted: (value) => Navigator.of(context).pop(value),
           ),
@@ -209,14 +210,15 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
       child: Text(
         title.toUpperCase(),
-        style: GoogleFonts.manrope(
+        style: GoogleFonts.inter(
           fontSize: 11,
+          height: 16 / 11,
           fontWeight: FontWeight.w600,
-          color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-          letterSpacing: 1.5,
+          color: scheme.onSurfaceVariant,
+          letterSpacing: 0.66,
         ),
       ),
     );
@@ -237,52 +239,11 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final selectedFg = scheme.onSurface;
-    final unselectedFg = scheme.onSurfaceVariant;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? scheme.primary.withValues(alpha: 0.12)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        border: isSelected
-            ? Border(left: BorderSide(color: scheme.primary, width: 3))
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: isSelected ? selectedFg : unselectedFg,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: GoogleFonts.manrope(
-                      fontSize: 14,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: isSelected ? selectedFg : unselectedFg,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return _SidebarRow(
+      isSelected: isSelected,
+      onTap: onTap,
+      icon: icon,
+      title: title,
     );
   }
 }
@@ -299,48 +260,84 @@ class _TaskListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _SidebarRow(
+      isSelected: isSelected,
+      onTap: onTap,
+      icon: taskList.isDefault ? Icons.star : Icons.list,
+      title: taskList.title,
+    );
+  }
+}
+
+/// 36 px tall row with `accent-soft` fill + 2 px left bar when selected.
+class _SidebarRow extends StatelessWidget {
+  const _SidebarRow({
+    required this.isSelected,
+    required this.onTap,
+    required this.icon,
+    required this.title,
+  });
+
+  final bool isSelected;
+  final VoidCallback onTap;
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final selectedFg = scheme.onSurface;
     final unselectedFg = scheme.onSurfaceVariant;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? scheme.primary.withValues(alpha: 0.12)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        border: isSelected
-            ? Border(left: BorderSide(color: scheme.primary, width: 3))
-            : null,
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Material(
-        color: Colors.transparent,
+        color: isSelected ? scheme.primaryContainer : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppTheme.controlRadius),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
+          borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+          child: SizedBox(
+            height: 36,
+            child: Stack(
               children: [
-                Icon(
-                  taskList.isDefault ? Icons.star : Icons.list,
-                  size: 20,
-                  color: taskList.isDefault
-                      ? scheme.tertiary
-                      : (isSelected ? selectedFg : unselectedFg),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    taskList.title,
-                    style: GoogleFonts.manrope(
-                      fontSize: 14,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: isSelected ? selectedFg : unselectedFg,
+                if (isSelected)
+                  Positioned(
+                    left: 0,
+                    top: 8,
+                    bottom: 8,
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        color: scheme.primary,
+                        borderRadius: BorderRadius.circular(1),
+                      ),
                     ),
-                    overflow: TextOverflow.ellipsis,
+                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        icon,
+                        size: 18,
+                        color: isSelected ? scheme.primary : unselectedFg,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            height: 22 / 15,
+                            fontWeight: isSelected
+                                ? FontWeight.w500
+                                : FontWeight.w400,
+                            color: isSelected ? selectedFg : unselectedFg,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -365,30 +362,29 @@ class _SidebarFooterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: scheme.outlineVariant, width: 1),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(8),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+        child: SizedBox(
+          height: 32,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 18, color: scheme.onSurfaceVariant),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: GoogleFonts.manrope(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: scheme.onSurfaceVariant,
+                Icon(icon, size: 16, color: scheme.onSurfaceVariant),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      height: 20 / 14,
+                      fontWeight: FontWeight.w400,
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
