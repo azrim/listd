@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/task_lists_provider.dart';
+import '../../theme/app_colors.dart';
 import '../../widgets/sidebar_panel.dart';
 import '../../widgets/task_list_panel.dart';
 
@@ -74,21 +75,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
-    return Scaffold(
-      body: Row(
-        children: [
-          // Left sidebar - 220px fixed
-          const SizedBox(width: 220, child: SidebarPanel()),
-          // Vertical divider
-          const VerticalDivider(width: 1),
-          // Main task list panel
-          Expanded(
-            child: TaskListPanel(
-              listId: selectedListId ?? SpecialListIds.tasks,
-              listName: listName,
+    return Container(
+      decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Row(
+          children: [
+            // Left sidebar - 220px fixed
+            const SizedBox(width: 220, child: SidebarPanel()),
+            // Vertical divider
+            const VerticalDivider(width: 1, color: Colors.white10),
+            // Main task list panel
+            Expanded(
+              child: TaskListPanel(
+                listId: selectedListId ?? SpecialListIds.tasks,
+                listName: listName,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

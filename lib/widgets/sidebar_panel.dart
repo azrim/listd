@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/task_lists_provider.dart';
+import '../theme/app_colors.dart';
 import '../models/task_list.dart';
 
 /// Provider for the currently selected task list ID
@@ -16,144 +19,151 @@ class SpecialListIds {
   static const String tasks = '@tasks';
 }
 
-/// Left sidebar panel with task lists
+/// Left sidebar panel with task lists - glassmorphism style
 class SidebarPanel extends ConsumerWidget {
   const SidebarPanel({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
     final selectedListId = ref.watch(selectedTaskListIdProvider);
     final taskListsAsync = ref.watch(taskListsStreamProvider);
 
-    return Container(
-      color: colorScheme.surfaceContainerLow,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildHeader(context),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              children: [
-                _SectionHeader(title: 'MY DAY'),
-                _SidebarItem(
-                  icon: Icons.wb_sunny_outlined,
-                  title: 'My Day',
-                  iconColor: Colors.orange,
-                  isSelected: selectedListId == SpecialListIds.myDay,
-                  onTap: () =>
-                      ref.read(selectedTaskListIdProvider.notifier).state =
-                          SpecialListIds.myDay,
-                ),
-                _SidebarItem(
-                  icon: Icons.star_outline,
-                  title: 'Important',
-                  iconColor: colorScheme.primary,
-                  isSelected: selectedListId == SpecialListIds.important,
-                  onTap: () =>
-                      ref.read(selectedTaskListIdProvider.notifier).state =
-                          SpecialListIds.important,
-                ),
-                _SidebarItem(
-                  icon: Icons.calendar_today_outlined,
-                  title: 'Planned',
-                  iconColor: colorScheme.tertiary,
-                  isSelected: selectedListId == SpecialListIds.planned,
-                  onTap: () =>
-                      ref.read(selectedTaskListIdProvider.notifier).state =
-                          SpecialListIds.planned,
-                ),
-                const SizedBox(height: 16),
-                const Divider(height: 1),
-                const SizedBox(height: 8),
-                _SectionHeader(title: 'MY LISTS'),
-                _SidebarItem(
-                  icon: Icons.inbox,
-                  title: 'Tasks',
-                  isSelected: selectedListId == SpecialListIds.tasks,
-                  onTap: () =>
-                      ref.read(selectedTaskListIdProvider.notifier).state =
-                          SpecialListIds.tasks,
-                ),
-                taskListsAsync.when(
-                  data: (taskLists) => Column(
-                    children: taskLists
-                        .map(
-                          (taskList) => _TaskListItem(
-                            taskList: taskList,
-                            isSelected: selectedListId == taskList.id,
-                            onTap: () =>
-                                ref
-                                    .read(selectedTaskListIdProvider.notifier)
-                                    .state = taskList
-                                    .id,
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.bgSurface.withAlpha(179), // 70% opacity
+            border: const Border(
+              right: BorderSide(color: AppColors.glassBorder, width: 1),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(context),
+              const Divider(height: 1, color: Colors.white10),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  children: [
+                    _SectionHeader(title: 'MY DAY'),
+                    _SidebarItem(
+                      icon: Icons.wb_sunny_outlined,
+                      title: 'My Day',
+                      iconColor: Colors.orange,
+                      isSelected: selectedListId == SpecialListIds.myDay,
+                      onTap: () =>
+                          ref.read(selectedTaskListIdProvider.notifier).state =
+                              SpecialListIds.myDay,
+                    ),
+                    _SidebarItem(
+                      icon: Icons.star_outline,
+                      title: 'Important',
+                      iconColor: AppColors.primary,
+                      isSelected: selectedListId == SpecialListIds.important,
+                      onTap: () =>
+                          ref.read(selectedTaskListIdProvider.notifier).state =
+                              SpecialListIds.important,
+                    ),
+                    _SidebarItem(
+                      icon: Icons.calendar_today_outlined,
+                      title: 'Planned',
+                      iconColor: Colors.cyan,
+                      isSelected: selectedListId == SpecialListIds.planned,
+                      onTap: () =>
+                          ref.read(selectedTaskListIdProvider.notifier).state =
+                              SpecialListIds.planned,
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(height: 1, color: Colors.white10),
+                    const SizedBox(height: 8),
+                    _SectionHeader(title: 'MY LISTS'),
+                    _SidebarItem(
+                      icon: Icons.inbox,
+                      title: 'Tasks',
+                      isSelected: selectedListId == SpecialListIds.tasks,
+                      onTap: () =>
+                          ref.read(selectedTaskListIdProvider.notifier).state =
+                              SpecialListIds.tasks,
+                    ),
+                    taskListsAsync.when(
+                      data: (taskLists) => Column(
+                        children: taskLists
+                            .map(
+                              (taskList) => _TaskListItem(
+                                taskList: taskList,
+                                isSelected: selectedListId == taskList.id,
+                                onTap: () =>
+                                    ref
+                                        .read(
+                                          selectedTaskListIdProvider.notifier,
+                                        )
+                                        .state = taskList
+                                        .id,
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      loading: () => const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
-                        )
-                        .toList(),
-                  ),
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      error: (_, _) => const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          'Failed to load lists',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
                       ),
                     ),
-                  ),
-                  error: (_, _) => const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('Failed to load lists'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          // New list button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: TextButton.icon(
-              onPressed: () => _showNewListDialog(context, ref),
-              icon: const Icon(Icons.add, size: 20),
-              label: const Text('New list'),
-              style: TextButton.styleFrom(
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
+                  ],
                 ),
               ),
-            ),
-          ),
-          // Settings button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: TextButton.icon(
-              onPressed: () => context.push('/settings'),
-              icon: const Icon(Icons.settings_outlined, size: 20),
-              label: const Text('Settings'),
-              style: TextButton.styleFrom(
-                alignment: Alignment.centerLeft,
+              const Divider(height: 1, color: Colors.white10),
+              // New list button
+              Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 12,
+                  vertical: 4,
+                ),
+                child: _GlassButton(
+                  icon: Icons.add,
+                  label: 'New list',
+                  onPressed: () => _showNewListDialog(context, ref),
                 ),
               ),
-            ),
+              // Settings button
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                child: _GlassButton(
+                  icon: Icons.settings_outlined,
+                  label: 'Settings',
+                  onPressed: () => context.push('/settings'),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.white10)),
+      ),
       child: Row(
         children: [
           ClipRRect(
@@ -162,19 +172,18 @@ class SidebarPanel extends ConsumerWidget {
               'assets/images/listd_logo.png',
               width: 32,
               height: 32,
-              errorBuilder: (_, _, _) => Icon(
-                Icons.check_circle,
-                size: 32,
-                color: colorScheme.primary,
-              ),
+              errorBuilder: (_, _, _) =>
+                  Icon(Icons.check_circle, size: 32, color: AppColors.primary),
             ),
           ),
           const SizedBox(width: 12),
           Text(
             'Listd',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
           ),
         ],
       ),
@@ -225,8 +234,10 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textHint,
           letterSpacing: 1.2,
         ),
       ),
@@ -255,11 +266,9 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Material(
       color: isSelected
-          ? colorScheme.primaryContainer.withAlpha(128)
+          ? AppColors.primary.withAlpha(51) // 20% opacity
           : Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -267,11 +276,7 @@ class _SidebarItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              Icon(
-                icon,
-                size: 20,
-                color: iconColor ?? colorScheme.onSurfaceVariant,
-              ),
+              Icon(icon, size: 20, color: iconColor ?? AppColors.textSecondary),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -282,8 +287,8 @@ class _SidebarItem extends StatelessWidget {
                         ? FontWeight.w600
                         : FontWeight.normal,
                     color: isSelected
-                        ? colorScheme.onSurface
-                        : colorScheme.onSurfaceVariant,
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -294,15 +299,12 @@ class _SidebarItem extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
+                    color: Colors.white.withAlpha(26),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     subtitle!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    style: TextStyle(fontSize: 12, color: AppColors.textHint),
                   ),
                 ),
             ],
@@ -326,11 +328,9 @@ class _TaskListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Material(
       color: isSelected
-          ? colorScheme.primaryContainer.withAlpha(128)
+          ? AppColors.primary.withAlpha(51) // 20% opacity
           : Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -342,8 +342,8 @@ class _TaskListItem extends StatelessWidget {
                 taskList.isDefault ? Icons.star : Icons.list,
                 size: 20,
                 color: taskList.isDefault
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -355,9 +355,50 @@ class _TaskListItem extends StatelessWidget {
                         ? FontWeight.w600
                         : FontWeight.normal,
                     color: isSelected
-                        ? colorScheme.onSurface
-                        : colorScheme.onSurfaceVariant,
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Glass-style button for sidebar actions
+class _GlassButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _GlassButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withAlpha(15),
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: AppColors.textSecondary),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],

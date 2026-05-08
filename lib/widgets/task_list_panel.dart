@@ -1,11 +1,14 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/task.dart';
 import '../providers/tasks_provider.dart';
 import '../providers/ui_state_providers.dart';
+import '../theme/app_colors.dart';
 
-/// Main task list panel showing tasks in a selected list
+/// Main task list panel showing tasks in a selected list - glassmorphism style
 class TaskListPanel extends ConsumerWidget {
   final String listId;
   final String listName;
@@ -23,7 +26,7 @@ class TaskListPanel extends ConsumerWidget {
 
     return Column(
       children: [
-        // Header
+        // Header with glass effect
         _buildHeader(context, ref),
         // Task list with pull-to-refresh
         Expanded(
@@ -40,33 +43,40 @@ class TaskListPanel extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context, WidgetRef ref) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).dividerColor.withAlpha(128),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              listName,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.bgSurface.withAlpha(128), // 50% opacity
+            border: const Border(
+              bottom: BorderSide(color: Colors.white10, width: 1),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh, size: 20),
-            onPressed: () => ref
-                .read(tasksNotifierProvider(listId).notifier)
-                .syncFromRemote(),
-            tooltip: 'Refresh',
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  listName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh, size: 20),
+                color: AppColors.textSecondary,
+                onPressed: () => ref
+                    .read(tasksNotifierProvider(listId).notifier)
+                    .syncFromRemote(),
+                tooltip: 'Refresh',
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -86,20 +96,24 @@ class TaskListPanel extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () =>
           ref.read(tasksNotifierProvider(listId).notifier).syncFromRemote(),
+      color: AppColors.primary,
       child: ListView.builder(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         itemCount: mainTasks.length,
         itemBuilder: (context, index) {
           final task = mainTasks[index];
-          return _TaskRow(
-            task: task,
-            isSelected: selectedTaskId == task.id,
-            onTap: () =>
-                ref.read(selectedTaskIdProvider.notifier).state = task.id,
-            onToggle: () => ref
-                .read(tasksNotifierProvider(listId).notifier)
-                .toggleComplete(task),
-            onDelete: () => _confirmDelete(context, ref, task),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: _TaskRow(
+              task: task,
+              isSelected: selectedTaskId == task.id,
+              onTap: () =>
+                  ref.read(selectedTaskIdProvider.notifier).state = task.id,
+              onToggle: () => ref
+                  .read(tasksNotifierProvider(listId).notifier)
+                  .toggleComplete(task),
+              onDelete: () => _confirmDelete(context, ref, task),
+            ),
           );
         },
       ),
@@ -114,8 +128,15 @@ class TaskListPanel extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete task'),
-        content: Text('Are you sure you want to delete "${task.title}"?'),
+        backgroundColor: AppColors.bgSurface,
+        title: const Text(
+          'Delete task',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${task.title}"?',
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -123,9 +144,7 @@ class TaskListPanel extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('Delete'),
           ),
         ],
@@ -144,15 +163,11 @@ class TaskListPanel extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 48,
-            color: Theme.of(context).colorScheme.error,
-          ),
+          const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             'Failed to load tasks',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: TextStyle(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
@@ -172,24 +187,16 @@ class TaskListPanel extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.task_alt,
-            size: 64,
-            color: Theme.of(context).colorScheme.outline,
-          ),
+          const Icon(Icons.task_alt, size: 64, color: AppColors.textHint),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             'No tasks yet',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Add a task below',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.outline,
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.textHint),
           ),
         ],
       ),
@@ -197,7 +204,7 @@ class TaskListPanel extends ConsumerWidget {
   }
 }
 
-/// Task row widget
+/// Glassmorphism task row widget
 class _TaskRow extends StatelessWidget {
   const _TaskRow({
     required this.task,
@@ -215,16 +222,17 @@ class _TaskRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Dismissible(
       key: Key(task.id),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
-        color: colorScheme.error,
-        child: Icon(Icons.delete, color: colorScheme.onError),
+        decoration: BoxDecoration(
+          color: AppColors.danger.withAlpha(179),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.delete, color: Colors.white),
       ),
       confirmDismiss: (direction) async {
         onDelete?.call();
@@ -232,10 +240,12 @@ class _TaskRow extends StatelessWidget {
       },
       child: Material(
         color: isSelected
-            ? colorScheme.primaryContainer.withAlpha(77)
-            : Colors.transparent,
+            ? AppColors.primary.withAlpha(51) // 20% opacity
+            : Colors.white.withAlpha(13), // 5% opacity
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -250,20 +260,16 @@ class _TaskRow extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: task.isCompleted
-                            ? colorScheme.primary
-                            : colorScheme.outline,
+                            ? AppColors.primary
+                            : AppColors.textHint,
                         width: 2,
                       ),
                       color: task.isCompleted
-                          ? colorScheme.primary
+                          ? AppColors.primary
                           : Colors.transparent,
                     ),
                     child: task.isCompleted
-                        ? Icon(
-                            Icons.check,
-                            size: 16,
-                            color: colorScheme.onPrimary,
-                          )
+                        ? const Icon(Icons.check, size: 16, color: Colors.white)
                         : null,
                   ),
                 ),
@@ -277,8 +283,8 @@ class _TaskRow extends StatelessWidget {
                           ? TextDecoration.lineThrough
                           : null,
                       color: task.isCompleted
-                          ? colorScheme.outline
-                          : colorScheme.onSurface,
+                          ? AppColors.textHint
+                          : AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -293,7 +299,7 @@ class _TaskRow extends StatelessWidget {
   }
 }
 
-/// Add task input widget - always visible at bottom
+/// Add task input widget - always visible at bottom with glass effect
 class _AddTaskInput extends ConsumerStatefulWidget {
   const _AddTaskInput({required this.listId});
 
@@ -338,9 +344,12 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
       _focusNode.requestFocus();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -349,47 +358,55 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: colorScheme.outlineVariant.withAlpha(128)),
-        ),
-      ),
-      child: Row(
-        children: [
-          _isLoading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Padding(
-                    padding: EdgeInsets.all(4),
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.add_circle_outline, size: 24),
-                  onPressed: _addTask,
-                ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              focusNode: _focusNode,
-              decoration: InputDecoration(
-                hintText: 'Add a task',
-                border: InputBorder.none,
-                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-                isDense: true,
-              ),
-              onSubmitted: (_) => _addTask(),
-              enabled: !_isLoading,
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.bgSurface.withAlpha(179), // 70% opacity
+            border: const Border(
+              top: BorderSide(color: Colors.white10, width: 1),
             ),
           ),
-        ],
+          child: Row(
+            children: [
+              _isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Padding(
+                        padding: EdgeInsets.all(4),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.add_circle_outline, size: 24),
+                      color: AppColors.textSecondary,
+                      onPressed: _addTask,
+                    ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: 'Add a task',
+                    hintStyle: TextStyle(color: AppColors.textHint),
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
+                  onSubmitted: (_) => _addTask(),
+                  enabled: !_isLoading,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
