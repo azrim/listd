@@ -502,8 +502,10 @@ class _Checkbox extends StatelessWidget {
   }
 }
 
-/// Borderless capture input — sits on `surface-sunken`, 32 px tall,
-/// 8 px radius, no border. Focus ring: 2 px accent outset on focus.
+/// Quiet capture input. 32 px tall, no fill, single 1 px hairline at the
+/// bottom that swaps to accent + 2 px on focus. Reads like an underlined
+/// native field — far closer to the rest of the inspector's hairline
+/// vocabulary than the chunky filled rectangle this used to be.
 class _AddTaskInput extends ConsumerStatefulWidget {
   final String listId;
 
@@ -606,59 +608,67 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 120),
-      height: AppTheme.controlHeight,
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-        border: Border.all(
-          color: _focused ? scheme.primary : Colors.transparent,
-          width: 2,
+    return SizedBox(
+      height: AppTheme.controlHeight + 2,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: _focused ? scheme.primary : scheme.outlineVariant,
+              width: _focused ? 2 : 1,
+            ),
+          ),
         ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        children: [
-          if (_isLoading)
+        child: Row(
+          children: [
             SizedBox(
               width: 14,
               height: 14,
-              child: CircularProgressIndicator(
-                strokeWidth: 1.5,
-                color: scheme.primary,
-              ),
-            )
-          else
-            Icon(Icons.add, size: 16, color: scheme.onSurfaceVariant),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              focusNode: _focusNode,
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                height: 22 / 15,
-                color: scheme.onSurface,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Add a task',
-                hintStyle: GoogleFonts.inter(
+              child: _isLoading
+                  ? CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      color: scheme.primary,
+                    )
+                  : Icon(
+                      Icons.add,
+                      size: 14,
+                      color: _focused
+                          ? scheme.primary
+                          : scheme.onSurfaceVariant,
+                    ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                cursorColor: scheme.primary,
+                style: GoogleFonts.inter(
                   fontSize: 15,
                   height: 22 / 15,
-                  color: scheme.outline,
+                  color: scheme.onSurface,
                 ),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
+                decoration: InputDecoration(
+                  hintText: 'Add a task',
+                  hintStyle: GoogleFonts.inter(
+                    fontSize: 15,
+                    height: 22 / 15,
+                    color: scheme.outline,
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onSubmitted: (_) => _addTask(),
+                enabled: !_isLoading,
               ),
-              onSubmitted: (_) => _addTask(),
-              enabled: !_isLoading,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
