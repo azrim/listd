@@ -3,15 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../providers/sync_provider.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 
-/// Compact status pill that shows the current sync state plus a manual
-/// "sync now" button. Designed to slot into the sidebar footer.
-///
-/// States:
-///   - **Synced** (green dot, no error, 0 pending)
-///   - **Syncing…** (spinner)
-///   - **N pending** (amber dot, has uncommitted local edits)
-///   - **Sync failed** (red dot, lastError set)
+/// Compact sync status pill — 32 px tall, hairline border, full width
+/// of its parent. Renders one of four states with a 6 px functional
+/// dot (success / warning / error / accent for in-flight) plus a
+/// trailing `sync` glyph or a 14 px spinner. Tap fires
+/// `syncStateProvider.notifier.syncNow()`.
 class SyncStatusPill extends ConsumerWidget {
   const SyncStatusPill({super.key});
 
@@ -26,18 +25,19 @@ class SyncStatusPill extends ConsumerWidget {
     return Tooltip(
       message: _tooltipFor(state),
       child: Material(
-        color: Colors.transparent,
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.controlRadius),
         child: InkWell(
           onTap: canSync
               ? () => ref.read(syncStateProvider.notifier).syncNow()
               : null,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppTheme.controlRadius),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            height: AppTheme.controlHeight,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppTheme.controlRadius),
               border: Border.all(color: scheme.outlineVariant),
-              color: scheme.surfaceContainerLow,
             ),
             child: Row(
               children: [
@@ -46,14 +46,14 @@ class SyncStatusPill extends ConsumerWidget {
                     width: 14,
                     height: 14,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                      strokeWidth: 1.5,
                       valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
                     ),
                   )
                 else
                   Container(
-                    width: 8,
-                    height: 8,
+                    width: 6,
+                    height: 6,
                     decoration: BoxDecoration(
                       color: dotColor,
                       shape: BoxShape.circle,
@@ -63,16 +63,17 @@ class SyncStatusPill extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     label,
-                    style: GoogleFonts.manrope(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      height: 18 / 13,
+                      fontWeight: FontWeight.w500,
                       color: scheme.onSurface,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (!state.isSyncing)
-                  Icon(Icons.sync, size: 16, color: scheme.onSurfaceVariant),
+                  Icon(Icons.sync, size: 14, color: scheme.onSurfaceVariant),
               ],
             ),
           ),
@@ -82,17 +83,18 @@ class SyncStatusPill extends ConsumerWidget {
   }
 
   (String, Color) _statusFor(SyncStateSnapshot state, ColorScheme scheme) {
+    final isDark = scheme.brightness == Brightness.dark;
     if (state.isSyncing) {
       return ('Syncing…', scheme.primary);
     }
     if (state.lastError != null) {
-      return ('Sync failed — tap to retry', scheme.error);
+      return ('Sync failed', isDark ? AppColors.errorDark : AppColors.error);
     }
     if (state.totalPending > 0) {
       final n = state.totalPending;
-      return ('$n pending — tap to sync', const Color(0xFFF59E0B));
+      return ('$n pending', isDark ? AppColors.warningDark : AppColors.warning);
     }
-    return ('Synced', const Color(0xFF22C55E));
+    return ('Synced', isDark ? AppColors.successDark : AppColors.success);
   }
 
   String _tooltipFor(SyncStateSnapshot state) {

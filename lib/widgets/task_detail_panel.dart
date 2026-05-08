@@ -8,6 +8,7 @@ import '../models/task.dart';
 import '../models/task_list.dart';
 import '../providers/task_lists_provider.dart';
 import '../providers/tasks_provider.dart';
+import '../theme/app_theme.dart';
 
 /// Task detail panel - 3rd column in 3-column layout.
 class TaskDetailPanel extends ConsumerStatefulWidget {
@@ -89,14 +90,14 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final surfaces = theme.extension<ListdSurfaces>();
     return Container(
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
-        color: scheme.surface,
-        border: Border(
-          left: BorderSide(color: scheme.outlineVariant, width: 1),
-        ),
+        color: surfaces?.detailPanel ?? scheme.surfaceContainerLow,
+        border: Border(left: BorderSide(color: scheme.outlineVariant)),
       ),
       child: SafeArea(
         child: Column(
@@ -104,15 +105,15 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
             _buildHeader(context),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildTitleSection(),
                     const SizedBox(height: 24),
-                    _buildSubtasksSection(),
-                    const SizedBox(height: 24),
                     _buildMetadataSection(),
+                    const SizedBox(height: 24),
+                    _buildSubtasksSection(),
                     const SizedBox(height: 24),
                     _buildTagsSection(),
                     const SizedBox(height: 24),
@@ -131,22 +132,20 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
 
   Widget _buildHeader(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: scheme.outlineVariant, width: 1),
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
       child: Row(
         children: [
-          IconButton(
-            icon: Icon(Icons.close, color: scheme.onSurfaceVariant),
+          _QuietIconButton(
+            icon: Icons.close,
+            tooltip: 'Close',
             onPressed: widget.onClose,
           ),
           const Spacer(),
-          IconButton(
-            icon: Icon(Icons.delete_outline, color: scheme.error),
+          _QuietIconButton(
+            icon: Icons.delete_outline,
+            color: scheme.error,
+            tooltip: 'Delete task',
             onPressed: () {
               ref
                   .read(tasksNotifierProvider(widget.listId).notifier)
@@ -162,13 +161,14 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   Widget _buildTitleSection() {
     final scheme = Theme.of(context).colorScheme;
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Checkbox
         GestureDetector(
           onTap: _toggleComplete,
-          child: Container(
-            width: 26,
-            height: 26,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            width: 18,
+            height: 18,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: widget.task.isCompleted
@@ -178,55 +178,57 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                 color: widget.task.isCompleted
                     ? scheme.primary
                     : scheme.outline,
-                width: 2,
+                width: 1.5,
               ),
-              boxShadow: widget.task.isCompleted
-                  ? [
-                      BoxShadow(
-                        color: scheme.primary.withValues(alpha: 0.35),
-                        blurRadius: 8,
-                      ),
-                    ]
-                  : null,
             ),
             child: widget.task.isCompleted
-                ? Icon(Icons.check, size: 14, color: scheme.onPrimary)
+                ? Icon(Icons.check, size: 12, color: scheme.onPrimary)
                 : null,
           ),
         ),
-        const SizedBox(width: 16),
-        // Title
+        const SizedBox(width: 12),
         Expanded(
           child: TextField(
             controller: _titleController,
             onChanged: _onTitleChanged,
-            style: GoogleFonts.manrope(
-              fontSize: 18,
+            style: GoogleFonts.inter(
+              fontSize: 22,
+              height: 28 / 22,
               fontWeight: FontWeight.w600,
+              letterSpacing: -0.22,
               color: widget.task.isCompleted
-                  ? scheme.onSurfaceVariant
+                  ? scheme.outline
                   : scheme.onSurface,
               decoration: widget.task.isCompleted
                   ? TextDecoration.lineThrough
                   : null,
+              decorationColor: scheme.outline,
             ),
             decoration: InputDecoration(
               border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              filled: false,
               hintText: 'Task title',
-              hintStyle: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
+              hintStyle: GoogleFonts.inter(
+                fontSize: 22,
+                height: 28 / 22,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.22,
+                color: scheme.outline,
+              ),
               isDense: true,
               contentPadding: EdgeInsets.zero,
             ),
           ),
         ),
-        // Star
-        IconButton(
-          icon: Icon(
-            widget.task.isStarred ? Icons.star : Icons.star_border,
-            color: widget.task.isStarred
-                ? scheme.tertiary
-                : scheme.onSurfaceVariant,
-          ),
+        const SizedBox(width: 4),
+        _QuietIconButton(
+          icon: widget.task.isStarred ? Icons.star : Icons.star_border,
+          tooltip: widget.task.isStarred ? 'Unstar' : 'Star',
+          color: widget.task.isStarred
+              ? scheme.onSurface
+              : scheme.onSurfaceVariant,
           onPressed: _toggleStar,
         ),
       ],
@@ -241,31 +243,19 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header
         Row(
           children: [
-            Icon(
-              Icons.check_box_outlined,
-              size: 18,
-              color: scheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'STEPS',
-              style: GoogleFonts.manrope(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: scheme.onSurfaceVariant,
-                letterSpacing: 1.2,
-              ),
-            ),
+            Text('STEPS', style: _captionStyle(scheme)),
             if (steps.isNotEmpty) ...[
               const SizedBox(width: 8),
               Text(
-                '$completedCount/${steps.length}',
-                style: GoogleFonts.manrope(
+                '$completedCount of ${steps.length}',
+                style: GoogleFonts.inter(
                   fontSize: 11,
+                  height: 16 / 11,
+                  fontWeight: FontWeight.w400,
                   color: scheme.onSurfaceVariant,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -287,19 +277,21 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
             },
           ),
         ),
-        // Add step button
-        GestureDetector(
+        InkWell(
           onTap: () => _showAddStepDialog(),
+          borderRadius: BorderRadius.circular(AppTheme.controlRadius),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
-                Icon(Icons.add, size: 18, color: scheme.onSurfaceVariant),
+                Icon(Icons.add, size: 14, color: scheme.onSurfaceVariant),
                 const SizedBox(width: 8),
                 Text(
                   'Add step',
-                  style: GoogleFonts.manrope(
-                    fontSize: 14,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    height: 18 / 13,
+                    fontWeight: FontWeight.w400,
                     color: scheme.onSurfaceVariant,
                   ),
                 ),
@@ -320,15 +312,15 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
         return AlertDialog(
           title: Text(
             'Add step',
-            style: GoogleFonts.manrope(color: scheme.onSurface),
+            style: GoogleFonts.inter(color: scheme.onSurface),
           ),
           content: TextField(
             controller: controller,
             autofocus: true,
-            style: GoogleFonts.manrope(color: scheme.onSurface),
+            style: GoogleFonts.inter(color: scheme.onSurface),
             decoration: InputDecoration(
               hintText: 'Step description',
-              hintStyle: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
+              hintStyle: GoogleFonts.inter(color: scheme.onSurfaceVariant),
             ),
             onSubmitted: (value) => Navigator.of(context).pop(value),
           ),
@@ -337,12 +329,12 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Cancel',
-                style: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
+                style: GoogleFonts.inter(color: scheme.onSurfaceVariant),
               ),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(controller.text),
-              child: Text('Add', style: GoogleFonts.manrope()),
+              child: Text('Add', style: GoogleFonts.inter()),
             ),
           ],
         );
@@ -430,7 +422,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: Text(
                   'Move to folder',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: scheme.onSurfaceVariant,
@@ -554,42 +546,33 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'TAGS',
-          style: GoogleFonts.manrope(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: scheme.onSurfaceVariant,
-            letterSpacing: 1.2,
-          ),
-        ),
+        Text('TAGS', style: _captionStyle(scheme)),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 6,
+          runSpacing: 6,
           children: [
             ...tags.map(
               (tag) => Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: scheme.primary.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: scheme.primary, width: 1),
+                  color: scheme.surface,
+                  borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+                  border: Border.all(color: scheme.outlineVariant),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       tag,
-                      style: GoogleFonts.manrope(
-                        fontSize: 12,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        height: 18 / 13,
+                        fontWeight: FontWeight.w400,
                         color: scheme.onSurface,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     GestureDetector(
                       onTap: () {
                         final updatedTags = tags
@@ -599,7 +582,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                       },
                       child: Icon(
                         Icons.close,
-                        size: 14,
+                        size: 12,
                         color: scheme.onSurfaceVariant,
                       ),
                     ),
@@ -607,27 +590,26 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
                 ),
               ),
             ),
-            // Add tag button
-            GestureDetector(
+            InkWell(
               onTap: _showAddTagDialog,
+              borderRadius: BorderRadius.circular(AppTheme.controlRadius),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  border: Border.all(color: scheme.outline),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+                  border: Border.all(color: scheme.outlineVariant),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.add, size: 14, color: scheme.onSurfaceVariant),
+                    Icon(Icons.add, size: 12, color: scheme.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
                       'Add tag',
-                      style: GoogleFonts.manrope(
-                        fontSize: 12,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        height: 18 / 13,
+                        fontWeight: FontWeight.w400,
                         color: scheme.onSurfaceVariant,
                       ),
                     ),
@@ -650,15 +632,15 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
         return AlertDialog(
           title: Text(
             'Add tag',
-            style: GoogleFonts.manrope(color: scheme.onSurface),
+            style: GoogleFonts.inter(color: scheme.onSurface),
           ),
           content: TextField(
             controller: controller,
             autofocus: true,
-            style: GoogleFonts.manrope(color: scheme.onSurface),
+            style: GoogleFonts.inter(color: scheme.onSurface),
             decoration: InputDecoration(
               hintText: 'Tag name',
-              hintStyle: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
+              hintStyle: GoogleFonts.inter(color: scheme.onSurfaceVariant),
             ),
             onSubmitted: (value) => Navigator.of(context).pop(value),
           ),
@@ -667,12 +649,12 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Cancel',
-                style: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
+                style: GoogleFonts.inter(color: scheme.onSurfaceVariant),
               ),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(controller.text),
-              child: Text('Add', style: GoogleFonts.manrope()),
+              child: Text('Add', style: GoogleFonts.inter()),
             ),
           ],
         );
@@ -690,32 +672,34 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'NOTES',
-          style: GoogleFonts.manrope(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: scheme.onSurfaceVariant,
-            letterSpacing: 1.2,
-          ),
-        ),
+        Text('NOTES', style: _captionStyle(scheme)),
         const SizedBox(height: 8),
         Container(
-          constraints: const BoxConstraints(minHeight: 80),
+          constraints: const BoxConstraints(minHeight: 96),
           decoration: BoxDecoration(
-            color: scheme.surfaceContainer,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: scheme.outlineVariant, width: 1),
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+            border: Border.all(color: scheme.outlineVariant),
           ),
           child: TextField(
             controller: _notesController,
             onChanged: _onNotesChanged,
             maxLines: null,
-            style: GoogleFonts.manrope(fontSize: 14, color: scheme.onSurface),
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              height: 22 / 15,
+              color: scheme.onSurface,
+            ),
             decoration: InputDecoration(
-              hintText: 'Add a note...',
-              hintStyle: GoogleFonts.manrope(color: scheme.onSurfaceVariant),
+              hintText: 'Notes',
+              hintStyle: GoogleFonts.inter(
+                fontSize: 15,
+                height: 22 / 15,
+                color: scheme.outline,
+              ),
               border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
               contentPadding: const EdgeInsets.all(12),
             ),
           ),
@@ -727,10 +711,23 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   Widget _buildFooter() {
     final scheme = Theme.of(context).colorScheme;
     return Text(
-      'Created ${_formatDate(widget.task.updated)}',
-      style: GoogleFonts.manrope(fontSize: 11, color: scheme.onSurfaceVariant),
+      'Updated ${_formatDate(widget.task.updated)}',
+      style: GoogleFonts.inter(
+        fontSize: 11,
+        height: 16 / 11,
+        fontWeight: FontWeight.w400,
+        color: scheme.onSurfaceVariant,
+      ),
     );
   }
+
+  TextStyle _captionStyle(ColorScheme scheme) => GoogleFonts.inter(
+    fontSize: 11,
+    height: 16 / 11,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.66,
+    color: scheme.onSurfaceVariant,
+  );
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
@@ -745,7 +742,7 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
   }
 }
 
-/// Step item in subtasks list
+/// Step row inside the inspector. 32 px tall, 18 px circular checkbox.
 class _StepItem extends StatelessWidget {
   final TaskStep step;
   final VoidCallback onToggle;
@@ -755,51 +752,98 @@ class _StepItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return GestureDetector(
+    return InkWell(
       onTap: onToggle,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                color: step.isCompleted ? scheme.primary : Colors.transparent,
-                border: Border.all(
-                  color: step.isCompleted ? scheme.primary : scheme.outline,
-                  width: 1.5,
+      borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+      child: SizedBox(
+        height: 32,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: step.isCompleted ? scheme.primary : Colors.transparent,
+                  border: Border.all(
+                    color: step.isCompleted ? scheme.primary : scheme.outline,
+                    width: 1.5,
+                  ),
+                ),
+                child: step.isCompleted
+                    ? Icon(Icons.check, size: 10, color: scheme.onPrimary)
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  step.title,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    height: 22 / 15,
+                    fontWeight: FontWeight.w400,
+                    color: step.isCompleted ? scheme.outline : scheme.onSurface,
+                    decoration: step.isCompleted
+                        ? TextDecoration.lineThrough
+                        : null,
+                    decorationColor: scheme.outline,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              child: step.isCompleted
-                  ? Icon(Icons.check, size: 12, color: scheme.onPrimary)
-                  : null,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                step.title,
-                style: GoogleFonts.manrope(
-                  fontSize: 14,
-                  color: step.isCompleted
-                      ? scheme.onSurfaceVariant
-                      : scheme.onSurface,
-                  decoration: step.isCompleted
-                      ? TextDecoration.lineThrough
-                      : null,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Metadata row (icon + label + value)
+/// 32×32 quiet icon button used in the inspector header.
+class _QuietIconButton extends StatelessWidget {
+  const _QuietIconButton({
+    required this.icon,
+    required this.onPressed,
+    this.color,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final Color? color;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: AppTheme.controlHeight,
+      height: AppTheme.controlHeight,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+          child: Tooltip(
+            message: tooltip ?? '',
+            child: Icon(
+              icon,
+              size: 18,
+              color: color ?? scheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Inspector metadata row. 96 px label gutter, no decorative chrome,
+/// 1 px hairline divider below.
 class _MetadataRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -818,35 +862,44 @@ class _MetadataRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(AppTheme.controlRadius),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: scheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(8),
+          border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
         ),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: scheme.onSurfaceVariant),
-            const SizedBox(width: 12),
+            Icon(icon, size: 14, color: scheme.onSurfaceVariant),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 96,
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  height: 18 / 13,
+                  fontWeight: FontWeight.w400,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
             Expanded(
               child: Text(
-                value ?? label,
-                style: GoogleFonts.manrope(
-                  fontSize: 14,
-                  color: valueColor ?? scheme.onSurface,
+                value ?? '—',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  height: 18 / 13,
+                  fontWeight: value == null ? FontWeight.w400 : FontWeight.w500,
+                  color: value == null
+                      ? scheme.outline
+                      : (valueColor ?? scheme.onSurface),
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (value != null)
-              Icon(
-                Icons.chevron_right,
-                size: 18,
-                color: scheme.onSurfaceVariant,
-              ),
           ],
         ),
       ),

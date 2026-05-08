@@ -1,242 +1,206 @@
 import 'package:flutter/material.dart';
 
-/// Stitch indigo design tokens for Listd.
+/// Listd 2026 design tokens.
 ///
-/// Every value below is sourced verbatim from the design tokens in
-/// `stitch_listd_indigo_task_manager/listd*/DESIGN.md`. Do not invent new
-/// hex literals for product surfaces — extend the [ColorScheme] returned
-/// by [lightScheme] / [darkScheme] instead so the rest of the app keeps
-/// referencing colors via `Theme.of(context).colorScheme`.
+/// One typeface, one accent, two surfaces. The whole product is built on
+/// the table below — there are no other hex literals anywhere in
+/// `lib/theme/`. Old aliases (`AppColors.primary`, `AppColors.bgSurface`,
+/// `AppColors.glassWhite`, …) are kept as backward-compat surfaces and
+/// just resolve back to the same tokens, so existing widgets pick up the
+/// new look automatically.
 class AppColors {
   AppColors._();
 
   // ─────────────────────────────────────────────────────────
-  //  LIGHT THEME (Stitch: listd/DESIGN.md)
+  //  ACCENT — the *only* hue that appears outside state pills.
   // ─────────────────────────────────────────────────────────
 
-  static const Color _lPrimary = Color(0xFF1A146B);
-  static const Color _lOnPrimary = Color(0xFFFFFFFF);
-  static const Color _lPrimaryContainer = Color(0xFF312E81);
-  static const Color _lOnPrimaryContainer = Color(0xFF9C9AF4);
-  static const Color _lInversePrimary = Color(0xFFC3C0FF);
+  /// Light-mode accent (selection, focus ring, primary button).
+  static const Color accent = Color(0xFF4F46E5);
 
-  static const Color _lSecondary = Color(0xFF4648D4);
-  static const Color _lOnSecondary = Color(0xFFFFFFFF);
-  static const Color _lSecondaryContainer = Color(0xFF6063EE);
-  static const Color _lOnSecondaryContainer = Color(0xFFFFFBFF);
+  /// Dark-mode accent — adjusted for contrast on near-black surfaces.
+  static const Color accentDark = Color(0xFF7C7BFF);
 
-  static const Color _lTertiary = Color(0xFF172245);
-  static const Color _lOnTertiary = Color(0xFFFFFFFF);
-  static const Color _lTertiaryContainer = Color(0xFF2D385C);
-  static const Color _lOnTertiaryContainer = Color(0xFF97A2CC);
+  /// Tinted fill behind a selected row in light mode.
+  static const Color accentSoft = Color(0xFFEEF0FF);
 
-  static const Color _lError = Color(0xFFBA1A1A);
-  static const Color _lOnError = Color(0xFFFFFFFF);
-  static const Color _lErrorContainer = Color(0xFFFFDAD6);
-  static const Color _lOnErrorContainer = Color(0xFF93000A);
-
-  static const Color _lSurface = Color(0xFFF7F9FB);
-  static const Color _lOnSurface = Color(0xFF191C1E);
-  static const Color _lOnSurfaceVariant = Color(0xFF474651);
-  static const Color _lInverseSurface = Color(0xFF2D3133);
-  static const Color _lInverseOnSurface = Color(0xFFEFF1F3);
-  static const Color _lOutline = Color(0xFF777682);
-  static const Color _lOutlineVariant = Color(0xFFC8C5D3);
-  static const Color _lShadow = Color(0xFF000000);
-  static const Color _lScrim = Color(0xFF000000);
-  static const Color _lSurfaceTint = Color(0xFF5654A8);
-
-  static const Color lSurfaceContainerLowest = Color(0xFFFFFFFF);
-  static const Color lSurfaceContainerLow = Color(0xFFF2F4F6);
-  static const Color lSurfaceContainer = Color(0xFFECEEF0);
-  static const Color lSurfaceContainerHigh = Color(0xFFE6E8EA);
-  static const Color lSurfaceContainerHighest = Color(0xFFE0E3E5);
-  static const Color lSurfaceDim = Color(0xFFD8DADC);
-  static const Color lSurfaceBright = Color(0xFFF7F9FB);
+  /// Tinted fill behind a selected row in dark mode.
+  static const Color accentSoftDark = Color(0xFF1B1D3A);
 
   // ─────────────────────────────────────────────────────────
-  //  DARK THEME (Stitch: listd_dark/DESIGN.md)
+  //  LIGHT NEUTRALS
   // ─────────────────────────────────────────────────────────
 
-  static const Color _dPrimary = Color(0xFFC3C0FF);
-  static const Color _dOnPrimary = Color(0xFF272377);
-  static const Color _dPrimaryContainer = Color(0xFF312E81);
-  static const Color _dOnPrimaryContainer = Color(0xFF9C9AF4);
-  static const Color _dInversePrimary = Color(0xFF5654A8);
-
-  static const Color _dSecondary = Color(0xFFC0C1FF);
-  static const Color _dOnSecondary = Color(0xFF1000A9);
-  static const Color _dSecondaryContainer = Color(0xFF3131C0);
-  static const Color _dOnSecondaryContainer = Color(0xFFB0B2FF);
-
-  static const Color _dTertiary = Color(0xFFFFB688);
-  static const Color _dOnTertiary = Color(0xFF512400);
-  static const Color _dTertiaryContainer = Color(0xFF5F2B00);
-  static const Color _dOnTertiaryContainer = Color(0xFFDE915E);
-
-  static const Color _dError = Color(0xFFFFB4AB);
-  static const Color _dOnError = Color(0xFF690005);
-  static const Color _dErrorContainer = Color(0xFF93000A);
-  static const Color _dOnErrorContainer = Color(0xFFFFDAD6);
-
-  static const Color _dSurface = Color(0xFF0B1326);
-  static const Color _dOnSurface = Color(0xFFDAE2FD);
-  static const Color _dOnSurfaceVariant = Color(0xFFC8C5D3);
-  static const Color _dInverseSurface = Color(0xFFDAE2FD);
-  static const Color _dInverseOnSurface = Color(0xFF283044);
-  static const Color _dOutline = Color(0xFF918F9C);
-  static const Color _dOutlineVariant = Color(0xFF474651);
-  static const Color _dShadow = Color(0xFF000000);
-  static const Color _dScrim = Color(0xFF000000);
-  static const Color _dSurfaceTint = Color(0xFFC3C0FF);
-
-  static const Color dSurfaceContainerLowest = Color(0xFF060E20);
-  static const Color dSurfaceContainerLow = Color(0xFF131B2E);
-  static const Color dSurfaceContainer = Color(0xFF171F33);
-  static const Color dSurfaceContainerHigh = Color(0xFF222A3D);
-  static const Color dSurfaceContainerHighest = Color(0xFF2D3449);
-  static const Color dSurfaceDim = Color(0xFF0B1326);
-  static const Color dSurfaceBright = Color(0xFF31394D);
+  static const Color _lSurface = Color(0xFFFFFFFF); // app background
+  static const Color _lSurfaceElevated = Color(0xFFFAFAFA); // rail/inspector
+  static const Color _lSurfaceSunken = Color(0xFFF4F4F5); // hover/capture
+  static const Color _lSurfaceDeeper = Color(0xFFEEEEF0); // press/header
+  static const Color _lBorder = Color(0xFFE5E5E7);
+  static const Color _lBorderStrong = Color(0xFFCFCFD3);
+  static const Color _lTextPrimary = Color(0xFF0A0A0B);
+  static const Color _lTextSecondary = Color(0xFF5C5C66);
+  static const Color _lTextTertiary = Color(0xFF9A9AA3);
 
   // ─────────────────────────────────────────────────────────
-  //  SCHEMES — explicit, no fromSeed.
+  //  DARK NEUTRALS
+  // ─────────────────────────────────────────────────────────
+
+  static const Color _dSurface = Color(0xFF0B0B0E);
+  static const Color _dSurfaceElevated = Color(0xFF121217);
+  static const Color _dSurfaceSunken = Color(0xFF191920);
+  static const Color _dSurfaceDeeper = Color(0xFF1F1F27);
+  static const Color _dBorder = Color(0xFF26262C);
+  static const Color _dBorderStrong = Color(0xFF3A3A42);
+  static const Color _dTextPrimary = Color(0xFFF2F2F4);
+  static const Color _dTextSecondary = Color(0xFF9C9CA6);
+  static const Color _dTextTertiary = Color(0xFF5F5F6B);
+
+  // ─────────────────────────────────────────────────────────
+  //  FUNCTIONAL — used only for state pills, never for emphasis.
+  // ─────────────────────────────────────────────────────────
+
+  static const Color success = Color(0xFF16A34A);
+  static const Color successDark = Color(0xFF22C55E);
+  static const Color warning = Color(0xFFD97706);
+  static const Color warningDark = Color(0xFFF59E0B);
+  static const Color error = Color(0xFFDC2626);
+  static const Color errorDark = Color(0xFFEF4444);
+
+  // ─────────────────────────────────────────────────────────
+  //  COLOR SCHEMES — explicit, no fromSeed.
   // ─────────────────────────────────────────────────────────
 
   static const ColorScheme lightScheme = ColorScheme(
     brightness: Brightness.light,
-    primary: _lPrimary,
-    onPrimary: _lOnPrimary,
-    primaryContainer: _lPrimaryContainer,
-    onPrimaryContainer: _lOnPrimaryContainer,
-    inversePrimary: _lInversePrimary,
-    secondary: _lSecondary,
-    onSecondary: _lOnSecondary,
-    secondaryContainer: _lSecondaryContainer,
-    onSecondaryContainer: _lOnSecondaryContainer,
-    tertiary: _lTertiary,
-    onTertiary: _lOnTertiary,
-    tertiaryContainer: _lTertiaryContainer,
-    onTertiaryContainer: _lOnTertiaryContainer,
-    error: _lError,
-    onError: _lOnError,
-    errorContainer: _lErrorContainer,
-    onErrorContainer: _lOnErrorContainer,
+    primary: accent,
+    onPrimary: Color(0xFFFFFFFF),
+    primaryContainer: accentSoft,
+    onPrimaryContainer: accent,
+    inversePrimary: accentDark,
+    secondary: _lTextSecondary,
+    onSecondary: Color(0xFFFFFFFF),
+    secondaryContainer: _lSurfaceSunken,
+    onSecondaryContainer: _lTextPrimary,
+    tertiary: accent,
+    onTertiary: Color(0xFFFFFFFF),
+    tertiaryContainer: accentSoft,
+    onTertiaryContainer: accent,
+    error: error,
+    onError: Color(0xFFFFFFFF),
+    errorContainer: Color(0xFFFEE2E2),
+    onErrorContainer: error,
     surface: _lSurface,
-    onSurface: _lOnSurface,
-    surfaceContainerLowest: lSurfaceContainerLowest,
-    surfaceContainerLow: lSurfaceContainerLow,
-    surfaceContainer: lSurfaceContainer,
-    surfaceContainerHigh: lSurfaceContainerHigh,
-    surfaceContainerHighest: lSurfaceContainerHighest,
-    surfaceDim: lSurfaceDim,
-    surfaceBright: lSurfaceBright,
-    onSurfaceVariant: _lOnSurfaceVariant,
-    inverseSurface: _lInverseSurface,
-    onInverseSurface: _lInverseOnSurface,
-    outline: _lOutline,
-    outlineVariant: _lOutlineVariant,
-    shadow: _lShadow,
-    scrim: _lScrim,
-    surfaceTint: _lSurfaceTint,
+    onSurface: _lTextPrimary,
+    surfaceContainerLowest: _lSurface,
+    surfaceContainerLow: _lSurfaceElevated,
+    surfaceContainer: _lSurfaceSunken,
+    surfaceContainerHigh: _lSurfaceDeeper,
+    surfaceContainerHighest: _lSurfaceDeeper,
+    surfaceDim: _lSurfaceSunken,
+    surfaceBright: _lSurface,
+    onSurfaceVariant: _lTextSecondary,
+    inverseSurface: _lTextPrimary,
+    onInverseSurface: _lSurface,
+    outline: _lBorderStrong,
+    outlineVariant: _lBorder,
+    shadow: Color(0xFF000000),
+    scrim: Color(0xFF000000),
+    surfaceTint: accent,
   );
 
   static const ColorScheme darkScheme = ColorScheme(
     brightness: Brightness.dark,
-    primary: _dPrimary,
-    onPrimary: _dOnPrimary,
-    primaryContainer: _dPrimaryContainer,
-    onPrimaryContainer: _dOnPrimaryContainer,
-    inversePrimary: _dInversePrimary,
-    secondary: _dSecondary,
-    onSecondary: _dOnSecondary,
-    secondaryContainer: _dSecondaryContainer,
-    onSecondaryContainer: _dOnSecondaryContainer,
-    tertiary: _dTertiary,
-    onTertiary: _dOnTertiary,
-    tertiaryContainer: _dTertiaryContainer,
-    onTertiaryContainer: _dOnTertiaryContainer,
-    error: _dError,
-    onError: _dOnError,
-    errorContainer: _dErrorContainer,
-    onErrorContainer: _dOnErrorContainer,
+    primary: accentDark,
+    onPrimary: Color(0xFF0B0B0E),
+    primaryContainer: accentSoftDark,
+    onPrimaryContainer: accentDark,
+    inversePrimary: accent,
+    secondary: _dTextSecondary,
+    onSecondary: _dSurface,
+    secondaryContainer: _dSurfaceSunken,
+    onSecondaryContainer: _dTextPrimary,
+    tertiary: accentDark,
+    onTertiary: _dSurface,
+    tertiaryContainer: accentSoftDark,
+    onTertiaryContainer: accentDark,
+    error: errorDark,
+    onError: Color(0xFF0B0B0E),
+    errorContainer: Color(0xFF3F1212),
+    onErrorContainer: errorDark,
     surface: _dSurface,
-    onSurface: _dOnSurface,
-    surfaceContainerLowest: dSurfaceContainerLowest,
-    surfaceContainerLow: dSurfaceContainerLow,
-    surfaceContainer: dSurfaceContainer,
-    surfaceContainerHigh: dSurfaceContainerHigh,
-    surfaceContainerHighest: dSurfaceContainerHighest,
-    surfaceDim: dSurfaceDim,
-    surfaceBright: dSurfaceBright,
-    onSurfaceVariant: _dOnSurfaceVariant,
-    inverseSurface: _dInverseSurface,
-    onInverseSurface: _dInverseOnSurface,
-    outline: _dOutline,
-    outlineVariant: _dOutlineVariant,
-    shadow: _dShadow,
-    scrim: _dScrim,
-    surfaceTint: _dSurfaceTint,
+    onSurface: _dTextPrimary,
+    surfaceContainerLowest: _dSurface,
+    surfaceContainerLow: _dSurfaceElevated,
+    surfaceContainer: _dSurfaceSunken,
+    surfaceContainerHigh: _dSurfaceDeeper,
+    surfaceContainerHighest: _dSurfaceDeeper,
+    surfaceDim: _dSurface,
+    surfaceBright: _dSurfaceElevated,
+    onSurfaceVariant: _dTextSecondary,
+    inverseSurface: _dTextPrimary,
+    onInverseSurface: _dSurface,
+    outline: _dBorderStrong,
+    outlineVariant: _dBorder,
+    shadow: Color(0xFF000000),
+    scrim: Color(0xFF000000),
+    surfaceTint: accentDark,
   );
 
   // ─────────────────────────────────────────────────────────
   //  BACKWARD-COMPAT ALIASES
-  //  Existing widgets still reference these names; they all resolve to
-  //  the explicit token values above. New code should reach for
+  //  Existing widgets keep referencing these names. Each one resolves to
+  //  a value from the spec above; new code should reach for
   //  `Theme.of(context).colorScheme` instead.
   // ─────────────────────────────────────────────────────────
 
-  static const Color primary = _lPrimary;
-  static const Color primaryLight = _dPrimary;
-  static const Color primaryContainer = _lPrimaryContainer;
-  static const Color onPrimaryContainer = _lOnPrimaryContainer;
-  static const Color secondary = _lSecondary;
-  static const Color secondaryContainer = _lSecondaryContainer;
-  static const Color onSecondaryContainer = _lOnSecondaryContainer;
+  /// Brand accent. Mapped to the spec accent.
+  static const Color primary = accent;
+  static const Color primaryLight = accentDark;
+  static const Color primaryContainer = accentSoft;
+  static const Color onPrimaryContainer = accent;
+  static const Color secondary = accent;
+  static const Color secondaryContainer = accentSoft;
+  static const Color onSecondaryContainer = accent;
 
+  // Dark surfaces — kept so legacy `AppColors.bg*` references resolve.
   static const Color bgDeep = _dSurface;
-  static const Color bgSurface = dSurfaceContainerLow;
-  static const Color bgContainer = dSurfaceContainer;
-  static const Color bgContainerHigh = dSurfaceContainerHigh;
-  static const Color bgContainerHighest = dSurfaceContainerHighest;
-  static const Color bgMid = Color(0xFF0E1030);
-  static const Color bgSurfaceDark = Color(0xFF131440);
+  static const Color bgSurface = _dSurface;
+  static const Color bgContainer = _dSurfaceElevated;
+  static const Color bgContainerHigh = _dSurfaceSunken;
+  static const Color bgContainerHighest = _dSurfaceDeeper;
+  static const Color bgMid = _dSurfaceElevated;
+  static const Color bgSurfaceDark = _dSurfaceElevated;
 
   static const Color bgLight = _lSurface;
   static const Color bgLightSurface = _lSurface;
-  static const Color bgLightContainerLow = lSurfaceContainerLow;
-  static const Color bgLightContainer = lSurfaceContainer;
-  static const Color bgLightContainerHigh = lSurfaceContainerHigh;
-  static const Color bgLightContainerHighest = lSurfaceContainerHighest;
+  static const Color bgLightContainerLow = _lSurfaceElevated;
+  static const Color bgLightContainer = _lSurfaceSunken;
+  static const Color bgLightContainerHigh = _lSurfaceDeeper;
+  static const Color bgLightContainerHighest = _lSurfaceDeeper;
 
-  static const Color textPrimary = _dOnSurface;
-  static const Color textSecondary = _dOnSurfaceVariant;
-  static const Color textHint = _dOutline;
-  static const Color textPrimaryLight = _lOnSurface;
-  static const Color textSecondaryLight = _lOnSurfaceVariant;
-  static const Color textHintLight = _lOutline;
+  static const Color textPrimary = _dTextPrimary;
+  static const Color textSecondary = _dTextSecondary;
+  static const Color textHint = _dTextTertiary;
+  static const Color textPrimaryLight = _lTextPrimary;
+  static const Color textSecondaryLight = _lTextSecondary;
+  static const Color textHintLight = _lTextTertiary;
 
-  static const Color error = _lError;
-  static const Color errorDark = _dError;
-  static const Color errorContainer = _dErrorContainer;
-  static const Color danger = _lError;
-  static const Color success = Color(0xFF4CAF50);
-  static const Color successDark = Color(0xFF81C784);
-  static const Color warning = Color(0xFFFFCA28);
-  static const Color warningDark = _dTertiary;
+  static const Color errorContainer = Color(0xFFFEE2E2);
+  static const Color danger = error;
 
-  static const Color outline = _lOutline;
-  static const Color outlineVariant = _lOutlineVariant;
-  static const Color outlineDark = _dOutline;
-  static const Color outlineVariantDark = _dOutlineVariant;
+  static const Color outline = _lBorderStrong;
+  static const Color outlineVariant = _lBorder;
+  static const Color outlineDark = _dBorderStrong;
+  static const Color outlineVariantDark = _dBorder;
 
-  /// Glass-effect aliases retained so the existing `glass_*` widgets keep
-  /// rendering until they are replaced with Material 3 surfaces. New code
-  /// should not reference these; use `colorScheme.surfaceContainer` etc.
-  static const Color glassWhite = Color(0x12FFFFFF);
-  static const Color glassBorder = Color(0x40FFFFFF);
-  static const Color glassBorderSubtle = Color(0x1AFFFFFF);
-  static const Color glassFill = Color(0x0DFFFFFF);
-  static const Color glassFillLight = Color(0x14FFFFFF);
-  static const Color glassPrimary = Color(0xFF5C6BC0);
-  static const Color glassPrimaryLight = Color(0xFF7986CB);
+  /// Legacy "glass" tokens. There are no glass surfaces in the 2026
+  /// system — these alias to neutral hairline equivalents so old call
+  /// sites still render correctly. Do not use in new code.
+  static const Color glassWhite = _lSurfaceSunken;
+  static const Color glassBorder = _lBorder;
+  static const Color glassBorderSubtle = _lBorder;
+  static const Color glassFill = _lSurfaceElevated;
+  static const Color glassFillLight = _lSurface;
+  static const Color glassPrimary = accent;
+  static const Color glassPrimaryLight = accentDark;
 }

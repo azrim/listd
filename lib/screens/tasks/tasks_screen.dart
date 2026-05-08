@@ -83,7 +83,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             ),
             title: Text(
               widget.taskListTitle,
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -159,7 +159,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               const SizedBox(height: 16),
               Text(
                 'No tasks yet',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -168,7 +168,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               const SizedBox(height: 8),
               Text(
                 'Tap + to add a new task',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
@@ -211,7 +211,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               const SizedBox(height: 16),
               Text(
                 'Failed to load tasks',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -220,7 +220,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               const SizedBox(height: 8),
               Text(
                 error.toString(),
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 12,
                   color: AppColors.textSecondary,
                 ),
@@ -232,7 +232,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 icon: const Icon(Icons.refresh, color: AppColors.primary),
                 label: Text(
                   'Retry',
-                  style: GoogleFonts.manrope(color: AppColors.primary),
+                  style: GoogleFonts.inter(color: AppColors.primary),
                 ),
               ),
             ],
@@ -283,18 +283,18 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         backgroundColor: AppColors.bgSurface,
         title: Text(
           'Delete task',
-          style: GoogleFonts.manrope(color: AppColors.textPrimary),
+          style: GoogleFonts.inter(color: AppColors.textPrimary),
         ),
         content: Text(
           'Are you sure you want to delete "${task.title}"?',
-          style: GoogleFonts.manrope(color: AppColors.textSecondary),
+          style: GoogleFonts.inter(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(
               'Cancel',
-              style: GoogleFonts.manrope(color: AppColors.textSecondary),
+              style: GoogleFonts.inter(color: AppColors.textSecondary),
             ),
           ),
           FilledButton(
@@ -302,7 +302,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             child: Text(
               'Delete',
-              style: GoogleFonts.manrope(color: Colors.white),
+              style: GoogleFonts.inter(color: Colors.white),
             ),
           ),
         ],
@@ -346,7 +346,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                     children: [
                       Text(
                         'Add Task',
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -384,7 +384,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       ),
                       child: Text(
                         'Add Task',
-                        style: GoogleFonts.manrope(fontWeight: FontWeight.w600),
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -462,7 +462,7 @@ class _TaskGlassTile extends StatelessWidget {
                 children: [
                   Text(
                     task.title,
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: task.isCompleted
@@ -477,7 +477,7 @@ class _TaskGlassTile extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       task.notes,
-                      style: GoogleFonts.manrope(
+                      style: GoogleFonts.inter(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -635,7 +635,7 @@ class _DueDateChip extends StatelessWidget {
       ),
       child: Text(
         _formatDate(dueDate),
-        style: GoogleFonts.manrope(
+        style: GoogleFonts.inter(
           fontSize: 11,
           color: textColor,
           fontWeight: isToday ? FontWeight.w600 : FontWeight.w400,

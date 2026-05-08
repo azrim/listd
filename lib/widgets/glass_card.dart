@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 
-/// Stitch-styled card surface used throughout the app.
-///
-/// Despite the legacy "Glass" name, this widget renders a flat
-/// theme-aware card so it looks correct under both light and dark
-/// Stitch indigo themes (no more BackdropFilter / hardcoded blue).
+import '../theme/app_theme.dart';
+
+/// Hairline card surface — 12 px radius, 1 px hairline border, no
+/// shadow, no blur. Despite the legacy "Glass" name, in the 2026
+/// system this is just a bordered surface; the class is preserved for
+/// backward compatibility with existing call sites.
 class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
     required this.child,
     this.padding,
     this.margin,
-    this.borderRadius = 12,
+    this.borderRadius = AppTheme.cardRadius,
     this.glowColor,
     this.width,
     this.onTap,
@@ -21,6 +22,8 @@ class GlassCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
   final double borderRadius;
+
+  /// In the 2026 system there is no glow. Retained for API compatibility.
   final Color? glowColor;
   final double? width;
   final VoidCallback? onTap;
@@ -28,29 +31,13 @@ class GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final hasGlow = glowColor != null;
-    final accent = glowColor ?? scheme.primary;
     return Container(
       width: width,
       margin: margin,
       decoration: BoxDecoration(
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(borderRadius),
-        color: scheme.surfaceContainer,
-        border: Border.all(
-          color: hasGlow
-              ? accent.withValues(alpha: 0.5)
-              : scheme.outlineVariant,
-          width: 1,
-        ),
-        boxShadow: hasGlow
-            ? [
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.18),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : null,
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Material(
         color: Colors.transparent,
@@ -64,14 +51,13 @@ class GlassCard extends StatelessWidget {
   }
 }
 
-/// A theme-aware container that previously rendered a translucent glass
-/// effect. Kept for backward compatibility with existing screens.
+/// Same as [GlassCard], without the `InkWell`.
 class GlassContainer extends StatelessWidget {
   const GlassContainer({
     super.key,
     required this.child,
     this.padding,
-    this.borderRadius = 16,
+    this.borderRadius = AppTheme.cardRadius,
   });
 
   final Widget child;
@@ -84,22 +70,22 @@ class GlassContainer extends StatelessWidget {
     return Container(
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainer,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: scheme.outlineVariant, width: 1),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: child,
     );
   }
 }
 
-/// A small chip/badge widget that picks up the active theme.
+/// Small chip / tag. Hairline border, 8 px radius, 13 px label.
 class GlassChip extends StatelessWidget {
   const GlassChip({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-    this.borderRadius = 20,
+    this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    this.borderRadius = AppTheme.controlRadius,
   });
 
   final Widget child;
@@ -112,9 +98,9 @@ class GlassChip extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
+        color: scheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: scheme.outlineVariant, width: 1),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: child,
     );

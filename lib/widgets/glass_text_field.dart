@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Theme-aware text field with focus glow effect.
+import '../theme/app_theme.dart';
+
+/// Hairline text field — 32 px tall, 8 px radius, 1 px border, 2 px
+/// accent focus ring (no glow). Despite the legacy name, there is no
+/// glass effect; the widget is kept for backward compatibility with
+/// existing call sites and now renders the 2026 input from the spec.
 class GlassTextField extends StatelessWidget {
   const GlassTextField({
     super.key,
@@ -37,33 +42,38 @@ class GlassTextField extends StatelessWidget {
       onChanged: onChanged,
       onSubmitted: onSubmitted,
       cursorColor: scheme.primary,
-      style: GoogleFonts.manrope(color: scheme.onSurface, fontSize: 14),
+      style: GoogleFonts.inter(
+        color: scheme.onSurface,
+        fontSize: 15,
+        height: 22 / 15,
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.manrope(
-          color: scheme.onSurfaceVariant,
-          fontSize: 14,
+        hintStyle: GoogleFonts.inter(
+          color: scheme.outline,
+          fontSize: 15,
+          height: 22 / 15,
         ),
         prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: scheme.onSurfaceVariant, size: 20)
+            ? Icon(prefixIcon, color: scheme.onSurfaceVariant, size: 18)
             : null,
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: scheme.surfaceContainer,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
+        fillColor: scheme.surface,
+        isDense: true,
+        contentPadding: maxLines > 1
+            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+            : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppTheme.controlRadius),
           borderSide: BorderSide(color: scheme.outlineVariant),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppTheme.controlRadius),
           borderSide: BorderSide(color: scheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppTheme.controlRadius),
           borderSide: BorderSide(color: scheme.primary, width: 2),
         ),
       ),
@@ -71,8 +81,9 @@ class GlassTextField extends StatelessWidget {
   }
 }
 
-/// A glass-styled text field with focus glow effect
-class FocusedGlassTextField extends StatefulWidget {
+/// In the 2026 system this is identical to [GlassTextField] — focus
+/// state is communicated by the 2 px accent border, not by a glow.
+class FocusedGlassTextField extends StatelessWidget {
   const FocusedGlassTextField({
     super.key,
     this.controller,
@@ -97,80 +108,17 @@ class FocusedGlassTextField extends StatefulWidget {
   final bool autofocus;
 
   @override
-  State<FocusedGlassTextField> createState() => _FocusedGlassTextFieldState();
-}
-
-class _FocusedGlassTextFieldState extends State<FocusedGlassTextField> {
-  bool _isFocused = false;
-
-  @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: _isFocused
-            ? [
-                BoxShadow(
-                  color: scheme.primary.withAlpha(48),
-                  blurRadius: 10,
-                  spreadRadius: 0,
-                ),
-              ]
-            : [],
-      ),
-      child: Focus(
-        onFocusChange: (hasFocus) => setState(() => _isFocused = hasFocus),
-        child: TextField(
-          controller: widget.controller,
-          obscureText: widget.obscureText,
-          maxLines: widget.maxLines,
-          autofocus: widget.autofocus,
-          onChanged: widget.onChanged,
-          onSubmitted: widget.onSubmitted,
-          cursorColor: scheme.primary,
-          style: GoogleFonts.manrope(color: scheme.onSurface, fontSize: 14),
-          decoration: InputDecoration(
-            hintText: widget.hint,
-            hintStyle: GoogleFonts.manrope(
-              color: scheme.onSurfaceVariant,
-              fontSize: 14,
-            ),
-            prefixIcon: widget.prefixIcon != null
-                ? Icon(
-                    widget.prefixIcon,
-                    color: scheme.onSurfaceVariant,
-                    size: 20,
-                  )
-                : null,
-            suffixIcon: widget.suffixIcon,
-            filled: true,
-            fillColor: _isFocused
-                ? scheme.surfaceContainerHigh
-                : scheme.surfaceContainer,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: _isFocused ? scheme.primary : scheme.outlineVariant,
-                width: _isFocused ? 2 : 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: scheme.outlineVariant),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: scheme.primary, width: 2),
-            ),
-          ),
-        ),
-      ),
+    return GlassTextField(
+      controller: controller,
+      hint: hint,
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      obscureText: obscureText,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      maxLines: maxLines,
+      autofocus: autofocus,
     );
   }
 }

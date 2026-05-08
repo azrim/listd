@@ -1,87 +1,95 @@
 import 'package:flutter/material.dart';
 
-/// Application gradients based on the Midnight Studio design language.
+import 'app_colors.dart';
+
+/// Listd 2026 surface tokens, exposed as `LinearGradient`s for backward
+/// compatibility with screens that use
+/// `BoxDecoration(gradient: AppGradients.foo)`.
+///
+/// **There are no real gradients in the 2026 system.** Every value below
+/// is a flat solid surface dressed up as a single-stop gradient so the
+/// existing call sites keep compiling without churn (including
+/// `const BoxDecoration(gradient: …)`). New code should use a plain
+/// `color:` instead.
 class AppGradients {
   AppGradients._();
 
-  /// Primary brand gradient - Violet to blue
+  /// Brand "gradient" — flat accent.
   static const LinearGradient primary = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFF312E81), // Deep navy
-      Color(0xFF6366F1), // Vibrant indigo
-    ],
+    colors: [AppColors.accent, AppColors.accent],
   );
 
-  /// Primary gradient dark mode
+  /// Dark-mode brand "gradient".
   static const LinearGradient primaryDark = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFF312E81),
-      Color(0xFF7C3AED), // Violet accent
-    ],
+    colors: [AppColors.accentDark, AppColors.accentDark],
   );
 
-  /// Background gradient for auth screen
+  /// Auth screen background — flat near-black surface.
   static const LinearGradient backgroundDark = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF0B1326), Color(0xFF131B2E), Color(0xFF171F33)],
-    stops: [0.0, 0.5, 1.0],
+    colors: [AppColors.bgDeep, AppColors.bgDeep],
   );
 
-  /// Screen gradient - deep to mid to surface for each screen
+  /// Generic screen background — flat surface so legacy callers get
+  /// the new neutral background instead of the old deep-blue gradient.
   static const LinearGradient screenBackground = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF07081A), Color(0xFF0E1030), Color(0xFF131440)],
+    colors: [AppColors.bgDeep, AppColors.bgDeep],
   );
 
-  /// Sidebar active gradient - used for active nav item
+  /// Selected sidebar item background. The 2026 system uses a 1-color
+  /// fill (`accentSoft`) plus a left bar, so this resolves to
+  /// `accentSoft`.
   static const LinearGradient navActiveGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF5C6BC0), Color(0xFF7986CB)],
+    colors: [AppColors.accentSoft, AppColors.accentSoft],
   );
 
-  /// Background gradient light
+  /// Light auth/screen background.
   static const LinearGradient backgroundLight = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFF7F9FB), Color(0xFFF2F4F6)],
+    colors: [AppColors.bgLight, AppColors.bgLight],
   );
 
-  /// Surface subtle gradient
+  /// Subtle elevated surface. Resolves to the elevated neutral surface
+  /// (`#FAFAFA` / `#121217`).
   static const LinearGradient surfaceGlow = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0x1AFFFFFF), Color(0x0DFFFFFF)],
+    colors: [AppColors.bgLightContainerLow, AppColors.bgLightContainerLow],
   );
 
-  /// Card subtle gradient
+  /// Card surface — flat neutral.
   static const LinearGradient cardGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF1E293B), Color(0xFF171F33)],
+    colors: [AppColors.bgContainer, AppColors.bgContainer],
   );
 
-  /// Success gradient
+  /// Success surface (state pill).
   static const LinearGradient success = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF10B981), Color(0xFF059669)],
+    colors: [AppColors.success, AppColors.success],
   );
 
-  /// Error gradient
+  /// Error surface (state pill).
   static const LinearGradient error = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+    colors: [AppColors.error, AppColors.error],
   );
 
-  /// Overlay gradient for modals
+  /// Modal scrim — kept as a true two-stop gradient since this is a
+  /// functional darkening overlay, not a brand gradient.
   static const LinearGradient overlay = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,

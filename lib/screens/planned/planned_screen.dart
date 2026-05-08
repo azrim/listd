@@ -96,7 +96,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
             const SizedBox(height: 12),
             Text(
               'Could not load tasks',
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: scheme.onSurface,
@@ -106,7 +106,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
             Text(
               '$error',
               textAlign: TextAlign.center,
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 13,
                 color: scheme.onSurfaceVariant,
               ),
@@ -143,7 +143,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
           const SizedBox(width: 12),
           Text(
             'Planned',
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 24,
               fontWeight: FontWeight.w700,
               color: scheme.onSurface,
@@ -269,7 +269,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
           const SizedBox(height: 16),
           Text(
             'No planned tasks',
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: scheme.onSurface,
@@ -278,7 +278,7 @@ class _PlannedScreenState extends ConsumerState<PlannedScreen> {
           const SizedBox(height: 8),
           Text(
             'Tasks with due dates will appear here',
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 14,
               color: scheme.onSurfaceVariant,
             ),
@@ -390,7 +390,7 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           title,
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: iconColor,
@@ -401,7 +401,7 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '$taskCount',
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 12,
             color: scheme.onSurfaceVariant,
           ),
@@ -460,7 +460,7 @@ class _TaskCard extends ConsumerWidget {
           Expanded(
             child: Text(
               task.title,
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 14,
                 color: task.isCompleted
                     ? scheme.onSurfaceVariant
@@ -482,7 +482,7 @@ class _TaskCard extends ConsumerWidget {
               ),
               child: Text(
                 _formatDueDate(task.due!),
-                style: GoogleFonts.manrope(fontSize: 11, color: scheme.primary),
+                style: GoogleFonts.inter(fontSize: 11, color: scheme.primary),
               ),
             ),
           if (task.isStarred) ...[

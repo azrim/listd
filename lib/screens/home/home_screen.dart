@@ -128,10 +128,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // Col 3: Task detail panel - AnimatedContainer slides in/out (360px per Stitch design)
+          // Col 3: Task detail panel — 200 ms cubic-bezier(0.2, 0, 0, 1) per spec.
           AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
+            duration: const Duration(milliseconds: 200),
+            curve: const Cubic(0.2, 0, 0, 1),
             width: showDetailPanel ? 360 : 0,
             child: showDetailPanel
                 ? ClipRect(

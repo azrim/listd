@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -8,10 +8,10 @@ import '../../services/auth/google_auth_service.dart';
 import '../../services/auth/token_manager.dart';
 import '../../services/supabase/supabase_client_service.dart';
 import '../../widgets/app_logo.dart';
-import '../../widgets/glass_card.dart';
 import '../../widgets/gradient_button.dart';
 
-/// Authentication screen with glassmorphism UI
+/// Auth screen — minimal centered card per the 2026 spec.
+/// No orbs, no pulsing glow, no gradients.
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
@@ -19,30 +19,8 @@ class AuthScreen extends ConsumerStatefulWidget {
   ConsumerState<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends ConsumerState<AuthScreen>
-    with SingleTickerProviderStateMixin {
+class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isLoading = false;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
 
   Future<void> _signInWithGoogle() async {
     if (_isLoading) return;
@@ -53,8 +31,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       final client = ref.read(supabaseClientProvider);
       final authService = GoogleAuthService(client);
       await authService.authorize();
-      // After authorize completes, auth state should be updated
-      // The widget will rebuild due to authNotifierProvider change
     } catch (e) {
       if (mounted) {
         final scheme = Theme.of(context).colorScheme;
@@ -71,11 +47,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Watch auth state - navigate to home when authenticated
     final authState = ref.watch(authNotifierProvider);
 
     if (authState is AuthAuthenticated) {
-      // Auth succeeded, navigate to home
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           context.go('/');
@@ -83,158 +57,69 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       });
     }
 
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
     return Scaffold(
       backgroundColor: scheme.surface,
-      body: Stack(
-        children: [
-          _buildOrbs(scheme),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildLogo(scheme)
-                      .animate()
-                      .fadeIn(duration: 600.ms)
-                      .scale(begin: const Offset(0.8, 0.8)),
-                  const SizedBox(height: 24),
-                  Text(
-                        'listd',
-                        style: GoogleFonts.manrope(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: scheme.onSurface,
-                          letterSpacing: -1,
-                        ),
-                      )
-                      .animate()
-                      .fadeIn(delay: 200.ms, duration: 400.ms)
-                      .slideY(begin: 0.1),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your tasks, beautifully organized',
-                    style: GoogleFonts.manrope(
-                      fontSize: 16,
-                      color: scheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
-                  const SizedBox(height: 48),
-                  GlassCard(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          children: [
-                            GradientButton(
-                              label: _isLoading
-                                  ? 'Signing in...'
-                                  : 'Continue with Google',
-                              icon: Icons.g_mobiledata,
-                              isLoading: _isLoading,
-                              onPressed: _isLoading ? null : _signInWithGoogle,
-                              width: 260,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'By continuing you agree to our Terms',
-                              style: GoogleFonts.manrope(
-                                fontSize: 11,
-                                color: scheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                      .animate()
-                      .fadeIn(delay: 400.ms, duration: 500.ms)
-                      .slideY(begin: 0.1),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOrbs(ColorScheme scheme) {
-    return Stack(
-      children: [
-        Positioned(
-          top: -100,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: AnimatedBuilder(
-              animation: _pulseAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _pulseAnimation.value,
-                  child: Container(
-                    width: 300,
-                    height: 300,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          scheme.primary.withAlpha(51),
-                          scheme.primary.withAlpha(0),
-                        ],
-                      ),
-                    ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const AppLogo(
+                  size: 56,
+                ).animate().fadeIn(duration: 320.ms).slideY(begin: 0.05),
+                const SizedBox(height: 24),
+                Text(
+                  'Listd',
+                  style: GoogleFonts.inter(
+                    fontSize: 32,
+                    height: 40 / 32,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.64,
+                    color: scheme.onSurface,
                   ),
-                );
-              },
+                ).animate().fadeIn(delay: 80.ms, duration: 320.ms),
+                const SizedBox(height: 6),
+                Text(
+                  'Capture, complete, sync.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    height: 22 / 15,
+                    fontWeight: FontWeight.w400,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ).animate().fadeIn(delay: 160.ms, duration: 320.ms),
+                const SizedBox(height: 40),
+                SizedBox(
+                  width: 240,
+                  child: GradientButton(
+                    label: _isLoading ? 'Signing in…' : 'Continue with Google',
+                    icon: Icons.g_mobiledata,
+                    isLoading: _isLoading,
+                    onPressed: _isLoading ? null : _signInWithGoogle,
+                  ),
+                ).animate().fadeIn(delay: 240.ms, duration: 320.ms),
+                const SizedBox(height: 12),
+                Text(
+                  'By continuing you agree to our Terms.',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    height: 16 / 11,
+                    fontWeight: FontWeight.w400,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        Positioned(
-          bottom: -150,
-          right: -100,
-          child: Container(
-            width: 400,
-            height: 400,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  scheme.tertiary.withAlpha(28),
-                  scheme.tertiary.withAlpha(0),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLogo(ColorScheme scheme) {
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Container(
-          width: 96,
-          height: 96,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: scheme.primary.withAlpha(70),
-                blurRadius: 30 + (_pulseAnimation.value * 10),
-                spreadRadius: 4,
-              ),
-              BoxShadow(
-                color: scheme.primary.withAlpha(35),
-                blurRadius: 60 + (_pulseAnimation.value * 15),
-                spreadRadius: 8,
-              ),
-            ],
-          ),
-          child: const AppLogo(size: 96),
-        );
-      },
+      ),
     );
   }
 }

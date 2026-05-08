@@ -100,9 +100,9 @@ class AccentColorNotifier extends StateNotifier<Color> {
     _hydrate();
   }
 
-  /// Default seed color. Mirrors `AppColors.primary` so the swatches in
+  /// Default seed color. Mirrors `AppColors.accent` so the swatches in
   /// Settings start with the brand color highlighted.
-  static const Color defaultAccent = Color(0xFF5C6BC0);
+  static const Color defaultAccent = Color(0xFF4F46E5);
 
   Future<void> _hydrate() async {
     final prefs = await _PrefsCache.instance();

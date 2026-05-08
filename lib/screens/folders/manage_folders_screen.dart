@@ -76,7 +76,7 @@ class ManageFoldersScreen extends ConsumerWidget {
             children: [
               Text(
                 'Folders',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
                   color: scheme.onSurface,
@@ -85,7 +85,7 @@ class ManageFoldersScreen extends ConsumerWidget {
               const SizedBox(height: 4),
               Text(
                 'Organize your tasks across different projects and contexts.',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   color: scheme.onSurfaceVariant,
                 ),
@@ -167,7 +167,7 @@ class ManageFoldersScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             'Could not load folders',
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: scheme.onSurface,
@@ -176,7 +176,7 @@ class ManageFoldersScreen extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             '$error',
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 13,
               color: scheme.onSurfaceVariant,
             ),
@@ -277,7 +277,7 @@ class _FolderCard extends StatelessWidget {
                       const Spacer(),
                       Text(
                         title,
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
                           color: scheme.onSurface,
@@ -289,7 +289,7 @@ class _FolderCard extends StatelessWidget {
                       Text(
                         '$activeTaskCount Active Task'
                         '${activeTaskCount == 1 ? '' : 's'}',
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                           fontSize: 13,
                           color: scheme.onSurfaceVariant,
                         ),
@@ -344,7 +344,7 @@ class _CreateFolderTile extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     'Create Folder',
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: scheme.onSurfaceVariant,

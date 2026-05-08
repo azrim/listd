@@ -61,7 +61,7 @@ class FoldersScreen extends ConsumerWidget {
           const SizedBox(width: 12),
           Text(
             'Folders',
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 24,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
@@ -158,7 +158,7 @@ class FoldersScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               'Failed to load folders',
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -167,7 +167,7 @@ class FoldersScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               error.toString(),
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 12,
                 color: AppColors.textSecondary,
               ),
@@ -180,7 +180,7 @@ class FoldersScreen extends ConsumerWidget {
               icon: const Icon(Icons.refresh, color: AppColors.primary),
               label: Text(
                 'Retry',
-                style: GoogleFonts.manrope(color: AppColors.primary),
+                style: GoogleFonts.inter(color: AppColors.primary),
               ),
             ),
           ],
@@ -197,15 +197,15 @@ class FoldersScreen extends ConsumerWidget {
         backgroundColor: AppColors.bgSurface,
         title: Text(
           'Create folder',
-          style: GoogleFonts.manrope(color: AppColors.textPrimary),
+          style: GoogleFonts.inter(color: AppColors.textPrimary),
         ),
         content: TextField(
           controller: controller,
           autofocus: true,
-          style: GoogleFonts.manrope(color: AppColors.textPrimary),
+          style: GoogleFonts.inter(color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: 'Folder name',
-            hintStyle: GoogleFonts.manrope(color: AppColors.textHint),
+            hintStyle: GoogleFonts.inter(color: AppColors.textHint),
           ),
           onSubmitted: (value) => Navigator.of(context).pop(value),
         ),
@@ -214,12 +214,12 @@ class FoldersScreen extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Cancel',
-              style: GoogleFonts.manrope(color: AppColors.textSecondary),
+              style: GoogleFonts.inter(color: AppColors.textSecondary),
             ),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text('Create', style: GoogleFonts.manrope()),
+            child: Text('Create', style: GoogleFonts.inter()),
           ),
         ],
       ),
@@ -288,7 +288,7 @@ class _FolderCard extends StatelessWidget {
                   // Folder name
                   Text(
                     taskList.title,
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
@@ -300,7 +300,7 @@ class _FolderCard extends StatelessWidget {
                   // Active tasks count
                   Text(
                     'Active tasks',
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
@@ -358,7 +358,7 @@ class _CreateFolderCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Create Folder',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     color: AppColors.textSecondary,
                   ),
