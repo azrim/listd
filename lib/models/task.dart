@@ -143,7 +143,7 @@ class TaskStep {
 /// It is distinct from the Drift table model which handles database persistence.
 @immutable
 class Task {
-  const Task({
+  Task({
     required this.id,
     required this.title,
     this.notes = '',
@@ -160,7 +160,8 @@ class Task {
     this.reminder,
     this.repeat,
     this.tags = const [],
-  });
+  }) : assert(id.isNotEmpty, 'Task ID cannot be empty'),
+       assert(title.isNotEmpty, 'Task title cannot be empty');
 
   /// Unique identifier for the task
   final String id;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/database/app_database.dart' hide databaseProvider;
@@ -25,51 +27,44 @@ final supabaseTasksProviderProvider = Provider<SupabaseTasksProvider>((ref) {
   return SupabaseTasksProvider(client);
 });
 
-/// Stream provider that watches all task lists from the local database.
-/// Also triggers sync from Supabase when auth changes to authenticated.
+/// Trigger to refresh the task lists stream
+final taskListsRefreshProvider = StateProvider<int>((ref) => 0);
+
+/// Stream provider that syncs task lists from Supabase.
+/// Refreshes when taskListsRefreshProvider changes.
 final taskListsStreamProvider = StreamProvider<List<TaskList>>((ref) async* {
-  final dao = ref.watch(taskListDaoProvider);
+  // Watch the refresh trigger
+  ref.watch(taskListsRefreshProvider);
 
-  // Watch the local database stream
-  await for (final entries in dao.watchAllTaskLists()) {
-    final lists = entries.map((e) => e.toDomain()).toList();
+  final authState = ref.watch(authNotifierProvider);
 
-    // If local is empty and user is authenticated, sync from remote
-    if (lists.isEmpty) {
-      final authState = ref.read(authNotifierProvider);
-      if (authState is AuthAuthenticated) {
-        try {
-          final provider = ref.read(supabaseTasksProviderProvider);
-          final remoteLists = await provider.getTaskLists();
-          await dao.upsertTaskLists(remoteLists);
-          continue; // Let the stream emit the updated data
-        } catch (_) {
-          // Ignore sync errors, emit local data
-        }
-      }
-    }
+  if (authState is! AuthAuthenticated) {
+    yield [];
+    return;
+  }
 
-    yield lists;
+  print('taskListsStreamProvider: Syncing from Supabase');
+
+  try {
+    final provider = ref.read(supabaseTasksProviderProvider);
+    final remoteLists = await provider.getTaskLists();
+    print('taskListsStreamProvider: Got ${remoteLists.length} lists');
+    yield remoteLists;
+  } catch (e) {
+    print('taskListsStreamProvider: Error - $e');
+    yield [];
   }
 });
 
 /// Future provider that fetches task lists from Supabase with auth.
 final remoteTaskListsProvider = FutureProvider<List<TaskList>>((ref) async {
-  // Wait for auth state to be ready
   final authState = ref.watch(authNotifierProvider);
   if (authState is! AuthAuthenticated) {
     return [];
   }
 
-  // Use SupabaseTasksProvider to fetch task lists
   final provider = ref.watch(supabaseTasksProviderProvider);
-  final taskLists = await provider.getTaskLists();
-
-  // Save to local database for offline access
-  final dao = ref.read(taskListDaoProvider);
-  await dao.upsertTaskLists(taskLists);
-
-  return taskLists;
+  return provider.getTaskLists();
 });
 
 /// Family provider that fetches a single task list by ID.
@@ -84,85 +79,64 @@ final taskListProvider = FutureProvider.family<TaskList?, String>((
 
 /// Notifier for managing task lists state.
 class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
-  final TaskListDao _dao;
   final Ref _ref;
 
-  TaskListsNotifier({required TaskListDao dao, required Ref ref})
-    : _dao = dao,
-      _ref = ref,
+  TaskListsNotifier({required Ref ref})
+    : _ref = ref,
       super(const AsyncValue.loading()) {
-    _init();
+    _syncFromRemote();
   }
 
-  Future<void> _init() async {
+  Future<void> _syncFromRemote() async {
     state = const AsyncValue.loading();
     try {
-      final taskLists = await _dao.getAllTaskLists();
-      state = AsyncValue.data(taskLists.map((e) => e.toDomain()).toList());
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
-  }
-
-  /// Refreshes task lists from the local database.
-  Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    try {
-      final taskLists = await _dao.getAllTaskLists();
-      state = AsyncValue.data(taskLists.map((e) => e.toDomain()).toList());
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
-  }
-
-  /// Syncs task lists from Supabase and saves to local database.
-  Future<void> syncFromRemote() async {
-    state = const AsyncValue.loading();
-    try {
-      // Get auth state
       final authState = _ref.read(authNotifierProvider);
       if (authState is! AuthAuthenticated) {
-        await refresh();
+        state = const AsyncValue.data([]);
         return;
       }
 
-      // Use SupabaseTasksProvider to sync
       final provider = _ref.read(supabaseTasksProviderProvider);
       final remoteLists = await provider.getTaskLists();
 
-      // Save to local database
-      await _dao.upsertTaskLists(remoteLists);
-
-      // Update state
       state = AsyncValue.data(remoteLists);
-    } catch (e) {
-      await refresh();
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
     }
   }
 
-  /// Creates a new task list and syncs to Supabase.
+  Future<void> refresh() async {
+    _ref.read(taskListsRefreshProvider.notifier).state++;
+  }
+
+  Future<void> syncFromRemote() async {
+    await _syncFromRemote();
+  }
+
   Future<void> createTaskList(String title) async {
+    print('TaskListsNotifier.createTaskList: $title');
     try {
       final authState = _ref.read(authNotifierProvider);
       if (authState is! AuthAuthenticated) {
         return;
       }
 
-      // Create via Supabase
       final provider = _ref.read(supabaseTasksProviderProvider);
-      final newList = await provider.createTaskList(title);
+      print('TaskListsNotifier: Creating via Supabase...');
+      await provider.createTaskList(title);
+      print('TaskListsNotifier: Created');
 
-      // Save to local database
-      await _dao.upsertTaskLists([newList]);
+      // Trigger stream refresh
+      _ref.read(taskListsRefreshProvider.notifier).state++;
 
-      // Refresh
-      await refresh();
+      // Also refresh state
+      await _syncFromRemote();
     } catch (e) {
+      print('TaskListsNotifier: Error - $e');
       await refresh();
     }
   }
 
-  /// Deletes a task list.
   Future<void> deleteTaskList(String id) async {
     try {
       final authState = _ref.read(authNotifierProvider);
@@ -170,17 +144,12 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
         return;
       }
 
-      // Delete via Supabase
       final provider = _ref.read(supabaseTasksProviderProvider);
       await provider.deleteTaskList(id);
 
-      // Remove from local database
-      await _dao.deleteTaskList(id);
-
-      // Refresh
       await refresh();
     } catch (e) {
-      // Ignore errors
+      // Ignore
     }
   }
 }
@@ -188,12 +157,10 @@ class TaskListsNotifier extends StateNotifier<AsyncValue<List<TaskList>>> {
 /// Provider for the TaskListsNotifier.
 final taskListsNotifierProvider =
     StateNotifierProvider<TaskListsNotifier, AsyncValue<List<TaskList>>>((ref) {
-      final dao = ref.watch(taskListDaoProvider);
-      return TaskListsNotifier(dao: dao, ref: ref);
+      return TaskListsNotifier(ref: ref);
     });
 
 /// Convenience provider that combines local and remote task lists.
-/// Prefers local data, falls back to remote if local is empty.
 final taskListsProvider = FutureProvider<List<TaskList>>((ref) async {
   final localAsync = ref.watch(taskListsStreamProvider);
   final remoteAsync = ref.watch(remoteTaskListsProvider);

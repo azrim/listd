@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/task.dart';
 import '../../models/task_list.dart';
+import '../../models/sync_status.dart';
 import '../tasks/task_provider.dart';
 
 /// Supabase-based task provider implementing ITaskProvider.
@@ -85,6 +86,9 @@ class SupabaseTasksProvider implements ITaskProvider {
         'is_important': task.isStarred,
         'is_my_day': false,
         'position': task.position,
+        'parent_id': task.parentId,
+        'completed_at': task.completedAt?.toIso8601String(),
+        'sync_status': task.syncStatus.value,
         'reminder': task.reminder?.toIso8601String(),
         'repeat_config': task.repeat?.toJson() != null
             ? jsonEncode(task.repeat!.toJson())
@@ -117,6 +121,8 @@ class SupabaseTasksProvider implements ITaskProvider {
         'is_completed': task.isCompleted,
         'is_important': task.isStarred,
         'position': task.position,
+        'parent_id': task.parentId,
+        'completed_at': task.completedAt?.toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
         'reminder': task.reminder?.toIso8601String(),
         'repeat_config': task.repeat?.toJson() != null
@@ -166,10 +172,21 @@ class SupabaseTasksProvider implements ITaskProvider {
     // TODO: Implement sync with Drift local cache
     // For now, just return current remote state
     final taskLists = await getTaskLists();
-    final tasks = <String, List<Task>>{};
 
-    for (final list in taskLists) {
-      tasks[list.id] = await getTasks(list.id);
+    // Fetch all tasks in one query to avoid N+1 problem
+    final allTasksResponse = await _client
+        .from('tasks')
+        .select()
+        .eq('user_id', currentUserId)
+        .order('task_list_id,position');
+
+    final tasks = <String, List<Task>>{};
+    for (final row in allTasksResponse as List) {
+      final task = _mapToTask(row);
+      if (!tasks.containsKey(task.taskListId)) {
+        tasks[task.taskListId] = [];
+      }
+      tasks[task.taskListId]!.add(task);
     }
 
     return SyncResult(taskLists: taskLists, tasks: tasks);
@@ -287,6 +304,12 @@ class SupabaseTasksProvider implements ITaskProvider {
       }).toList();
     }
 
+    // Parse sync status from integer
+    SyncStatus syncStatus = SyncStatus.synced;
+    if (row['sync_status'] != null) {
+      syncStatus = SyncStatus.fromValue(row['sync_status']);
+    }
+
     return Task(
       id: row['id'] as String,
       title: row['title'] as String,
@@ -303,6 +326,11 @@ class SupabaseTasksProvider implements ITaskProvider {
       repeat: repeat,
       tags: tags,
       steps: steps,
+      parentId: row['parent_id'],
+      completedAt: row['completed_at'] != null
+          ? DateTime.parse(row['completed_at'] as String)
+          : null,
+      syncStatus: syncStatus,
     );
   }
 }
