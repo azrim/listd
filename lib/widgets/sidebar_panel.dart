@@ -120,6 +120,14 @@ class SidebarPanel extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: _SidebarFooterButton(
+              icon: Icons.folder_outlined,
+              label: 'Folders',
+              onPressed: () => context.push('/folders'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: _SidebarFooterButton(
               icon: Icons.settings_outlined,
               label: 'Settings',
               onPressed: () => context.push('/settings'),
