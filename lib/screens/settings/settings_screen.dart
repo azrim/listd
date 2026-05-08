@@ -372,13 +372,18 @@ class _AppearanceContent extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        const Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(child: _ProfileDetailsCard()),
-            SizedBox(width: 16),
-            Expanded(child: _AlertPreferencesCard()),
-          ],
+        // IntrinsicHeight gives the Row's stretch alignment a finite vertical
+        // constraint when nested inside a SingleChildScrollView. Without it
+        // the Row gets BoxConstraints(h=Infinity) and asserts at layout time.
+        const IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _ProfileDetailsCard()),
+              SizedBox(width: 16),
+              Expanded(child: _AlertPreferencesCard()),
+            ],
+          ),
         ),
         const SizedBox(height: 24),
         Align(

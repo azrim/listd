@@ -3,8 +3,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/task.dart';
+import '../models/task_list.dart';
+import '../providers/task_lists_provider.dart';
 import '../providers/tasks_provider.dart';
 import '../providers/ui_state_providers.dart';
+
+/// Filter the aggregate task stream into the slice that belongs to a virtual
+/// list (My Day / Important / Planned / Tasks).
+List<Task> _filterForVirtualList(List<Task> all, String listId) {
+  final today = DateTime.now();
+  bool sameDay(DateTime d) =>
+      d.year == today.year && d.month == today.month && d.day == today.day;
+
+  switch (listId) {
+    case SpecialListIds.myDay:
+      return all.where((t) => t.due != null && sameDay(t.due!)).toList();
+    case SpecialListIds.important:
+      return all.where((t) => t.isStarred).toList();
+    case SpecialListIds.planned:
+      return all.where((t) => t.due != null).toList();
+    case SpecialListIds.tasks:
+      return all;
+    default:
+      return all;
+  }
+}
+
+/// Pick the list that "Add a task" on a virtual screen should write to.
+/// Prefers the user's default list, then falls back to the first list.
+TaskList? _resolveTargetList(List<TaskList> lists) {
+  if (lists.isEmpty) return null;
+  final defaults = lists.where((l) => l.isDefault);
+  return defaults.isNotEmpty ? defaults.first : lists.first;
+}
 
 /// Main task list panel - 3-column layout middle column
 class TaskListPanel extends ConsumerWidget {
@@ -19,9 +50,15 @@ class TaskListPanel extends ConsumerWidget {
     this.onTaskSelected,
   });
 
+  bool get _isVirtual => listId.startsWith('@');
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tasksAsync = ref.watch(tasksNotifierProvider(listId));
+    final tasksAsync = _isVirtual
+        ? ref
+              .watch(allTasksProvider)
+              .whenData((all) => _filterForVirtualList(all, listId))
+        : ref.watch(tasksNotifierProvider(listId));
     final selectedTaskId = ref.watch(selectedTaskIdProvider);
     final scheme = Theme.of(context).colorScheme;
 
@@ -41,6 +78,21 @@ class TaskListPanel extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Trigger a fresh fetch. Virtual lists ask every real list to resync,
+  /// since the aggregate is computed from those.
+  Future<void> _refresh(WidgetRef ref) async {
+    if (!_isVirtual) {
+      await ref.read(tasksNotifierProvider(listId).notifier).syncFromRemote();
+      return;
+    }
+    final lists = ref.read(taskListsNotifierProvider).valueOrNull ?? const [];
+    await Future.wait(
+      lists.map(
+        (l) => ref.read(tasksNotifierProvider(l.id).notifier).syncFromRemote(),
       ),
     );
   }
@@ -68,9 +120,7 @@ class TaskListPanel extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.refresh, size: 20),
             color: scheme.onSurfaceVariant,
-            onPressed: () => ref
-                .read(tasksNotifierProvider(listId).notifier)
-                .syncFromRemote(),
+            onPressed: () => _refresh(ref),
             tooltip: 'Refresh',
           ),
         ],
@@ -91,14 +141,16 @@ class TaskListPanel extends ConsumerWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: () =>
-          ref.read(tasksNotifierProvider(listId).notifier).syncFromRemote(),
+      onRefresh: () => _refresh(ref),
       color: Theme.of(context).colorScheme.primary,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         itemCount: mainTasks.length,
         itemBuilder: (context, index) {
           final task = mainTasks[index];
+          // Mutations always target the task's real owning list, not the
+          // virtual screen the user happens to be viewing.
+          final ownerListId = task.taskListId;
           return Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: _TaskRow(
@@ -109,7 +161,7 @@ class TaskListPanel extends ConsumerWidget {
                 onTaskSelected?.call(task);
               },
               onToggle: () => ref
-                  .read(tasksNotifierProvider(listId).notifier)
+                  .read(tasksNotifierProvider(ownerListId).notifier)
                   .toggleComplete(task),
               onDelete: () => _confirmDelete(context, ref, task),
             ),
@@ -151,7 +203,7 @@ class TaskListPanel extends ConsumerWidget {
 
     if (confirmed == true) {
       await ref
-          .read(tasksNotifierProvider(listId).notifier)
+          .read(tasksNotifierProvider(task.taskListId).notifier)
           .deleteTask(task.id);
     }
   }
@@ -170,9 +222,7 @@ class TaskListPanel extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: () => ref
-                .read(tasksNotifierProvider(listId).notifier)
-                .syncFromRemote(),
+            onPressed: () => _refresh(ref),
             icon: const Icon(Icons.refresh),
             label: const Text('Retry'),
           ),
@@ -456,6 +506,36 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
     final title = _controller.text.trim();
     if (title.isEmpty || _isLoading) return;
 
+    // Resolve the real list to write into. Synthetic list IDs are not valid
+    // foreign keys for the tasks table, so always route to a real list and
+    // apply the right metadata so the task still surfaces in the virtual view.
+    String targetListId = widget.listId;
+    DateTime? defaultDue;
+    bool defaultStarred = false;
+
+    if (widget.listId.startsWith('@')) {
+      final lists =
+          ref.read(taskListsNotifierProvider).valueOrNull ?? const <TaskList>[];
+      final target = _resolveTargetList(lists);
+      if (target == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Create a list first to add tasks here'),
+            ),
+          );
+        }
+        return;
+      }
+      targetListId = target.id;
+      if (widget.listId == SpecialListIds.myDay) {
+        final now = DateTime.now();
+        defaultDue = DateTime(now.year, now.month, now.day);
+      } else if (widget.listId == SpecialListIds.important) {
+        defaultStarred = true;
+      }
+    }
+
     setState(() => _isLoading = true);
     try {
       final id = const Uuid().v4();
@@ -463,10 +543,12 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
         id: id,
         title: title,
         updated: DateTime.now(),
-        taskListId: widget.listId,
+        taskListId: targetListId,
+        due: defaultDue,
+        isStarred: defaultStarred,
       );
       await ref
-          .read(tasksNotifierProvider(widget.listId).notifier)
+          .read(tasksNotifierProvider(targetListId).notifier)
           .createTask(newTask);
       _controller.clear();
     } finally {
