@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
@@ -10,8 +11,12 @@ import 'services/supabase/supabase_client_service.dart'
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase
-  await SupabaseClientService.initialize();
+  // Pre-warm SharedPreferences in parallel with Supabase init so the
+  // first frame's settings hydrate without an extra disk roundtrip.
+  await Future.wait<void>([
+    SupabaseClientService.initialize(),
+    SharedPreferences.getInstance().then((_) {}),
+  ]);
 
   runApp(
     ProviderScope(

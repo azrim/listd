@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../data/database/daos/task_dao.dart';
 import '../../data/database/daos/task_list_dao.dart';
@@ -19,7 +19,8 @@ import '../tasks/supabase_tasks_provider.dart';
 ///      to clobber rows that still have unsynced local edits.
 ///
 /// All sync work runs in the background — the UI never awaits it before
-/// rendering changes.
+/// rendering changes. Mutations call [scheduleSync] which coalesces
+/// rapid bursts into a single sync cycle.
 class TaskSyncService {
   TaskSyncService({
     required TaskDao taskDao,
@@ -33,38 +34,63 @@ class TaskSyncService {
   final TaskListDao _taskListDao;
   final SupabaseTasksProvider _taskProvider;
 
-  /// Whether a sync cycle is currently in flight.
-  bool get isSyncing => _running;
-  bool _running = false;
+  /// Whether a sync cycle is currently in flight. Listenable for the
+  /// status pill in the UI.
+  final ValueNotifier<bool> isSyncing = ValueNotifier<bool>(false);
+
+  /// Last sync error message (null = no error). Cleared on next success.
+  final ValueNotifier<String?> lastError = ValueNotifier<String?>(null);
+
+  /// Timestamp of the last successful sync.
+  final ValueNotifier<DateTime?> lastSyncedAt = ValueNotifier<DateTime?>(null);
+
+  /// Coalescing timer for [scheduleSync].
+  Timer? _debounce;
 
   /// Performs a full sync cycle: push pending → pull remote.
   ///
   /// Safe to call concurrently — overlapping calls become no-ops.
   Future<SyncSummary> syncAll() async {
-    if (_running) return const SyncSummary();
-    _running = true;
-    try {
-      if (!_taskProvider.isAuthenticated) return const SyncSummary();
+    if (isSyncing.value) return const SyncSummary();
+    if (!_taskProvider.isAuthenticated) return const SyncSummary();
 
+    isSyncing.value = true;
+    try {
       final pushed = await _pushPending();
       final pulled = await _pullRemote();
+      lastError.value = null;
+      lastSyncedAt.value = DateTime.now();
       return SyncSummary(
         taskListsPushed: pushed.lists,
         tasksPushed: pushed.tasks,
         taskListsUpdated: pulled.taskListsUpdated,
         tasksUpdated: pulled.tasksUpdated,
       );
+    } catch (e) {
+      lastError.value = e.toString();
+      rethrow;
     } finally {
-      _running = false;
+      isSyncing.value = false;
     }
   }
 
-  /// Triggers a sync without awaiting the result. Use after a local
-  /// mutation so the UI doesn't block on network.
-  void scheduleSync() {
-    // Fire-and-forget. Errors are intentionally swallowed; the row stays
-    // pending and will be retried on the next sync.
-    unawaited(syncAll());
+  /// Triggers a sync without awaiting the result. Coalesces rapid bursts
+  /// of local mutations into a single sync cycle.
+  void scheduleSync({Duration delay = const Duration(milliseconds: 250)}) {
+    _debounce?.cancel();
+    _debounce = Timer(delay, () {
+      // Errors are intentionally swallowed at this layer; rows stay
+      // pending and will be retried on the next sync.
+      unawaited(syncAll().catchError((_) => const SyncSummary()));
+    });
+  }
+
+  /// Cancels any pending debounced sync. Mainly useful for tests.
+  void dispose() {
+    _debounce?.cancel();
+    isSyncing.dispose();
+    lastError.dispose();
+    lastSyncedAt.dispose();
   }
 
   /// Push pending local mutations to Supabase, then mark synced.
@@ -130,7 +156,9 @@ class TaskSyncService {
   }
 
   /// Pull remote state into Drift, preserving any rows that still have
-  /// pending local edits.
+  /// pending local edits. Skips Drift writes when the remote payload is
+  /// identical to the existing local row, to avoid spurious watch-stream
+  /// fires (which would cost a UI rebuild for nothing).
   Future<_PullSummary> _pullRemote() async {
     int taskListsUpdated = 0;
     int tasksUpdated = 0;
@@ -144,6 +172,7 @@ class TaskSyncService {
       // Drop synced lists that no longer exist remotely.
       final remoteListIds = remoteLists.map((l) => l.id).toSet();
       final localLists = await _taskListDao.getAllTaskLists();
+      final localListsById = {for (final l in localLists) l.id: l.toDomain()};
       for (final local in localLists) {
         if (!remoteListIds.contains(local.id) &&
             !pendingListIds.contains(local.id)) {
@@ -152,16 +181,18 @@ class TaskSyncService {
         }
       }
 
-      // Upsert remote lists, but skip rows the local user is still editing.
-      final freshLists = remoteLists
-          .where((l) => !pendingListIds.contains(l.id))
-          .toList();
+      // Upsert remote lists, but skip rows the local user is still editing
+      // *and* rows whose synced state already matches the remote payload.
+      final freshLists = <TaskList>[];
+      for (final remote in remoteLists) {
+        if (pendingListIds.contains(remote.id)) continue;
+        final local = localListsById[remote.id];
+        final synced = remote.copyWith(syncStatus: SyncStatus.synced);
+        if (local != null && _taskListEqual(local, synced)) continue;
+        freshLists.add(synced);
+      }
       if (freshLists.isNotEmpty) {
-        await _taskListDao.upsertTaskLists(
-          freshLists
-              .map((l) => l.copyWith(syncStatus: SyncStatus.synced))
-              .toList(),
-        );
+        await _taskListDao.upsertTaskLists(freshLists);
         taskListsUpdated = freshLists.length;
       }
     } catch (_) {
@@ -177,38 +208,39 @@ class TaskSyncService {
           .map((e) => e.id)
           .toSet();
 
-      // Drop synced tasks that no longer exist remotely (and aren't pending
-      // a local-side mutation that hasn't reached the server yet).
-      final remoteTaskIds = remoteTasks.map((t) => t.id).toSet();
-      final localTasks = await _taskDao.getPendingSyncTasks();
-      // Note: we only want to compare *synced* local tasks against remote.
-      // Pull all task lists then their tasks individually.
+      // Build a lookup of every locally-synced task once, so we don't run
+      // an N+1 query per list.
       final allLists = await _taskListDao.getAllTaskLists();
-      final localSyncedIds = <String>{};
+      final localSyncedById = <String, Task>{};
       for (final list in allLists) {
         final entries = await _taskDao.getTasksByListId(list.id);
         for (final e in entries) {
-          if (!pendingTaskIds.contains(e.id)) localSyncedIds.add(e.id);
+          if (!pendingTaskIds.contains(e.id)) {
+            localSyncedById[e.id] = e.toDomain();
+          }
         }
       }
-      // Avoid lint about unused var.
-      localTasks.length;
-      for (final id in localSyncedIds) {
+
+      // Drop synced tasks that no longer exist remotely.
+      final remoteTaskIds = remoteTasks.map((t) => t.id).toSet();
+      for (final id in localSyncedById.keys) {
         if (!remoteTaskIds.contains(id)) {
           await _taskDao.deleteTask(id);
         }
       }
 
-      // Upsert remote tasks, skipping any with pending local edits.
-      final freshTasks = remoteTasks
-          .where((t) => !pendingTaskIds.contains(t.id))
-          .toList();
+      // Upsert remote tasks, skipping any with pending local edits AND any
+      // that already match the local synced row.
+      final freshTasks = <Task>[];
+      for (final remote in remoteTasks) {
+        if (pendingTaskIds.contains(remote.id)) continue;
+        final local = localSyncedById[remote.id];
+        final synced = remote.copyWith(syncStatus: SyncStatus.synced);
+        if (local != null && _taskEqual(local, synced)) continue;
+        freshTasks.add(synced);
+      }
       if (freshTasks.isNotEmpty) {
-        await _taskDao.upsertTasks(
-          freshTasks
-              .map((t) => t.copyWith(syncStatus: SyncStatus.synced))
-              .toList(),
-        );
+        await _taskDao.upsertTasks(freshTasks);
         tasksUpdated = freshTasks.length;
       }
     } catch (_) {
@@ -219,6 +251,20 @@ class TaskSyncService {
       taskListsUpdated: taskListsUpdated,
       tasksUpdated: tasksUpdated,
     );
+  }
+
+  static bool _taskListEqual(TaskList a, TaskList b) {
+    return a.id == b.id &&
+        a.title == b.title &&
+        a.isDefault == b.isDefault &&
+        a.position == b.position &&
+        a.userId == b.userId &&
+        a.syncStatus == b.syncStatus;
+  }
+
+  static bool _taskEqual(Task a, Task b) {
+    // Reuse the Task `==` operator (already covers every field).
+    return a == b;
   }
 
   /// Performs a full sync.
@@ -258,50 +304,6 @@ class _PullSummary {
   final int tasksUpdated;
 }
 
-/// Notifier for managing sync state.
-class SyncNotifier extends StateNotifier<SyncState> {
-  SyncNotifier({required TaskSyncService syncService})
-    : _syncService = syncService,
-      super(const SyncIdle());
-
-  final TaskSyncService _syncService;
-
-  /// Triggers a full sync.
-  Future<void> sync() async {
-    if (state is SyncInProgress) return;
-    state = const SyncInProgress();
-    try {
-      final summary = await _syncService.syncAll();
-      state = SyncSuccess(summary);
-    } catch (e) {
-      state = SyncError(e.toString());
-    }
-  }
-}
-
-/// Sealed type for sync state.
-sealed class SyncState {
-  const SyncState();
-}
-
-class SyncIdle extends SyncState {
-  const SyncIdle();
-}
-
-class SyncInProgress extends SyncState {
-  const SyncInProgress();
-}
-
-class SyncSuccess extends SyncState {
-  const SyncSuccess(this.summary);
-  final SyncSummary summary;
-}
-
-class SyncError extends SyncState {
-  const SyncError(this.message);
-  final String message;
-}
-
 /// Riverpod-side accessors are wired up in `providers/sync_provider.dart`.
 TaskSyncService taskSyncServiceFromRefs({
   required TaskDao taskDao,
@@ -314,25 +316,3 @@ TaskSyncService taskSyncServiceFromRefs({
     taskProvider: taskProvider,
   );
 }
-
-/// Convenience: run a single one-shot sync against the given collaborators.
-/// Used by tests and headless tooling.
-Future<SyncSummary> runOneShotSync({
-  required TaskDao taskDao,
-  required TaskListDao taskListDao,
-  required SupabaseTasksProvider taskProvider,
-}) {
-  return TaskSyncService(
-    taskDao: taskDao,
-    taskListDao: taskListDao,
-    taskProvider: taskProvider,
-  ).syncAll();
-}
-
-/// Convenience helper bound to a domain [Task] for tests.
-Task taskWithSync(Task task, SyncStatus status) =>
-    task.copyWith(syncStatus: status);
-
-/// Convenience helper bound to a domain [TaskList] for tests.
-TaskList taskListWithSync(TaskList taskList, SyncStatus status) =>
-    taskList.copyWith(syncStatus: status);

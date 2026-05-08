@@ -92,6 +92,16 @@ class TaskListDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.syncStatus.isBiggerOrEqualValue(1))).get();
   }
 
+  /// Streams the count of task lists with pending sync changes.
+  Stream<int> watchPendingSyncCount() {
+    final query = selectOnly(taskLists)
+      ..addColumns([taskLists.id.count()])
+      ..where(taskLists.syncStatus.isBiggerOrEqualValue(1));
+    return query
+        .map((row) => row.read(taskLists.id.count()) ?? 0)
+        .watchSingle();
+  }
+
   /// Gets all task lists with specific sync status.
   Future<List<TaskListEntry>> getTaskListsBySyncStatus(SyncStatus status) {
     return (select(
