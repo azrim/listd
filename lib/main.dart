@@ -31,14 +31,28 @@ class ListdApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final accent = ref.watch(accentColorProvider);
+    final fontScale = ref.watch(fontScaleProvider);
     final appRouter = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
       title: 'Listd',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme.copyWith(
+        colorScheme: AppTheme.lightTheme.colorScheme.copyWith(primary: accent),
+      ),
+      darkTheme: AppTheme.darkTheme.copyWith(
+        colorScheme: AppTheme.darkTheme.colorScheme.copyWith(primary: accent),
+      ),
       themeMode: themeMode,
+      builder: (context, child) {
+        // Apply the user's selected font scale on top of the platform default.
+        final media = MediaQuery.of(context);
+        return MediaQuery(
+          data: media.copyWith(textScaler: TextScaler.linear(fontScale)),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       routerConfig: appRouter,
     );
   }

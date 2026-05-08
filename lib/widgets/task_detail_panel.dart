@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../models/task.dart';
+import '../models/task_list.dart';
+import '../providers/task_lists_provider.dart';
 import '../providers/tasks_provider.dart';
 
 /// Task detail panel - 3rd column in 3-column layout.
@@ -359,6 +361,11 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
 
   Widget _buildMetadataSection() {
     final scheme = Theme.of(context).colorScheme;
+    final lists =
+        ref.watch(taskListsNotifierProvider).valueOrNull ?? const <TaskList>[];
+    final owningList = lists
+        .where((l) => l.id == widget.task.taskListId)
+        .firstOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -366,8 +373,8 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
         _MetadataRow(
           icon: Icons.folder_outlined,
           label: 'Folder',
-          value: 'Tasks',
-          onTap: () {},
+          value: owningList?.title ?? 'Tasks',
+          onTap: () => _showFolderPicker(lists, owningList),
         ),
         // Reminder
         _MetadataRow(
@@ -399,6 +406,65 @@ class _TaskDetailPanelState extends ConsumerState<TaskDetailPanel> {
         ),
       ],
     );
+  }
+
+  Future<void> _showFolderPicker(
+    List<TaskList> lists,
+    TaskList? current,
+  ) async {
+    if (lists.isEmpty) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Create a folder first')));
+      return;
+    }
+    final picked = await showModalBottomSheet<TaskList>(
+      context: context,
+      builder: (sheetContext) {
+        final scheme = Theme.of(sheetContext).colorScheme;
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Text(
+                  'Move to folder',
+                  style: GoogleFonts.manrope(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: scheme.onSurfaceVariant,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              for (final list in lists)
+                ListTile(
+                  leading: Icon(
+                    Icons.folder_outlined,
+                    color: list.id == current?.id
+                        ? scheme.primary
+                        : scheme.onSurfaceVariant,
+                  ),
+                  title: Text(list.title),
+                  trailing: list.id == current?.id
+                      ? Icon(Icons.check, color: scheme.primary)
+                      : null,
+                  onTap: () => Navigator.of(sheetContext).pop(list),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+    if (picked == null || picked.id == widget.task.taskListId) return;
+
+    // Move via the *current* list's notifier so it picks up the deletion
+    // tombstone, then create the same task under the new list.
+    final moved = widget.task.copyWith(taskListId: picked.id);
+    await ref
+        .read(tasksNotifierProvider(widget.task.taskListId).notifier)
+        .updateTask(moved);
   }
 
   Future<void> _showReminderPicker() async {

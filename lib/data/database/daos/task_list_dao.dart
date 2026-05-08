@@ -14,18 +14,27 @@ class TaskListDao extends DatabaseAccessor<AppDatabase>
     with _$TaskListDaoMixin {
   TaskListDao(super.db);
 
-  /// Watches all task lists, ordered by title.
+  /// Watches all task lists not pending deletion, ordered by position
+  /// then title (matches sidebar order).
   Stream<List<TaskListEntry>> watchAllTaskLists() {
-    return (select(
-      taskLists,
-    )..orderBy([(t) => OrderingTerm.asc(t.title)])).watch();
+    return (select(taskLists)
+          ..where((t) => t.syncStatus.isSmallerThanValue(3))
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.position),
+            (t) => OrderingTerm.asc(t.title),
+          ]))
+        .watch();
   }
 
-  /// Gets all task lists.
+  /// Gets all task lists (excluding pending deletes).
   Future<List<TaskListEntry>> getAllTaskLists() {
-    return (select(
-      taskLists,
-    )..orderBy([(t) => OrderingTerm.asc(t.title)])).get();
+    return (select(taskLists)
+          ..where((t) => t.syncStatus.isSmallerThanValue(3))
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.position),
+            (t) => OrderingTerm.asc(t.title),
+          ]))
+        .get();
   }
 
   /// Gets a single task list by ID.
@@ -35,40 +44,24 @@ class TaskListDao extends DatabaseAccessor<AppDatabase>
 
   /// Gets the default task list.
   Future<TaskListEntry?> getDefaultTaskList() {
-    return (select(
-      taskLists,
-    )..where((t) => t.isDefault.equals(true))).getSingleOrNull();
+    return (select(taskLists)..where(
+          (t) => t.isDefault.equals(true) & t.syncStatus.isSmallerThanValue(3),
+        ))
+        .getSingleOrNull();
   }
 
   /// Inserts or updates a task list.
   Future<void> upsertTaskList(domain.TaskList taskList) {
-    return into(taskLists).insertOnConflictUpdate(
-      TaskListEntry(
-        id: taskList.id,
-        title: taskList.title,
-        updated: taskList.updated.toIso8601String(),
-        syncStatus: taskList.syncStatus.value,
-        isDefault: taskList.isDefault,
-      ),
-    );
+    return into(taskLists).insertOnConflictUpdate(_toCompanion(taskList));
   }
 
   /// Inserts or updates multiple task lists.
   Future<void> upsertTaskLists(List<domain.TaskList> list) async {
+    if (list.isEmpty) return;
     await batch((batch) {
       batch.insertAllOnConflictUpdate(
         taskLists,
-        list
-            .map(
-              (t) => TaskListEntry(
-                id: t.id,
-                title: t.title,
-                updated: t.updated.toIso8601String(),
-                syncStatus: t.syncStatus.value,
-                isDefault: t.isDefault,
-              ),
-            )
-            .toList(),
+        list.map(_toCompanion).toList(),
       );
     });
   }
@@ -76,7 +69,14 @@ class TaskListDao extends DatabaseAccessor<AppDatabase>
   /// Marks a task list as deleted locally (sets sync status to deleted).
   Future<void> markDeletedLocally(String id) {
     return (update(taskLists)..where((t) => t.id.equals(id))).write(
-      TaskListsCompanion(syncStatus: const Value(3)),
+      const TaskListsCompanion(syncStatus: Value(3)),
+    );
+  }
+
+  /// Marks a task list with the given sync status (used to flag local edits).
+  Future<void> markSyncStatus(String id, SyncStatus status) {
+    return (update(taskLists)..where((t) => t.id.equals(id))).write(
+      TaskListsCompanion(syncStatus: Value(status.value)),
     );
   }
 
@@ -102,7 +102,7 @@ class TaskListDao extends DatabaseAccessor<AppDatabase>
   /// Marks a task list as synced (resets sync status to 0).
   Future<void> markSynced(String id) {
     return (update(taskLists)..where((t) => t.id.equals(id))).write(
-      TaskListsCompanion(syncStatus: const Value(0)),
+      const TaskListsCompanion(syncStatus: Value(0)),
     );
   }
 
@@ -111,7 +111,7 @@ class TaskListDao extends DatabaseAccessor<AppDatabase>
     await batch((batch) {
       batch.update(
         taskLists,
-        TaskListsCompanion(syncStatus: const Value(0)),
+        const TaskListsCompanion(syncStatus: Value(0)),
         where: (t) => t.id.isIn(ids),
       );
     });
@@ -131,6 +131,18 @@ class TaskListDao extends DatabaseAccessor<AppDatabase>
       const TaskListsCompanion(isDefault: Value(true)),
     );
   }
+
+  TaskListsCompanion _toCompanion(domain.TaskList taskList) {
+    return TaskListsCompanion(
+      id: Value(taskList.id),
+      title: Value(taskList.title),
+      updated: Value(taskList.updated.toIso8601String()),
+      syncStatus: Value(taskList.syncStatus.value),
+      isDefault: Value(taskList.isDefault),
+      userId: Value(taskList.userId),
+      position: Value(taskList.position),
+    );
+  }
 }
 
 /// Extension to convert TaskListEntry to domain model
@@ -143,6 +155,8 @@ extension TaskListEntryExtension on TaskListEntry {
       updated: DateTime.parse(updated),
       syncStatus: SyncStatus.fromValue(syncStatus),
       isDefault: isDefault,
+      userId: userId,
+      position: position,
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'sync_status.dart';
 
-/// Represents a task list in the Google Tasks domain model.
+/// Represents a task list in the application domain model.
 ///
 /// This is the core domain model used throughout the application for task lists.
 /// It is distinct from the Drift table model which handles database persistence.
@@ -13,9 +13,11 @@ class TaskList {
     required this.updated,
     this.syncStatus = SyncStatus.synced,
     this.isDefault = false,
+    this.userId = '',
+    this.position = 0,
   });
 
-  /// Unique identifier for the task list (Google Tasks API format)
+  /// Unique identifier for the task list
   final String id;
 
   /// Display title of the task list
@@ -30,6 +32,12 @@ class TaskList {
   /// Whether this is the user's default task list
   final bool isDefault;
 
+  /// Owning Supabase user id (for RLS), '' before auth is known.
+  final String userId;
+
+  /// Position within the sidebar for ordering.
+  final int position;
+
   /// Creates a copy with updated fields
   TaskList copyWith({
     String? id,
@@ -37,6 +45,8 @@ class TaskList {
     DateTime? updated,
     SyncStatus? syncStatus,
     bool? isDefault,
+    String? userId,
+    int? position,
   }) {
     return TaskList(
       id: id ?? this.id,
@@ -44,6 +54,8 @@ class TaskList {
       updated: updated ?? this.updated,
       syncStatus: syncStatus ?? this.syncStatus,
       isDefault: isDefault ?? this.isDefault,
+      userId: userId ?? this.userId,
+      position: position ?? this.position,
     );
   }
 
@@ -55,12 +67,22 @@ class TaskList {
         other.title == title &&
         other.updated == updated &&
         other.syncStatus == syncStatus &&
-        other.isDefault == isDefault;
+        other.isDefault == isDefault &&
+        other.userId == userId &&
+        other.position == position;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, title, updated, syncStatus, isDefault);
+    return Object.hash(
+      id,
+      title,
+      updated,
+      syncStatus,
+      isDefault,
+      userId,
+      position,
+    );
   }
 
   @override

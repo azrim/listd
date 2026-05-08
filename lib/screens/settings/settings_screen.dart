@@ -358,7 +358,16 @@ class _AppearanceContent extends ConsumerWidget {
                       color: scheme.onSurfaceVariant,
                     ),
                   ),
-                  const Expanded(child: Slider(value: 0.5, onChanged: null)),
+                  Expanded(
+                    child: Slider(
+                      min: FontScaleNotifier.minScale,
+                      max: FontScaleNotifier.maxScale,
+                      divisions: 6,
+                      value: ref.watch(fontScaleProvider),
+                      onChanged: (value) =>
+                          ref.read(fontScaleProvider.notifier).setScale(value),
+                    ),
+                  ),
                   Text(
                     'Aa',
                     style: GoogleFonts.manrope(
@@ -389,13 +398,17 @@ class _AppearanceContent extends ConsumerWidget {
         Align(
           alignment: Alignment.centerRight,
           child: FilledButton(
+            // Settings are persisted live as the user toggles each control,
+            // so this button is just an explicit confirmation.
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Settings saved'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  const SnackBar(
+                    content: Text('Settings saved'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
             },
             child: const Text('Save Changes'),
           ),
@@ -405,35 +418,37 @@ class _AppearanceContent extends ConsumerWidget {
   }
 }
 
-class _ThemeColorPicker extends StatelessWidget {
+class _ThemeColorPicker extends ConsumerWidget {
   const _ThemeColorPicker();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
-    final swatches = <Color>[
-      scheme.primary,
-      const Color(0xFF38BDF8),
-      const Color(0xFF22C55E),
-      const Color(0xFFF59E0B),
-      const Color(0xFFEC4899),
-    ];
+    final selected = ref.watch(accentColorProvider);
     return Wrap(
       spacing: 12,
       runSpacing: 12,
       children: [
-        for (var i = 0; i < swatches.length; i++)
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: swatches[i],
-              borderRadius: BorderRadius.circular(8),
-              border: i == 0
-                  ? Border.all(color: scheme.primary, width: 2)
+        for (final swatch in kAccentSwatches)
+          GestureDetector(
+            onTap: () =>
+                ref.read(accentColorProvider.notifier).setAccent(swatch),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: swatch,
+                borderRadius: BorderRadius.circular(8),
+                // ignore: deprecated_member_use
+                border: swatch.value == selected.value
+                    ? Border.all(color: scheme.onSurface, width: 2)
+                    : null,
+              ),
+              // ignore: deprecated_member_use
+              child: swatch.value == selected.value
+                  ? Icon(Icons.check, color: scheme.onPrimary)
                   : null,
             ),
-            child: i == 0 ? Icon(Icons.check, color: scheme.onPrimary) : null,
           ),
       ],
     );
@@ -517,7 +532,7 @@ class _ProfileDetailsCard extends ConsumerWidget {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: null,
+              onPressed: () => _showEditProfileDialog(context, ref, name),
               child: Text(
                 'Edit Profile',
                 style: GoogleFonts.manrope(
@@ -532,14 +547,64 @@ class _ProfileDetailsCard extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _showEditProfileDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String currentName,
+  ) async {
+    final controller = TextEditingController(text: currentName);
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Edit profile'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: 'Display name'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+    if (saved != true) return;
+    final newName = controller.text.trim();
+    if (newName.isEmpty) return;
+    try {
+      await ref.read(authNotifierProvider.notifier).updateDisplayName(newName);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(const SnackBar(content: Text('Profile updated')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text('Could not update: $e')));
+      }
+    }
+  }
 }
 
-class _AlertPreferencesCard extends StatelessWidget {
+class _AlertPreferencesCard extends ConsumerWidget {
   const _AlertPreferencesCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final prefs = ref.watch(notificationPrefsProvider);
+    final notifier = ref.read(notificationPrefsProvider.notifier);
     return _SettingsCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -568,7 +633,11 @@ class _AlertPreferencesCard extends StatelessWidget {
               SizedBox(
                 width: 24,
                 height: 24,
-                child: Checkbox(value: true, onChanged: (_) {}),
+                child: Checkbox(
+                  value: prefs.emailSummaries,
+                  onChanged: (value) =>
+                      notifier.setEmailSummaries(value ?? false),
+                ),
               ),
               const SizedBox(width: 8),
               Text(
@@ -586,7 +655,11 @@ class _AlertPreferencesCard extends StatelessWidget {
               SizedBox(
                 width: 24,
                 height: 24,
-                child: Checkbox(value: false, onChanged: (_) {}),
+                child: Checkbox(
+                  value: prefs.pushNotifications,
+                  onChanged: (value) =>
+                      notifier.setPushNotifications(value ?? false),
+                ),
               ),
               const SizedBox(width: 8),
               Text(
@@ -602,7 +675,9 @@ class _AlertPreferencesCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: null,
+              onPressed: () =>
+                  ref.read(selectedSettingsCategoryProvider.notifier).state =
+                      SettingsCategory.notifications,
               child: Text(
                 'Manage All',
                 style: GoogleFonts.manrope(
@@ -795,22 +870,14 @@ class _AccountContent extends ConsumerWidget {
   }
 }
 
-class _NotificationsContent extends ConsumerStatefulWidget {
+class _NotificationsContent extends ConsumerWidget {
   const _NotificationsContent();
 
   @override
-  ConsumerState<_NotificationsContent> createState() =>
-      _NotificationsContentState();
-}
-
-class _NotificationsContentState extends ConsumerState<_NotificationsContent> {
-  bool _dueDateReminders = true;
-  bool _repeatReminders = true;
-  bool _starredAlerts = false;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final prefs = ref.watch(notificationPrefsProvider);
+    final notifier = ref.read(notificationPrefsProvider.notifier);
     return _SettingsCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -824,24 +891,24 @@ class _NotificationsContentState extends ConsumerState<_NotificationsContent> {
             icon: Icons.notifications_active_outlined,
             title: 'Due date reminders',
             subtitle: 'Get notified when tasks are due',
-            value: _dueDateReminders,
-            onChanged: (value) => setState(() => _dueDateReminders = value),
+            value: prefs.dueDateReminders,
+            onChanged: notifier.setDueDateReminders,
           ),
           Divider(color: scheme.outlineVariant, height: 24),
           _NotificationToggle(
             icon: Icons.repeat,
             title: 'Repeat reminders',
             subtitle: 'Remind about recurring tasks',
-            value: _repeatReminders,
-            onChanged: (value) => setState(() => _repeatReminders = value),
+            value: prefs.repeatReminders,
+            onChanged: notifier.setRepeatReminders,
           ),
           Divider(color: scheme.outlineVariant, height: 24),
           _NotificationToggle(
             icon: Icons.star_outline,
             title: 'Starred task alerts',
             subtitle: 'Notifications for important tasks',
-            value: _starredAlerts,
-            onChanged: (value) => setState(() => _starredAlerts = value),
+            value: prefs.starredAlerts,
+            onChanged: notifier.setStarredAlerts,
           ),
         ],
       ),

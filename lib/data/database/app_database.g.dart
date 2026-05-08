@@ -116,6 +116,67 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _reminderMeta = const VerificationMeta(
+    'reminder',
+  );
+  @override
+  late final GeneratedColumn<String> reminder = GeneratedColumn<String>(
+    'reminder',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _repeatConfigMeta = const VerificationMeta(
+    'repeatConfig',
+  );
+  @override
+  late final GeneratedColumn<String> repeatConfig = GeneratedColumn<String>(
+    'repeat_config',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tagsMeta = const VerificationMeta('tags');
+  @override
+  late final GeneratedColumn<String> tags = GeneratedColumn<String>(
+    'tags',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stepsMeta = const VerificationMeta('steps');
+  @override
+  late final GeneratedColumn<String> steps = GeneratedColumn<String>(
+    'steps',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<String> completedAt = GeneratedColumn<String>(
+    'completed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _syncStatusMeta = const VerificationMeta(
     'syncStatus',
   );
@@ -140,6 +201,12 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
     parentId,
     position,
     isStarred,
+    reminder,
+    repeatConfig,
+    tags,
+    steps,
+    completedAt,
+    userId,
     syncStatus,
   ];
   @override
@@ -220,6 +287,48 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
         isStarred.isAcceptableOrUnknown(data['is_starred']!, _isStarredMeta),
       );
     }
+    if (data.containsKey('reminder')) {
+      context.handle(
+        _reminderMeta,
+        reminder.isAcceptableOrUnknown(data['reminder']!, _reminderMeta),
+      );
+    }
+    if (data.containsKey('repeat_config')) {
+      context.handle(
+        _repeatConfigMeta,
+        repeatConfig.isAcceptableOrUnknown(
+          data['repeat_config']!,
+          _repeatConfigMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tags')) {
+      context.handle(
+        _tagsMeta,
+        tags.isAcceptableOrUnknown(data['tags']!, _tagsMeta),
+      );
+    }
+    if (data.containsKey('steps')) {
+      context.handle(
+        _stepsMeta,
+        steps.isAcceptableOrUnknown(data['steps']!, _stepsMeta),
+      );
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    }
     if (data.containsKey('sync_status')) {
       context.handle(
         _syncStatusMeta,
@@ -275,6 +384,30 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_starred'],
       )!,
+      reminder: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reminder'],
+      ),
+      repeatConfig: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}repeat_config'],
+      ),
+      tags: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tags'],
+      ),
+      steps: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}steps'],
+      ),
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}completed_at'],
+      ),
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
       syncStatus: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sync_status'],
@@ -319,6 +452,24 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
   /// Whether this task is starred/favorited
   final bool isStarred;
 
+  /// Reminder timestamp as ISO8601 string (null if no reminder)
+  final String? reminder;
+
+  /// Repeat configuration as JSON string (null if not repeating)
+  final String? repeatConfig;
+
+  /// Tags encoded as a JSON array string (null/[] if no tags)
+  final String? tags;
+
+  /// Steps/subtasks encoded as a JSON array string (null/[] if no steps)
+  final String? steps;
+
+  /// Completion timestamp as ISO8601 string (null if not completed)
+  final String? completedAt;
+
+  /// Owning Supabase user id (for RLS), '' before auth is known.
+  final String userId;
+
   /// Sync status: 0=synced, 1=created, 2=updated, 3=deleted
   final int syncStatus;
   const TaskEntry({
@@ -332,6 +483,12 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     this.parentId,
     required this.position,
     required this.isStarred,
+    this.reminder,
+    this.repeatConfig,
+    this.tags,
+    this.steps,
+    this.completedAt,
+    required this.userId,
     required this.syncStatus,
   });
   @override
@@ -351,6 +508,22 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     }
     map['position'] = Variable<int>(position);
     map['is_starred'] = Variable<bool>(isStarred);
+    if (!nullToAbsent || reminder != null) {
+      map['reminder'] = Variable<String>(reminder);
+    }
+    if (!nullToAbsent || repeatConfig != null) {
+      map['repeat_config'] = Variable<String>(repeatConfig);
+    }
+    if (!nullToAbsent || tags != null) {
+      map['tags'] = Variable<String>(tags);
+    }
+    if (!nullToAbsent || steps != null) {
+      map['steps'] = Variable<String>(steps);
+    }
+    if (!nullToAbsent || completedAt != null) {
+      map['completed_at'] = Variable<String>(completedAt);
+    }
+    map['user_id'] = Variable<String>(userId);
     map['sync_status'] = Variable<int>(syncStatus);
     return map;
   }
@@ -369,6 +542,20 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           : Value(parentId),
       position: Value(position),
       isStarred: Value(isStarred),
+      reminder: reminder == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reminder),
+      repeatConfig: repeatConfig == null && nullToAbsent
+          ? const Value.absent()
+          : Value(repeatConfig),
+      tags: tags == null && nullToAbsent ? const Value.absent() : Value(tags),
+      steps: steps == null && nullToAbsent
+          ? const Value.absent()
+          : Value(steps),
+      completedAt: completedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completedAt),
+      userId: Value(userId),
       syncStatus: Value(syncStatus),
     );
   }
@@ -389,6 +576,12 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
       parentId: serializer.fromJson<String?>(json['parentId']),
       position: serializer.fromJson<int>(json['position']),
       isStarred: serializer.fromJson<bool>(json['isStarred']),
+      reminder: serializer.fromJson<String?>(json['reminder']),
+      repeatConfig: serializer.fromJson<String?>(json['repeatConfig']),
+      tags: serializer.fromJson<String?>(json['tags']),
+      steps: serializer.fromJson<String?>(json['steps']),
+      completedAt: serializer.fromJson<String?>(json['completedAt']),
+      userId: serializer.fromJson<String>(json['userId']),
       syncStatus: serializer.fromJson<int>(json['syncStatus']),
     );
   }
@@ -406,6 +599,12 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
       'parentId': serializer.toJson<String?>(parentId),
       'position': serializer.toJson<int>(position),
       'isStarred': serializer.toJson<bool>(isStarred),
+      'reminder': serializer.toJson<String?>(reminder),
+      'repeatConfig': serializer.toJson<String?>(repeatConfig),
+      'tags': serializer.toJson<String?>(tags),
+      'steps': serializer.toJson<String?>(steps),
+      'completedAt': serializer.toJson<String?>(completedAt),
+      'userId': serializer.toJson<String>(userId),
       'syncStatus': serializer.toJson<int>(syncStatus),
     };
   }
@@ -421,6 +620,12 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     Value<String?> parentId = const Value.absent(),
     int? position,
     bool? isStarred,
+    Value<String?> reminder = const Value.absent(),
+    Value<String?> repeatConfig = const Value.absent(),
+    Value<String?> tags = const Value.absent(),
+    Value<String?> steps = const Value.absent(),
+    Value<String?> completedAt = const Value.absent(),
+    String? userId,
     int? syncStatus,
   }) => TaskEntry(
     id: id ?? this.id,
@@ -433,6 +638,12 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     parentId: parentId.present ? parentId.value : this.parentId,
     position: position ?? this.position,
     isStarred: isStarred ?? this.isStarred,
+    reminder: reminder.present ? reminder.value : this.reminder,
+    repeatConfig: repeatConfig.present ? repeatConfig.value : this.repeatConfig,
+    tags: tags.present ? tags.value : this.tags,
+    steps: steps.present ? steps.value : this.steps,
+    completedAt: completedAt.present ? completedAt.value : this.completedAt,
+    userId: userId ?? this.userId,
     syncStatus: syncStatus ?? this.syncStatus,
   );
   TaskEntry copyWithCompanion(TasksCompanion data) {
@@ -449,6 +660,16 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
       parentId: data.parentId.present ? data.parentId.value : this.parentId,
       position: data.position.present ? data.position.value : this.position,
       isStarred: data.isStarred.present ? data.isStarred.value : this.isStarred,
+      reminder: data.reminder.present ? data.reminder.value : this.reminder,
+      repeatConfig: data.repeatConfig.present
+          ? data.repeatConfig.value
+          : this.repeatConfig,
+      tags: data.tags.present ? data.tags.value : this.tags,
+      steps: data.steps.present ? data.steps.value : this.steps,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
+      userId: data.userId.present ? data.userId.value : this.userId,
       syncStatus: data.syncStatus.present
           ? data.syncStatus.value
           : this.syncStatus,
@@ -468,6 +689,12 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           ..write('parentId: $parentId, ')
           ..write('position: $position, ')
           ..write('isStarred: $isStarred, ')
+          ..write('reminder: $reminder, ')
+          ..write('repeatConfig: $repeatConfig, ')
+          ..write('tags: $tags, ')
+          ..write('steps: $steps, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('userId: $userId, ')
           ..write('syncStatus: $syncStatus')
           ..write(')'))
         .toString();
@@ -485,6 +712,12 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     parentId,
     position,
     isStarred,
+    reminder,
+    repeatConfig,
+    tags,
+    steps,
+    completedAt,
+    userId,
     syncStatus,
   );
   @override
@@ -501,6 +734,12 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           other.parentId == this.parentId &&
           other.position == this.position &&
           other.isStarred == this.isStarred &&
+          other.reminder == this.reminder &&
+          other.repeatConfig == this.repeatConfig &&
+          other.tags == this.tags &&
+          other.steps == this.steps &&
+          other.completedAt == this.completedAt &&
+          other.userId == this.userId &&
           other.syncStatus == this.syncStatus);
 }
 
@@ -515,6 +754,12 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
   final Value<String?> parentId;
   final Value<int> position;
   final Value<bool> isStarred;
+  final Value<String?> reminder;
+  final Value<String?> repeatConfig;
+  final Value<String?> tags;
+  final Value<String?> steps;
+  final Value<String?> completedAt;
+  final Value<String> userId;
   final Value<int> syncStatus;
   final Value<int> rowid;
   const TasksCompanion({
@@ -528,6 +773,12 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     this.parentId = const Value.absent(),
     this.position = const Value.absent(),
     this.isStarred = const Value.absent(),
+    this.reminder = const Value.absent(),
+    this.repeatConfig = const Value.absent(),
+    this.tags = const Value.absent(),
+    this.steps = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.userId = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -542,6 +793,12 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     this.parentId = const Value.absent(),
     this.position = const Value.absent(),
     this.isStarred = const Value.absent(),
+    this.reminder = const Value.absent(),
+    this.repeatConfig = const Value.absent(),
+    this.tags = const Value.absent(),
+    this.steps = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.userId = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -558,6 +815,12 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     Expression<String>? parentId,
     Expression<int>? position,
     Expression<bool>? isStarred,
+    Expression<String>? reminder,
+    Expression<String>? repeatConfig,
+    Expression<String>? tags,
+    Expression<String>? steps,
+    Expression<String>? completedAt,
+    Expression<String>? userId,
     Expression<int>? syncStatus,
     Expression<int>? rowid,
   }) {
@@ -572,6 +835,12 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
       if (parentId != null) 'parent_id': parentId,
       if (position != null) 'position': position,
       if (isStarred != null) 'is_starred': isStarred,
+      if (reminder != null) 'reminder': reminder,
+      if (repeatConfig != null) 'repeat_config': repeatConfig,
+      if (tags != null) 'tags': tags,
+      if (steps != null) 'steps': steps,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (userId != null) 'user_id': userId,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (rowid != null) 'rowid': rowid,
     });
@@ -588,6 +857,12 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     Value<String?>? parentId,
     Value<int>? position,
     Value<bool>? isStarred,
+    Value<String?>? reminder,
+    Value<String?>? repeatConfig,
+    Value<String?>? tags,
+    Value<String?>? steps,
+    Value<String?>? completedAt,
+    Value<String>? userId,
     Value<int>? syncStatus,
     Value<int>? rowid,
   }) {
@@ -602,6 +877,12 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
       parentId: parentId ?? this.parentId,
       position: position ?? this.position,
       isStarred: isStarred ?? this.isStarred,
+      reminder: reminder ?? this.reminder,
+      repeatConfig: repeatConfig ?? this.repeatConfig,
+      tags: tags ?? this.tags,
+      steps: steps ?? this.steps,
+      completedAt: completedAt ?? this.completedAt,
+      userId: userId ?? this.userId,
       syncStatus: syncStatus ?? this.syncStatus,
       rowid: rowid ?? this.rowid,
     );
@@ -640,6 +921,24 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     if (isStarred.present) {
       map['is_starred'] = Variable<bool>(isStarred.value);
     }
+    if (reminder.present) {
+      map['reminder'] = Variable<String>(reminder.value);
+    }
+    if (repeatConfig.present) {
+      map['repeat_config'] = Variable<String>(repeatConfig.value);
+    }
+    if (tags.present) {
+      map['tags'] = Variable<String>(tags.value);
+    }
+    if (steps.present) {
+      map['steps'] = Variable<String>(steps.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<String>(completedAt.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
     if (syncStatus.present) {
       map['sync_status'] = Variable<int>(syncStatus.value);
     }
@@ -662,6 +961,12 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
           ..write('parentId: $parentId, ')
           ..write('position: $position, ')
           ..write('isStarred: $isStarred, ')
+          ..write('reminder: $reminder, ')
+          ..write('repeatConfig: $repeatConfig, ')
+          ..write('tags: $tags, ')
+          ..write('steps: $steps, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('userId: $userId, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -731,6 +1036,28 @@ class $TaskListsTable extends TaskLists
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -738,6 +1065,8 @@ class $TaskListsTable extends TaskLists
     updated,
     syncStatus,
     isDefault,
+    userId,
+    position,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -784,6 +1113,18 @@ class $TaskListsTable extends TaskLists
         isDefault.isAcceptableOrUnknown(data['is_default']!, _isDefaultMeta),
       );
     }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    }
     return context;
   }
 
@@ -813,6 +1154,14 @@ class $TaskListsTable extends TaskLists
         DriftSqlType.bool,
         data['${effectivePrefix}is_default'],
       )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
     );
   }
 
@@ -837,12 +1186,20 @@ class TaskListEntry extends DataClass implements Insertable<TaskListEntry> {
 
   /// Whether this is the user's default task list
   final bool isDefault;
+
+  /// Owning Supabase user id (for RLS), '' before auth is known.
+  final String userId;
+
+  /// Position within the sidebar for ordering
+  final int position;
   const TaskListEntry({
     required this.id,
     required this.title,
     required this.updated,
     required this.syncStatus,
     required this.isDefault,
+    required this.userId,
+    required this.position,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -852,6 +1209,8 @@ class TaskListEntry extends DataClass implements Insertable<TaskListEntry> {
     map['updated'] = Variable<String>(updated);
     map['sync_status'] = Variable<int>(syncStatus);
     map['is_default'] = Variable<bool>(isDefault);
+    map['user_id'] = Variable<String>(userId);
+    map['position'] = Variable<int>(position);
     return map;
   }
 
@@ -862,6 +1221,8 @@ class TaskListEntry extends DataClass implements Insertable<TaskListEntry> {
       updated: Value(updated),
       syncStatus: Value(syncStatus),
       isDefault: Value(isDefault),
+      userId: Value(userId),
+      position: Value(position),
     );
   }
 
@@ -876,6 +1237,8 @@ class TaskListEntry extends DataClass implements Insertable<TaskListEntry> {
       updated: serializer.fromJson<String>(json['updated']),
       syncStatus: serializer.fromJson<int>(json['syncStatus']),
       isDefault: serializer.fromJson<bool>(json['isDefault']),
+      userId: serializer.fromJson<String>(json['userId']),
+      position: serializer.fromJson<int>(json['position']),
     );
   }
   @override
@@ -887,6 +1250,8 @@ class TaskListEntry extends DataClass implements Insertable<TaskListEntry> {
       'updated': serializer.toJson<String>(updated),
       'syncStatus': serializer.toJson<int>(syncStatus),
       'isDefault': serializer.toJson<bool>(isDefault),
+      'userId': serializer.toJson<String>(userId),
+      'position': serializer.toJson<int>(position),
     };
   }
 
@@ -896,12 +1261,16 @@ class TaskListEntry extends DataClass implements Insertable<TaskListEntry> {
     String? updated,
     int? syncStatus,
     bool? isDefault,
+    String? userId,
+    int? position,
   }) => TaskListEntry(
     id: id ?? this.id,
     title: title ?? this.title,
     updated: updated ?? this.updated,
     syncStatus: syncStatus ?? this.syncStatus,
     isDefault: isDefault ?? this.isDefault,
+    userId: userId ?? this.userId,
+    position: position ?? this.position,
   );
   TaskListEntry copyWithCompanion(TaskListsCompanion data) {
     return TaskListEntry(
@@ -912,6 +1281,8 @@ class TaskListEntry extends DataClass implements Insertable<TaskListEntry> {
           ? data.syncStatus.value
           : this.syncStatus,
       isDefault: data.isDefault.present ? data.isDefault.value : this.isDefault,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      position: data.position.present ? data.position.value : this.position,
     );
   }
 
@@ -922,13 +1293,16 @@ class TaskListEntry extends DataClass implements Insertable<TaskListEntry> {
           ..write('title: $title, ')
           ..write('updated: $updated, ')
           ..write('syncStatus: $syncStatus, ')
-          ..write('isDefault: $isDefault')
+          ..write('isDefault: $isDefault, ')
+          ..write('userId: $userId, ')
+          ..write('position: $position')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, title, updated, syncStatus, isDefault);
+  int get hashCode =>
+      Object.hash(id, title, updated, syncStatus, isDefault, userId, position);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -937,7 +1311,9 @@ class TaskListEntry extends DataClass implements Insertable<TaskListEntry> {
           other.title == this.title &&
           other.updated == this.updated &&
           other.syncStatus == this.syncStatus &&
-          other.isDefault == this.isDefault);
+          other.isDefault == this.isDefault &&
+          other.userId == this.userId &&
+          other.position == this.position);
 }
 
 class TaskListsCompanion extends UpdateCompanion<TaskListEntry> {
@@ -946,6 +1322,8 @@ class TaskListsCompanion extends UpdateCompanion<TaskListEntry> {
   final Value<String> updated;
   final Value<int> syncStatus;
   final Value<bool> isDefault;
+  final Value<String> userId;
+  final Value<int> position;
   final Value<int> rowid;
   const TaskListsCompanion({
     this.id = const Value.absent(),
@@ -953,6 +1331,8 @@ class TaskListsCompanion extends UpdateCompanion<TaskListEntry> {
     this.updated = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.isDefault = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.position = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TaskListsCompanion.insert({
@@ -961,6 +1341,8 @@ class TaskListsCompanion extends UpdateCompanion<TaskListEntry> {
     required String updated,
     this.syncStatus = const Value.absent(),
     this.isDefault = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.position = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title),
@@ -971,6 +1353,8 @@ class TaskListsCompanion extends UpdateCompanion<TaskListEntry> {
     Expression<String>? updated,
     Expression<int>? syncStatus,
     Expression<bool>? isDefault,
+    Expression<String>? userId,
+    Expression<int>? position,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -979,6 +1363,8 @@ class TaskListsCompanion extends UpdateCompanion<TaskListEntry> {
       if (updated != null) 'updated': updated,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (isDefault != null) 'is_default': isDefault,
+      if (userId != null) 'user_id': userId,
+      if (position != null) 'position': position,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -989,6 +1375,8 @@ class TaskListsCompanion extends UpdateCompanion<TaskListEntry> {
     Value<String>? updated,
     Value<int>? syncStatus,
     Value<bool>? isDefault,
+    Value<String>? userId,
+    Value<int>? position,
     Value<int>? rowid,
   }) {
     return TaskListsCompanion(
@@ -997,6 +1385,8 @@ class TaskListsCompanion extends UpdateCompanion<TaskListEntry> {
       updated: updated ?? this.updated,
       syncStatus: syncStatus ?? this.syncStatus,
       isDefault: isDefault ?? this.isDefault,
+      userId: userId ?? this.userId,
+      position: position ?? this.position,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1019,6 +1409,12 @@ class TaskListsCompanion extends UpdateCompanion<TaskListEntry> {
     if (isDefault.present) {
       map['is_default'] = Variable<bool>(isDefault.value);
     }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1033,6 +1429,8 @@ class TaskListsCompanion extends UpdateCompanion<TaskListEntry> {
           ..write('updated: $updated, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('isDefault: $isDefault, ')
+          ..write('userId: $userId, ')
+          ..write('position: $position, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1065,6 +1463,12 @@ typedef $$TasksTableCreateCompanionBuilder =
       Value<String?> parentId,
       Value<int> position,
       Value<bool> isStarred,
+      Value<String?> reminder,
+      Value<String?> repeatConfig,
+      Value<String?> tags,
+      Value<String?> steps,
+      Value<String?> completedAt,
+      Value<String> userId,
       Value<int> syncStatus,
       Value<int> rowid,
     });
@@ -1080,6 +1484,12 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<String?> parentId,
       Value<int> position,
       Value<bool> isStarred,
+      Value<String?> reminder,
+      Value<String?> repeatConfig,
+      Value<String?> tags,
+      Value<String?> steps,
+      Value<String?> completedAt,
+      Value<String> userId,
       Value<int> syncStatus,
       Value<int> rowid,
     });
@@ -1139,6 +1549,36 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<bool> get isStarred => $composableBuilder(
     column: $table.isStarred,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reminder => $composableBuilder(
+    column: $table.reminder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get repeatConfig => $composableBuilder(
+    column: $table.repeatConfig,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tags => $composableBuilder(
+    column: $table.tags,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get steps => $composableBuilder(
+    column: $table.steps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1207,6 +1647,36 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get reminder => $composableBuilder(
+    column: $table.reminder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get repeatConfig => $composableBuilder(
+    column: $table.repeatConfig,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tags => $composableBuilder(
+    column: $table.tags,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get steps => $composableBuilder(
+    column: $table.steps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get syncStatus => $composableBuilder(
     column: $table.syncStatus,
     builder: (column) => ColumnOrderings(column),
@@ -1254,6 +1724,28 @@ class $$TasksTableAnnotationComposer
   GeneratedColumn<bool> get isStarred =>
       $composableBuilder(column: $table.isStarred, builder: (column) => column);
 
+  GeneratedColumn<String> get reminder =>
+      $composableBuilder(column: $table.reminder, builder: (column) => column);
+
+  GeneratedColumn<String> get repeatConfig => $composableBuilder(
+    column: $table.repeatConfig,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get tags =>
+      $composableBuilder(column: $table.tags, builder: (column) => column);
+
+  GeneratedColumn<String> get steps =>
+      $composableBuilder(column: $table.steps, builder: (column) => column);
+
+  GeneratedColumn<String> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
   GeneratedColumn<int> get syncStatus => $composableBuilder(
     column: $table.syncStatus,
     builder: (column) => column,
@@ -1298,6 +1790,12 @@ class $$TasksTableTableManager
                 Value<String?> parentId = const Value.absent(),
                 Value<int> position = const Value.absent(),
                 Value<bool> isStarred = const Value.absent(),
+                Value<String?> reminder = const Value.absent(),
+                Value<String?> repeatConfig = const Value.absent(),
+                Value<String?> tags = const Value.absent(),
+                Value<String?> steps = const Value.absent(),
+                Value<String?> completedAt = const Value.absent(),
+                Value<String> userId = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TasksCompanion(
@@ -1311,6 +1809,12 @@ class $$TasksTableTableManager
                 parentId: parentId,
                 position: position,
                 isStarred: isStarred,
+                reminder: reminder,
+                repeatConfig: repeatConfig,
+                tags: tags,
+                steps: steps,
+                completedAt: completedAt,
+                userId: userId,
                 syncStatus: syncStatus,
                 rowid: rowid,
               ),
@@ -1326,6 +1830,12 @@ class $$TasksTableTableManager
                 Value<String?> parentId = const Value.absent(),
                 Value<int> position = const Value.absent(),
                 Value<bool> isStarred = const Value.absent(),
+                Value<String?> reminder = const Value.absent(),
+                Value<String?> repeatConfig = const Value.absent(),
+                Value<String?> tags = const Value.absent(),
+                Value<String?> steps = const Value.absent(),
+                Value<String?> completedAt = const Value.absent(),
+                Value<String> userId = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TasksCompanion.insert(
@@ -1339,6 +1849,12 @@ class $$TasksTableTableManager
                 parentId: parentId,
                 position: position,
                 isStarred: isStarred,
+                reminder: reminder,
+                repeatConfig: repeatConfig,
+                tags: tags,
+                steps: steps,
+                completedAt: completedAt,
+                userId: userId,
                 syncStatus: syncStatus,
                 rowid: rowid,
               ),
@@ -1371,6 +1887,8 @@ typedef $$TaskListsTableCreateCompanionBuilder =
       required String updated,
       Value<int> syncStatus,
       Value<bool> isDefault,
+      Value<String> userId,
+      Value<int> position,
       Value<int> rowid,
     });
 typedef $$TaskListsTableUpdateCompanionBuilder =
@@ -1380,6 +1898,8 @@ typedef $$TaskListsTableUpdateCompanionBuilder =
       Value<String> updated,
       Value<int> syncStatus,
       Value<bool> isDefault,
+      Value<String> userId,
+      Value<int> position,
       Value<int> rowid,
     });
 
@@ -1414,6 +1934,16 @@ class $$TaskListsTableFilterComposer
 
   ColumnFilters<bool> get isDefault => $composableBuilder(
     column: $table.isDefault,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1451,6 +1981,16 @@ class $$TaskListsTableOrderingComposer
     column: $table.isDefault,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TaskListsTableAnnotationComposer
@@ -1478,6 +2018,12 @@ class $$TaskListsTableAnnotationComposer
 
   GeneratedColumn<bool> get isDefault =>
       $composableBuilder(column: $table.isDefault, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
 }
 
 class $$TaskListsTableTableManager
@@ -1516,6 +2062,8 @@ class $$TaskListsTableTableManager
                 Value<String> updated = const Value.absent(),
                 Value<int> syncStatus = const Value.absent(),
                 Value<bool> isDefault = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<int> position = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TaskListsCompanion(
                 id: id,
@@ -1523,6 +2071,8 @@ class $$TaskListsTableTableManager
                 updated: updated,
                 syncStatus: syncStatus,
                 isDefault: isDefault,
+                userId: userId,
+                position: position,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1532,6 +2082,8 @@ class $$TaskListsTableTableManager
                 required String updated,
                 Value<int> syncStatus = const Value.absent(),
                 Value<bool> isDefault = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<int> position = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TaskListsCompanion.insert(
                 id: id,
@@ -1539,6 +2091,8 @@ class $$TaskListsTableTableManager
                 updated: updated,
                 syncStatus: syncStatus,
                 isDefault: isDefault,
+                userId: userId,
+                position: position,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
