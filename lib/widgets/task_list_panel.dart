@@ -5,7 +5,6 @@ import 'package:uuid/uuid.dart';
 import '../models/task.dart';
 import '../providers/tasks_provider.dart';
 import '../providers/ui_state_providers.dart';
-import '../theme/app_colors.dart';
 
 /// Main task list panel - 3-column layout middle column
 class TaskListPanel extends ConsumerWidget {
@@ -24,50 +23,51 @@ class TaskListPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tasksAsync = ref.watch(tasksNotifierProvider(listId));
     final selectedTaskId = ref.watch(selectedTaskIdProvider);
+    final scheme = Theme.of(context).colorScheme;
 
-    return Column(
-      children: [
-        // Header
-        _buildHeader(context, ref),
-        // Stats strip
-        _StatsStrip(tasksAsync: tasksAsync),
-        // Add task input at TOP
-        _AddTaskInput(listId: listId),
-        // Task list
-        Expanded(
-          child: tasksAsync.when(
-            data: (tasks) => _buildContent(context, ref, tasks, selectedTaskId),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => _buildError(context, ref, e),
+    return ColoredBox(
+      color: scheme.surface,
+      child: Column(
+        children: [
+          _buildHeader(context, ref),
+          _StatsStrip(tasksAsync: tasksAsync),
+          _AddTaskInput(listId: listId),
+          Expanded(
+            child: tasksAsync.when(
+              data: (tasks) =>
+                  _buildContent(context, ref, tasks, selectedTaskId),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => _buildError(context, ref, e),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildHeader(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: AppColors.glassBorderSubtle, width: 1),
-        ),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               listName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: scheme.onSurface,
+                letterSpacing: -0.2,
               ),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.refresh, size: 20),
-            color: AppColors.textSecondary,
+            color: scheme.onSurfaceVariant,
             onPressed: () => ref
                 .read(tasksNotifierProvider(listId).notifier)
                 .syncFromRemote(),
@@ -93,7 +93,7 @@ class TaskListPanel extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () =>
           ref.read(tasksNotifierProvider(listId).notifier).syncFromRemote(),
-      color: AppColors.primary,
+      color: Theme.of(context).colorScheme.primary,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         itemCount: mainTasks.length,
@@ -126,28 +126,27 @@ class TaskListPanel extends ConsumerWidget {
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.bgSurface,
-        title: const Text(
-          'Delete task',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: Text(
-          'Are you sure you want to delete "${task.title}"?',
-          style: const TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          title: const Text('Delete task'),
+          content: Text('Are you sure you want to delete "${task.title}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: scheme.error,
+                foregroundColor: scheme.onError,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed == true) {
@@ -158,15 +157,16 @@ class TaskListPanel extends ConsumerWidget {
   }
 
   Widget _buildError(BuildContext context, WidgetRef ref, Object error) {
+    final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+          Icon(Icons.error_outline, size: 48, color: scheme.error),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Failed to load tasks',
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: scheme.onSurface),
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
@@ -182,20 +182,21 @@ class TaskListPanel extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return const Center(
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.task_alt, size: 64, color: AppColors.textHint),
-          SizedBox(height: 16),
+          Icon(Icons.task_alt, size: 64, color: scheme.onSurfaceVariant),
+          const SizedBox(height: 16),
           Text(
             'No tasks yet',
-            style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 16, color: scheme.onSurfaceVariant),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Add a task above',
-            style: TextStyle(fontSize: 14, color: AppColors.textHint),
+            style: TextStyle(fontSize: 14, color: scheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -227,16 +228,14 @@ class _StatsStrip extends StatelessWidget {
 
         if (total == 0) return const SizedBox.shrink();
 
+        final scheme = Theme.of(context).colorScheme;
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 12),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: const Color(0xFF1A2040),
+            color: scheme.surfaceContainer,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.15),
-              width: 1,
-            ),
+            border: Border.all(color: scheme.outlineVariant, width: 1),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -283,7 +282,8 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = highlight ? AppColors.primary : AppColors.textSecondary;
+    final scheme = Theme.of(context).colorScheme;
+    final color = highlight ? scheme.primary : scheme.onSurfaceVariant;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -300,7 +300,7 @@ class _StatItem extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Color(0xFF8C8A97)),
+          style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
         ),
       ],
     );
@@ -325,21 +325,20 @@ class _TaskRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2040),
+        color: scheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected
-              ? AppColors.primary
-              : AppColors.primary.withValues(alpha: 0.2),
+          color: isSelected ? scheme.primary : scheme.outlineVariant,
           width: 1,
         ),
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: scheme.primary.withValues(alpha: 0.15),
                   blurRadius: 12,
                   offset: const Offset(0, 2),
                 ),
@@ -355,7 +354,6 @@ class _TaskRow extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // Checkbox
                 GestureDetector(
                   onTap: onToggle,
                   child: Container(
@@ -364,30 +362,21 @@ class _TaskRow extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: task.isCompleted
-                          ? AppColors.primary
+                          ? scheme.primary
                           : Colors.transparent,
                       border: Border.all(
                         color: task.isCompleted
-                            ? AppColors.primary
-                            : const Color(0xFF5C5C5C),
+                            ? scheme.primary
+                            : scheme.outline,
                         width: 2,
                       ),
-                      boxShadow: task.isCompleted
-                          ? [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.4),
-                                blurRadius: 8,
-                              ),
-                            ]
-                          : null,
                     ),
                     child: task.isCompleted
-                        ? const Icon(Icons.check, size: 13, color: Colors.white)
+                        ? Icon(Icons.check, size: 13, color: scheme.onPrimary)
                         : null,
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Task content
                 Expanded(
                   child: Text(
                     task.title,
@@ -395,8 +384,8 @@ class _TaskRow extends StatelessWidget {
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                       color: task.isCompleted
-                          ? AppColors.textHint
-                          : const Color(0xFFEBEBEB),
+                          ? scheme.onSurfaceVariant
+                          : scheme.onSurface,
                       decoration: task.isCompleted
                           ? TextDecoration.lineThrough
                           : null,
@@ -405,7 +394,6 @@ class _TaskRow extends StatelessWidget {
                     maxLines: 1,
                   ),
                 ),
-                // Due date
                 if (task.due != null)
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -413,21 +401,17 @@ class _TaskRow extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
+                      color: scheme.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       _formatDate(task.due!),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.primary,
-                      ),
+                      style: TextStyle(fontSize: 11, color: scheme.primary),
                     ),
                   ),
-                // Star
                 if (task.isStarred) ...[
                   const SizedBox(width: 8),
-                  const Icon(Icons.star, size: 18, color: Colors.amber),
+                  Icon(Icons.star, size: 18, color: scheme.tertiary),
                 ],
               ],
             ),
@@ -492,48 +476,42 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.all(12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2040),
+        color: scheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
-          width: 1,
-        ),
+        border: Border.all(color: scheme.outlineVariant, width: 1),
       ),
       child: Row(
         children: [
           if (_isLoading)
-            const SizedBox(
+            SizedBox(
               width: 24,
               height: 24,
               child: Padding(
-                padding: EdgeInsets.all(4),
+                padding: const EdgeInsets.all(4),
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.primary,
+                  color: scheme.primary,
                 ),
               ),
             )
           else
             GestureDetector(
               onTap: _addTask,
-              child: const Icon(
-                Icons.add,
-                size: 24,
-                color: AppColors.textSecondary,
-              ),
+              child: Icon(Icons.add, size: 24, color: scheme.onSurfaceVariant),
             ),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
               controller: _controller,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: const InputDecoration(
+              style: TextStyle(color: scheme.onSurface),
+              decoration: InputDecoration(
                 hintText: 'Add a task...',
-                hintStyle: TextStyle(color: AppColors.textHint),
+                hintStyle: TextStyle(color: scheme.onSurfaceVariant),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
