@@ -8,6 +8,7 @@ import '../providers/task_lists_provider.dart';
 import '../providers/ui_state_providers.dart';
 import '../theme/app_theme.dart' show ListdSurfaces;
 import 'app_logo.dart';
+import 'sync_status_pill.dart';
 
 export '../providers/ui_state_providers.dart'
     show selectedTaskListIdProvider, SpecialListIds;
@@ -110,7 +111,11 @@ class SidebarPanel extends ConsumerWidget {
           ),
           Container(height: 1, color: divider),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: const SyncStatusPill(),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: _SidebarFooterButton(
               icon: Icons.add,
               label: 'New list',

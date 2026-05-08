@@ -1,6 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const _kThemeModeKey = 'listd.themeMode';
 const _kAutoSyncKey = 'listd.autoSync';
@@ -12,7 +14,25 @@ const _kDueDateRemindersKey = 'listd.notifications.dueDateReminders';
 const _kRepeatRemindersKey = 'listd.notifications.repeatReminders';
 const _kStarredAlertsKey = 'listd.notifications.starredAlerts';
 
-const _storage = FlutterSecureStorage();
+/// Single SharedPreferences instance shared by every preference notifier.
+///
+/// `flutter_secure_storage` was previously used for these values, but on
+/// Linux it talks to libsecret over D-Bus and adds 100–300ms latency per
+/// read/write. None of these values are sensitive, so plain
+/// SharedPreferences (a JSON-backed file on Linux) is the right tool.
+class _PrefsCache {
+  static SharedPreferences? _instance;
+  static Future<SharedPreferences>? _initFuture;
+
+  static Future<SharedPreferences> instance() {
+    final cached = _instance;
+    if (cached != null) return Future.value(cached);
+    return _initFuture ??= SharedPreferences.getInstance().then((p) {
+      _instance = p;
+      return p;
+    });
+  }
+}
 
 ThemeMode _decodeThemeMode(String? value) {
   switch (value) {
@@ -44,25 +64,24 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 
   Future<void> _hydrate() async {
-    try {
-      final raw = await _storage.read(key: _kThemeModeKey);
-      state = _decodeThemeMode(raw);
-    } catch (_) {
-      // Ignore — fall back to system default.
-    }
+    final prefs = await _PrefsCache.instance();
+    state = _decodeThemeMode(prefs.getString(_kThemeModeKey));
   }
 
-  Future<void> setThemeMode(ThemeMode mode) async {
+  /// Updates state synchronously, then persists asynchronously.
+  /// Callers should NOT await — UI updates happen instantly.
+  void setThemeMode(ThemeMode mode) {
     state = mode;
-    try {
-      await _storage.write(key: _kThemeModeKey, value: _encodeThemeMode(mode));
-    } catch (_) {}
+    unawaited(_persist(mode));
   }
 
-  Future<void> toggleTheme() async {
-    await setThemeMode(
-      state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light,
-    );
+  Future<void> _persist(ThemeMode mode) async {
+    final prefs = await _PrefsCache.instance();
+    await prefs.setString(_kThemeModeKey, _encodeThemeMode(mode));
+  }
+
+  void toggleTheme() {
+    setThemeMode(state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light);
   }
 }
 
@@ -86,24 +105,20 @@ class AccentColorNotifier extends StateNotifier<Color> {
   static const Color defaultAccent = Color(0xFF5C6BC0);
 
   Future<void> _hydrate() async {
-    try {
-      final raw = await _storage.read(key: _kAccentColorKey);
-      if (raw != null) {
-        final parsed = int.tryParse(raw);
-        if (parsed != null) state = Color(parsed);
-      }
-    } catch (_) {}
+    final prefs = await _PrefsCache.instance();
+    final raw = prefs.getInt(_kAccentColorKey);
+    if (raw != null) state = Color(raw);
   }
 
-  Future<void> setAccent(Color color) async {
+  void setAccent(Color color) {
     state = color;
-    try {
-      await _storage.write(
-        key: _kAccentColorKey,
-        // ignore: deprecated_member_use
-        value: color.value.toString(),
-      );
-    } catch (_) {}
+    unawaited(_persist(color));
+  }
+
+  Future<void> _persist(Color color) async {
+    final prefs = await _PrefsCache.instance();
+    // ignore: deprecated_member_use
+    await prefs.setInt(_kAccentColorKey, color.value);
   }
 }
 
@@ -115,6 +130,10 @@ final accentColorProvider = StateNotifierProvider<AccentColorNotifier, Color>((
 
 /// Notifier for the global text-scale factor picked in Settings.
 /// Range is clamped to a sensible interval (0.8x – 1.4x).
+///
+/// State updates are synchronous and disk writes are debounced so a
+/// fast slider drag doesn't cause repeated writes (which would also
+/// queue up extra theme rebuilds).
 class FontScaleNotifier extends StateNotifier<double> {
   FontScaleNotifier() : super(1.0) {
     _hydrate();
@@ -123,23 +142,33 @@ class FontScaleNotifier extends StateNotifier<double> {
   static const double minScale = 0.8;
   static const double maxScale = 1.4;
 
+  Timer? _persistDebounce;
+
   Future<void> _hydrate() async {
-    try {
-      final raw = await _storage.read(key: _kFontScaleKey);
-      if (raw != null) {
-        final parsed = double.tryParse(raw);
-        if (parsed != null) {
-          state = parsed.clamp(minScale, maxScale);
-        }
-      }
-    } catch (_) {}
+    final prefs = await _PrefsCache.instance();
+    final raw = prefs.getDouble(_kFontScaleKey);
+    if (raw != null) state = raw.clamp(minScale, maxScale);
   }
 
-  Future<void> setScale(double scale) async {
-    state = scale.clamp(minScale, maxScale);
-    try {
-      await _storage.write(key: _kFontScaleKey, value: state.toString());
-    } catch (_) {}
+  void setScale(double scale) {
+    final clamped = scale.clamp(minScale, maxScale);
+    if (clamped == state) return;
+    state = clamped;
+    _persistDebounce?.cancel();
+    _persistDebounce = Timer(const Duration(milliseconds: 200), () {
+      unawaited(_persist(clamped));
+    });
+  }
+
+  Future<void> _persist(double scale) async {
+    final prefs = await _PrefsCache.instance();
+    await prefs.setDouble(_kFontScaleKey, scale);
+  }
+
+  @override
+  void dispose() {
+    _persistDebounce?.cancel();
+    super.dispose();
   }
 }
 
@@ -188,51 +217,44 @@ class NotificationPrefsNotifier extends StateNotifier<NotificationPrefs> {
   }
 
   Future<void> _hydrate() async {
-    try {
-      final email = await _storage.read(key: _kEmailSummariesKey);
-      final push = await _storage.read(key: _kPushNotificationsKey);
-      final due = await _storage.read(key: _kDueDateRemindersKey);
-      final repeat = await _storage.read(key: _kRepeatRemindersKey);
-      final starred = await _storage.read(key: _kStarredAlertsKey);
-      state = NotificationPrefs(
-        emailSummaries: email == null ? true : email == 'true',
-        pushNotifications: push == 'true',
-        dueDateReminders: due == null ? true : due == 'true',
-        repeatReminders: repeat == null ? true : repeat == 'true',
-        starredAlerts: starred == 'true',
-      );
-    } catch (_) {}
+    final prefs = await _PrefsCache.instance();
+    state = NotificationPrefs(
+      emailSummaries: prefs.getBool(_kEmailSummariesKey) ?? true,
+      pushNotifications: prefs.getBool(_kPushNotificationsKey) ?? false,
+      dueDateReminders: prefs.getBool(_kDueDateRemindersKey) ?? true,
+      repeatReminders: prefs.getBool(_kRepeatRemindersKey) ?? true,
+      starredAlerts: prefs.getBool(_kStarredAlertsKey) ?? false,
+    );
   }
 
-  Future<void> setEmailSummaries(bool value) async {
+  void setEmailSummaries(bool value) {
     state = state.copyWith(emailSummaries: value);
-    await _persist(_kEmailSummariesKey, value);
+    unawaited(_persist(_kEmailSummariesKey, value));
   }
 
-  Future<void> setPushNotifications(bool value) async {
+  void setPushNotifications(bool value) {
     state = state.copyWith(pushNotifications: value);
-    await _persist(_kPushNotificationsKey, value);
+    unawaited(_persist(_kPushNotificationsKey, value));
   }
 
-  Future<void> setDueDateReminders(bool value) async {
+  void setDueDateReminders(bool value) {
     state = state.copyWith(dueDateReminders: value);
-    await _persist(_kDueDateRemindersKey, value);
+    unawaited(_persist(_kDueDateRemindersKey, value));
   }
 
-  Future<void> setRepeatReminders(bool value) async {
+  void setRepeatReminders(bool value) {
     state = state.copyWith(repeatReminders: value);
-    await _persist(_kRepeatRemindersKey, value);
+    unawaited(_persist(_kRepeatRemindersKey, value));
   }
 
-  Future<void> setStarredAlerts(bool value) async {
+  void setStarredAlerts(bool value) {
     state = state.copyWith(starredAlerts: value);
-    await _persist(_kStarredAlertsKey, value);
+    unawaited(_persist(_kStarredAlertsKey, value));
   }
 
   Future<void> _persist(String key, bool value) async {
-    try {
-      await _storage.write(key: key, value: value.toString());
-    } catch (_) {}
+    final prefs = await _PrefsCache.instance();
+    await prefs.setBool(key, value);
   }
 }
 
@@ -248,17 +270,19 @@ class AutoSyncNotifier extends StateNotifier<bool> {
   }
 
   Future<void> _hydrate() async {
-    try {
-      final raw = await _storage.read(key: _kAutoSyncKey);
-      if (raw != null) state = raw == 'true';
-    } catch (_) {}
+    final prefs = await _PrefsCache.instance();
+    final raw = prefs.getBool(_kAutoSyncKey);
+    if (raw != null) state = raw;
   }
 
-  Future<void> setEnabled(bool enabled) async {
+  void setEnabled(bool enabled) {
     state = enabled;
-    try {
-      await _storage.write(key: _kAutoSyncKey, value: enabled.toString());
-    } catch (_) {}
+    unawaited(_persist(enabled));
+  }
+
+  Future<void> _persist(bool enabled) async {
+    final prefs = await _PrefsCache.instance();
+    await prefs.setBool(_kAutoSyncKey, enabled);
   }
 }
 

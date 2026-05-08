@@ -98,6 +98,15 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
     )..where((t) => t.syncStatus.isBiggerOrEqualValue(1))).get();
   }
 
+  /// Streams the count of tasks with pending sync changes
+  /// (created/updated/deleted). Used by the sync status pill.
+  Stream<int> watchPendingSyncCount() {
+    final query = selectOnly(tasks)
+      ..addColumns([tasks.id.count()])
+      ..where(tasks.syncStatus.isBiggerOrEqualValue(1));
+    return query.map((row) => row.read(tasks.id.count()) ?? 0).watchSingle();
+  }
+
   /// Gets all tasks with specific sync status.
   Future<List<TaskEntry>> getTasksBySyncStatus(SyncStatus status) {
     return (select(
