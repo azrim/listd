@@ -9,6 +9,7 @@ import '../../services/auth/token_manager.dart';
 import '../../services/supabase/supabase_client_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/gradients.dart';
+import '../../widgets/app_logo.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/gradient_button.dart';
 
@@ -218,33 +219,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       animation: _pulseAnimation,
       builder: (context, child) {
         return Container(
-          width: 80,
-          height: 80,
+          width: 96,
+          height: 96,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.primary, AppColors.primaryLight],
-            ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withAlpha(102),
+                color: AppColors.primary.withAlpha(80),
                 blurRadius: 30 + (_pulseAnimation.value * 10),
-                spreadRadius: 5,
+                spreadRadius: 4,
               ),
               BoxShadow(
-                color: AppColors.primary.withAlpha(51),
+                color: AppColors.primary.withAlpha(40),
                 blurRadius: 60 + (_pulseAnimation.value * 15),
-                spreadRadius: 10,
+                spreadRadius: 8,
               ),
             ],
           ),
-          child: const Icon(
-            Icons.check_circle_outline,
-            color: Colors.white,
-            size: 40,
-          ),
+          child: const AppLogo(size: 96),
         );
       },
     );
