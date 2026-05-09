@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
+import '../config/feature_flags.dart';
 import '../models/task.dart';
 import '../models/task_list.dart';
 import '../providers/task_lists_provider.dart';
 import '../providers/tasks_provider.dart';
 import '../providers/ui_state_providers.dart';
 import '../theme/app_theme.dart';
+import 'task_card.dart';
 
 /// Filter the aggregate task stream into the slice that belongs to a virtual
 /// list (My Day / Important / Planned / Tasks).
@@ -184,6 +186,38 @@ class TaskListPanel extends ConsumerWidget {
     }
 
     final scheme = Theme.of(context).colorScheme;
+
+    if (FeatureFlags.use2027Cards) {
+      // 2027 P3 — render TaskCard islands. No separators (cards are
+      // their own surface) and tap toggles inline expand instead of
+      // mounting an inspector pane.
+      final expandedId = ref.watch(expandedTaskIdProvider);
+      return RefreshIndicator(
+        onRefresh: () => _refresh(ref),
+        color: scheme.primary,
+        child: ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          itemCount: mainTasks.length,
+          itemBuilder: (context, index) {
+            final task = mainTasks[index];
+            final ownerListId = task.taskListId;
+            return TaskCard(
+              key: ValueKey<String>(task.id),
+              task: task,
+              listId: ownerListId,
+              isExpanded: expandedId == task.id,
+              isSelected: selectedTaskId == task.id,
+              onToggleExpand: () {
+                final notifier = ref.read(expandedTaskIdProvider.notifier);
+                notifier.state = expandedId == task.id ? null : task.id;
+                ref.read(selectedTaskIdProvider.notifier).state = task.id;
+                onTaskSelected?.call(task);
+              },
+            );
+          },
+        ),
+      );
+    }
 
     return RefreshIndicator(
       onRefresh: () => _refresh(ref),
