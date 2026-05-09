@@ -8,6 +8,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../providers/overlays_provider.dart';
 import '../providers/task_lists_provider.dart';
 import '../theme/app_theme.dart';
+import 'hoverable_surface.dart';
 
 /// Listd 2027 P6 command palette.
 ///
@@ -357,53 +358,53 @@ class _PaletteRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return MouseRegion(
-      onHover: (_) => onHover(),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      child: HoverableSurface(
+        selected: selected,
         onTap: onTap,
-        child: Container(
+        onHover: onHover,
+        borderRadius: BorderRadius.circular(8),
+        fillFor: (_, {required hovered, required selected}) =>
+            selected ? scheme.primaryContainer : Colors.transparent,
+        child: SizedBox(
           height: 36,
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: selected ? scheme.primaryContainer : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                item.icon,
-                size: 16,
-                color: selected
-                    ? scheme.onPrimaryContainer
-                    : scheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  item.label,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    height: 18 / 13,
-                    fontWeight: FontWeight.w500,
-                    color: selected
-                        ? scheme.onPrimaryContainer
-                        : scheme.onSurface,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Icon(
+                  item.icon,
+                  size: 16,
+                  color: selected
+                      ? scheme.onPrimaryContainer
+                      : scheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      height: 18 / 13,
+                      fontWeight: FontWeight.w500,
+                      color: selected
+                          ? scheme.onPrimaryContainer
+                          : scheme.onSurface,
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                item.section,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  height: 14 / 11,
-                  fontWeight: FontWeight.w500,
-                  color: scheme.onSurfaceVariant,
+                Text(
+                  item.section,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    height: 14 / 11,
+                    fontWeight: FontWeight.w500,
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

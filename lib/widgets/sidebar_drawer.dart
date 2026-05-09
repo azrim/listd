@@ -8,8 +8,10 @@ import '../models/task_list.dart';
 import '../providers/task_lists_provider.dart';
 import '../providers/today_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
 import 'context_menu.dart';
+import 'hoverable_surface.dart';
 import 'rename_dialog.dart';
 import 'sync_status_pill.dart';
 
@@ -281,71 +283,58 @@ class _DrawerItem extends StatefulWidget {
 }
 
 class _DrawerItemState extends State<_DrawerItem> {
-  bool _hovered = false;
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    Color fill;
-    Color fg;
-    Color iconColor;
-    if (widget.isSelected) {
-      fill = scheme.primaryContainer;
-      fg = scheme.primary;
-      iconColor = widget.iconTint ?? scheme.primary;
-    } else if (_hovered) {
-      fill = scheme.surfaceContainerHighest;
-      fg = scheme.onSurface;
-      iconColor = widget.iconTint ?? scheme.onSurfaceVariant;
-    } else {
-      fill = Colors.transparent;
-      fg = scheme.onSurface;
-      iconColor = widget.iconTint ?? scheme.onSurfaceVariant;
-    }
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-        child: Material(
-          color: fill,
-          borderRadius: BorderRadius.circular(10),
-          child: InkWell(
-            onTap: widget.onTap,
-            onSecondaryTapDown: widget.onSecondaryTapDown,
-            borderRadius: BorderRadius.circular(10),
-            child: SizedBox(
-              height: 36,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    Icon(widget.icon, size: 18, color: iconColor),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        widget.label,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          height: 18 / 14,
-                          fontWeight: widget.isSelected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          color: fg,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                    if (widget.count != null && widget.count! > 0)
-                      _CountBadge(
-                        count: widget.count!,
-                        selected: widget.isSelected,
-                      ),
-                  ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      child: HoverableSurface(
+        selected: widget.isSelected,
+        onTap: widget.onTap,
+        onSecondaryTapDown: widget.onSecondaryTapDown,
+        borderRadius: BorderRadius.circular(10),
+        fillFor: (_, {required hovered, required selected}) {
+          if (selected) return scheme.primaryContainer;
+          if (hovered) return scheme.surfaceContainerHighest;
+          return Colors.transparent;
+        },
+        child: SizedBox(
+          height: 36,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Icon(
+                  widget.icon,
+                  size: 18,
+                  color: widget.isSelected
+                      ? (widget.iconTint ?? scheme.primary)
+                      : (widget.iconTint ?? scheme.onSurfaceVariant),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      height: 18 / 14,
+                      fontWeight: widget.isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: widget.isSelected
+                          ? scheme.primary
+                          : scheme.onSurface,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+                if (widget.count != null && widget.count! > 0)
+                  _CountBadge(
+                    count: widget.count!,
+                    selected: widget.isSelected,
+                  ),
+              ],
             ),
           ),
         ),
@@ -384,57 +373,59 @@ class _CountBadge extends StatelessWidget {
 }
 
 /// "+ New list" affordance pinned to the bottom of the LISTS section.
-class _NewListItem extends StatefulWidget {
+class _NewListItem extends StatelessWidget {
   const _NewListItem({required this.onTap});
 
   final VoidCallback onTap;
 
   @override
-  State<_NewListItem> createState() => _NewListItemState();
-}
-
-class _NewListItemState extends State<_NewListItem> {
-  bool _hovered = false;
-
-  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final fg = _hovered ? scheme.onSurface : scheme.onSurfaceVariant;
-    final fill = _hovered ? scheme.surfaceContainerHighest : Colors.transparent;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-        child: Material(
-          color: fill,
-          borderRadius: BorderRadius.circular(10),
-          child: InkWell(
-            onTap: widget.onTap,
-            borderRadius: BorderRadius.circular(10),
-            child: SizedBox(
-              height: 36,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    Icon(PhosphorIcons.plus(), size: 16, color: fg),
-                    const SizedBox(width: 12),
-                    Text(
-                      'New list',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        height: 18 / 13,
-                        fontWeight: FontWeight.w500,
-                        color: fg,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      child: HoverableSurface(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        fillFor: (_, {required hovered, required selected}) =>
+            hovered ? scheme.surfaceContainerHighest : Colors.transparent,
+        builder: (_, {required hovered, required selected}) {
+          // Foreground colour rides the same `settle` calibration so
+          // the typography "lift" on hover doesn't snap while the
+          // fill cross-fades.
+          return SizedBox(
+            height: 36,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(end: hovered ? 1 : 0),
+                duration: AppMotion.settleFor(context),
+                curve: AppMotion.settleCurve,
+                builder: (_, t, _) {
+                  final fg = Color.lerp(
+                    scheme.onSurfaceVariant,
+                    scheme.onSurface,
+                    t,
+                  )!;
+                  return Row(
+                    children: [
+                      Icon(PhosphorIcons.plus(), size: 16, color: fg),
+                      const SizedBox(width: 12),
+                      Text(
+                        'New list',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          height: 18 / 13,
+                          fontWeight: FontWeight.w500,
+                          color: fg,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  );
+                },
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

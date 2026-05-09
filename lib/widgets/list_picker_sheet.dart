@@ -6,6 +6,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/task_list.dart';
 import '../providers/task_lists_provider.dart';
 import '../theme/app_theme.dart';
+import 'hoverable_surface.dart';
 
 /// Bottom sheet that lists every user-owned `TaskList` so the caller
 /// can pick one. Returns the selected `TaskList` or `null` on cancel.
@@ -138,61 +139,49 @@ class _ListPickerSheet extends ConsumerWidget {
   }
 }
 
-class _ListRow extends StatefulWidget {
+class _ListRow extends StatelessWidget {
   const _ListRow({required this.taskList, required this.onTap});
 
   final TaskList taskList;
   final VoidCallback onTap;
 
   @override
-  State<_ListRow> createState() => _ListRowState();
-}
-
-class _ListRowState extends State<_ListRow> {
-  bool _hovered = false;
-
-  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      child: HoverableSurface(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        fillFor: (_, {required hovered, required selected}) =>
+            hovered ? scheme.surfaceContainerHighest : Colors.transparent,
+        child: SizedBox(
           height: 44,
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: _hovered
-                ? scheme.surfaceContainerHighest
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                PhosphorIcons.bookmark(),
-                size: 18,
-                color: scheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  widget.taskList.title,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    height: 18 / 14,
-                    fontWeight: FontWeight.w500,
-                    color: scheme.onSurface,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Icon(
+                  PhosphorIcons.bookmark(),
+                  size: 18,
+                  color: scheme.onSurfaceVariant,
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    taskList.title,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      height: 18 / 14,
+                      fontWeight: FontWeight.w500,
+                      color: scheme.onSurface,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -9,6 +9,7 @@ import '../providers/overlays_provider.dart';
 import '../providers/shell_state_provider.dart';
 import '../providers/task_lists_provider.dart';
 import 'context_menu.dart';
+import 'hoverable_surface.dart';
 
 /// Listd 2027 · Indigo Edition top bar.
 ///
@@ -91,39 +92,25 @@ class TopBar extends ConsumerWidget {
   }
 }
 
-class _PanelToggle extends StatefulWidget {
+class _PanelToggle extends StatelessWidget {
   const _PanelToggle({required this.onTap});
 
   final VoidCallback onTap;
-
-  @override
-  State<_PanelToggle> createState() => _PanelToggleState();
-}
-
-class _PanelToggleState extends State<_PanelToggle> {
-  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Tooltip(
       message: 'Toggle sidebar · Ctrl + \\',
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: _hovered
-                  ? scheme.surfaceContainerHighest
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            alignment: Alignment.center,
+      child: HoverableSurface(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        fillFor: (_, {required hovered, required selected}) =>
+            hovered ? scheme.surfaceContainerHighest : Colors.transparent,
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: Center(
             child: Icon(
               PhosphorIcons.sidebarSimple(),
               size: 18,
@@ -136,42 +123,29 @@ class _PanelToggleState extends State<_PanelToggle> {
   }
 }
 
-class _SearchPill extends StatefulWidget {
+class _SearchPill extends StatelessWidget {
   const _SearchPill({required this.onTap});
 
   final VoidCallback onTap;
 
   @override
-  State<_SearchPill> createState() => _SearchPillState();
-}
-
-class _SearchPillState extends State<_SearchPill> {
-  bool _hovered = false;
-
-  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final fg = scheme.onSurfaceVariant;
-    final fill = _hovered
-        ? scheme.surfaceContainerHighest
-        : scheme.surfaceContainerLow;
 
     return Tooltip(
       message: 'Search · Ctrl + K',
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: Container(
-            height: 28,
+      child: HoverableSurface(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: scheme.outlineVariant),
+        fillFor: (_, {required hovered, required selected}) => hovered
+            ? scheme.surfaceContainerHighest
+            : scheme.surfaceContainerLow,
+        child: SizedBox(
+          height: 28,
+          child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: fill,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: scheme.outlineVariant),
-            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

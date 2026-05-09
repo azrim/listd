@@ -4,6 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/task.dart';
 import '../theme/app_colors.dart';
+import 'hoverable_surface.dart';
 
 /// Right-column "metadata rail" inside the expanded `TaskCard`. Shows
 /// one row per editable metadata facet — star, due, reminder, repeat,
@@ -133,7 +134,7 @@ class TaskActionRail extends StatelessWidget {
   }
 }
 
-class _ActionRow extends StatefulWidget {
+class _ActionRow extends StatelessWidget {
   const _ActionRow({
     required this.icon,
     required this.label,
@@ -159,75 +160,61 @@ class _ActionRow extends StatefulWidget {
   final VoidCallback onTap;
 
   @override
-  State<_ActionRow> createState() => _ActionRowState();
-}
-
-class _ActionRowState extends State<_ActionRow> {
-  bool _hover = false;
-
-  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final fg = widget.destructive
+    final fg = destructive
         ? scheme.error
-        : widget.tinted
+        : tinted
         ? scheme.primary
         : scheme.onSurface;
-    final secondaryFg = widget.destructive
+    final secondaryFg = destructive
         ? scheme.error.withValues(alpha: 0.7)
         : scheme.onSurfaceVariant;
     final hoverFill = scheme.surfaceContainerHighest.withValues(alpha: 0.6);
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      cursor: SystemMouseCursors.click,
-      child: Material(
-        color: _hover ? hoverFill : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
-              children: [
-                Icon(widget.icon, size: 16, color: widget.iconOverride ?? fg),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    widget.label,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      height: 18 / 13,
-                      fontWeight: FontWeight.w500,
-                      color: fg,
-                    ),
+    return HoverableSurface(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      fillFor: (_, {required hovered, required selected}) =>
+          hovered ? hoverFill : Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: iconOverride ?? fg),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  height: 18 / 13,
+                  fontWeight: FontWeight.w500,
+                  color: fg,
+                ),
+              ),
+            ),
+            if (valueWidget != null) ...[
+              const SizedBox(width: 8),
+              Flexible(child: valueWidget!),
+            ] else if (value != null) ...[
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  value!,
+                  textAlign: TextAlign.right,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    height: 16 / 12,
+                    fontWeight: FontWeight.w400,
+                    color: secondaryFg,
                   ),
                 ),
-                if (widget.valueWidget != null) ...[
-                  const SizedBox(width: 8),
-                  Flexible(child: widget.valueWidget!),
-                ] else if (widget.value != null) ...[
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      widget.value!,
-                      textAlign: TextAlign.right,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        height: 16 / 12,
-                        fontWeight: FontWeight.w400,
-                        color: secondaryFg,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+              ),
+            ],
+          ],
         ),
       ),
     );
