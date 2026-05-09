@@ -148,6 +148,7 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
       taskListId: Value(task.taskListId),
       parentId: Value(task.parentId),
       position: Value(task.position),
+      manuallyAddedToToday: Value(task.manuallyAddedToToday),
       isStarred: Value(task.isStarred),
       reminder: Value(task.reminder?.toIso8601String()),
       repeatConfig: Value(
@@ -215,6 +216,7 @@ extension TaskEntryExtension on TaskEntry {
       taskListId: taskListId,
       parentId: parentId,
       position: position,
+      manuallyAddedToToday: manuallyAddedToToday,
       isStarred: isStarred,
       reminder: reminder != null ? DateTime.parse(reminder!) : null,
       repeat: repeat,
