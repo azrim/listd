@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// Hairline card surface — 12 px radius, 1 px hairline border, no
-/// shadow, no blur. Despite the legacy "Glass" name, in the 2026
-/// system this is just a bordered surface; the class is preserved for
-/// backward compatibility with existing call sites.
+/// Card surface — 16 px radius, soft warm shadow, no blur, no border.
+///
+/// In the 2027 system this is a bordered-or-shadowed warm surface that
+/// auto-picks colors from `Theme.of(context).colorScheme` and the
+/// `ListdSurfaces` extension, so existing call sites keep compiling and
+/// pick up the new look without changes. The legacy "Glass" name is
+/// retained as an alias only.
+///
+/// New code should use a plain `Container` + `ListdSurfaces.card` /
+/// `shadowSm` instead.
+// Deprecated — alias only.
+// New code should use Container + ListdSurfaces.card / shadowSm.
 class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
@@ -23,21 +31,23 @@ class GlassCard extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final double borderRadius;
 
-  /// In the 2026 system there is no glow. Retained for API compatibility.
+  /// Retained for API compatibility — ignored in the 2027 system.
   final Color? glowColor;
   final double? width;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final surfaces = theme.extension<ListdSurfaces>();
+    final shadow = surfaces?.shadowSm;
     return Container(
       width: width,
       margin: margin,
       decoration: BoxDecoration(
-        color: scheme.surface,
+        color: surfaces?.card ?? theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: scheme.outlineVariant),
+        boxShadow: shadow == null ? null : <BoxShadow>[shadow],
       ),
       child: Material(
         color: Colors.transparent,
@@ -52,6 +62,8 @@ class GlassCard extends StatelessWidget {
 }
 
 /// Same as [GlassCard], without the `InkWell`.
+// Deprecated — alias only.
+// New code should use Container + ListdSurfaces.card / shadowSm.
 class GlassContainer extends StatelessWidget {
   const GlassContainer({
     super.key,
@@ -66,20 +78,25 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final surfaces = theme.extension<ListdSurfaces>();
+    final shadow = surfaces?.shadowSm;
     return Container(
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: scheme.surface,
+        color: surfaces?.card ?? theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: scheme.outlineVariant),
+        boxShadow: shadow == null ? null : <BoxShadow>[shadow],
       ),
       child: child,
     );
   }
 }
 
-/// Small chip / tag. Hairline border, 8 px radius, 13 px label.
+/// Small chip / tag. Pill-shaped (999 px radius), warm muted fill, no
+/// border. Auto-picks the 2027 chip token from `ListdSurfaces.chip`.
+// Deprecated — alias only.
+// New code should use Container + ListdSurfaces.chip + pillRadius.
 class GlassChip extends StatelessWidget {
   const GlassChip({
     super.key,
@@ -94,13 +111,13 @@ class GlassChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final surfaces = theme.extension<ListdSurfaces>();
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
+        color: surfaces?.chip ?? theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: scheme.outlineVariant),
       ),
       child: child,
     );
