@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,21 +5,28 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import '../theme/app_density.dart';
+import '../theme/app_motion.dart';
 import '../theme/app_theme.dart';
 
-/// Listd 2027 P7 settings overlay.
+/// Listd 2027 · Indigo Edition settings drawer.
 ///
-/// 560 × 640 px modal mounted from `AppShell`. The **only** allowed
-/// blurred backdrop in the codebase — the P7 grep gate asserts that
-/// the blur primitive appears in exactly one place, and this is it.
+/// Replaces the old centered modal — the indigo system rejects any
+/// blurred backdrop primitive entirely. Per
+/// `docs/redesign/2027-indigo/03_components.md` §6 the drawer:
 ///
-/// Two-pane layout:
+///  * Slides in from the right edge using
+///    `AppMotion.breatheDuration` (~320 ms, snaps to zero under
+///    `MediaQuery.disableAnimations`).
+///  * Is **opaque** — no blur, no transparency. The canvas behind
+///    dims to a flat 40 % slate-900 scrim only.
+///  * Is 560 px wide (or full canvas width on narrow viewports).
+///  * Closes on Esc, on click-on-scrim, or on the X button.
+///  * Persists every change immediately — there is no Save button.
 ///
-///  * Left rail (160 px) — category picker (Appearance / Account /
-///    Notifications).
-///  * Right pane — settings for the active category. Uses simple
-///    list rows that share the same hairline + 8 px radius
-///    primitive as the rest of the 2027 system.
+/// Layout is two-pane internally (160 px rail + body) so the
+/// information architecture is identical to the previous modal —
+/// only the chrome changes.
 class SettingsOverlay extends ConsumerStatefulWidget {
   const SettingsOverlay({super.key, required this.onClose});
 
@@ -31,8 +36,42 @@ class SettingsOverlay extends ConsumerStatefulWidget {
   ConsumerState<SettingsOverlay> createState() => _SettingsOverlayState();
 }
 
-class _SettingsOverlayState extends ConsumerState<SettingsOverlay> {
+class _SettingsOverlayState extends ConsumerState<SettingsOverlay>
+    with SingleTickerProviderStateMixin {
+  static const double _drawerWidth = 560;
+
   _Category _selected = _Category.appearance;
+  late final AnimationController _controller;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: AppMotion.breatheDuration,
+    );
+    _slide = Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: AppMotion.breatheCurve),
+    );
+    // Drive the controller forward on the next frame so reduced-motion
+    // paths still resolve to a fully-open drawer.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final reducedMotion = MediaQuery.disableAnimationsOf(context);
+      if (reducedMotion) {
+        _controller.value = 1;
+      } else {
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,37 +79,41 @@ class _SettingsOverlayState extends ConsumerState<SettingsOverlay> {
     final scheme = theme.colorScheme;
     final surfaces = theme.extension<ListdSurfaces>();
     final cardBg = surfaces?.panel ?? scheme.surface;
+    final mediaWidth = MediaQuery.sizeOf(context).width;
+    final width = mediaWidth < _drawerWidth ? mediaWidth : _drawerWidth;
 
     return Stack(
       children: [
-        // The single allowed blurred backdrop in the codebase —
-        // frosts the canvas behind the modal so the eye locks onto
-        // the dialog.
+        // Opaque scrim — slate-900 at 40 % opacity. No blur, no
+        // gradient — the indigo system rejects glassmorphism entirely.
         Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: widget.onClose,
-              child: Container(color: Colors.black.withValues(alpha: 0.18)),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onClose,
+            child: FadeTransition(
+              opacity: _controller,
+              child: Container(color: Colors.black.withValues(alpha: 0.4)),
             ),
           ),
         ),
-        Center(
-          child: Material(
-            color: cardBg,
-            elevation: 0,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: 560,
-              height: 640,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: scheme.outlineVariant, width: 1),
-                boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+        Positioned(
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: width,
+          child: SlideTransition(
+            position: _slide,
+            child: Material(
+              color: cardBg,
+              elevation: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  border: Border(
+                    left: BorderSide(color: scheme.outlineVariant, width: 1),
+                  ),
+                  boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
+                ),
                 child: Row(
                   children: [
                     _Rail(
@@ -253,9 +296,10 @@ class _Header extends StatelessWidget {
           Text(
             title,
             style: GoogleFonts.inter(
-              fontSize: 16,
-              height: 22 / 16,
+              fontSize: 18,
+              height: 24 / 18,
               fontWeight: FontWeight.w600,
+              letterSpacing: -0.18,
               color: scheme.onSurface,
             ),
           ),
@@ -299,6 +343,7 @@ class _AppearanceBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
     final scale = ref.watch(fontScaleProvider);
+    final density = ref.watch(densityModeProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -313,6 +358,18 @@ class _AppearanceBody extends ConsumerWidget {
           selected: {mode},
           onSelectionChanged: (s) =>
               ref.read(themeModeProvider.notifier).setThemeMode(s.first),
+        ),
+        const SizedBox(height: 24),
+        _SectionLabel('Density'),
+        const SizedBox(height: 8),
+        SegmentedButton<DensityMode>(
+          segments: const [
+            ButtonSegment(value: DensityMode.cozy, label: Text('Cozy')),
+            ButtonSegment(value: DensityMode.compact, label: Text('Compact')),
+          ],
+          selected: {density},
+          onSelectionChanged: (s) =>
+              ref.read(densityModeProvider.notifier).setMode(s.first),
         ),
         const SizedBox(height: 24),
         _SectionLabel('Text size'),

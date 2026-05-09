@@ -6,15 +6,17 @@ import '../providers/sync_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
-/// Compact sync status pill — 32 px tall, hairline border, sized to
-/// its content (it must work both in the 2027 top bar `Row` — where
-/// the parent constraint is unbounded — and in the legacy sidebar
-/// column — where the pill simply takes its natural width).
+/// Listd 2027 · Indigo Edition sync status pill.
 ///
-/// Renders one of four states with a 6 px functional dot
-/// (success / warning / error / accent for in-flight) plus a
-/// trailing `sync` glyph or a 14 px spinner. Tap fires
+/// One pill, lives at the bottom of the sidebar drawer. Renders one of
+/// four states with a 6 px functional dot
+/// (success / warning / error / accent for in-flight) plus a trailing
+/// `sync` glyph or a 14 px spinner. Tap fires
 /// `syncStateProvider.notifier.syncNow()`.
+///
+/// Per the indigo spec the pill takes the **full available width** when
+/// it's given bounded constraints (sidebar drawer footer) and shrinks
+/// to its content otherwise.
 class SyncStatusPill extends ConsumerWidget {
   const SyncStatusPill({super.key});
 
@@ -38,13 +40,12 @@ class SyncStatusPill extends ConsumerWidget {
           borderRadius: BorderRadius.circular(AppTheme.controlRadius),
           child: Container(
             height: AppTheme.controlHeight,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppTheme.controlRadius),
               border: Border.all(color: scheme.outlineVariant),
             ),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 if (state.isSyncing)
                   SizedBox(
@@ -64,8 +65,8 @@ class SyncStatusPill extends ConsumerWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                const SizedBox(width: 8),
-                Flexible(
+                const SizedBox(width: 10),
+                Expanded(
                   child: Text(
                     label,
                     style: GoogleFonts.inter(
@@ -78,9 +79,10 @@ class SyncStatusPill extends ConsumerWidget {
                     softWrap: false,
                   ),
                 ),
-                const SizedBox(width: 8),
-                if (!state.isSyncing)
+                if (!state.isSyncing) ...[
+                  const SizedBox(width: 8),
                   Icon(Icons.sync, size: 14, color: scheme.onSurfaceVariant),
+                ],
               ],
             ),
           ),

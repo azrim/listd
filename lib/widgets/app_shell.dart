@@ -215,8 +215,9 @@ class _AppShellState extends ConsumerState<AppShell> {
             const Positioned.fill(child: CaptureSheet()),
           ],
 
-          // P7 settings overlay — owns its own backdrop scrim
-          // (the single allowed blurred backdrop in lib/).
+          // 2027 indigo settings drawer — slides in from the right
+          // edge with a flat 40 % slate scrim. No blur anywhere in
+          // the tree (see CI gate in docs/redesign/2027-indigo).
           if (settingsOpen)
             Positioned.fill(
               child: SettingsOverlay(

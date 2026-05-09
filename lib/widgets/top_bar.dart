@@ -1,28 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/overlays_provider.dart';
 import '../providers/shell_state_provider.dart';
-import 'app_logo.dart';
+import '../providers/task_lists_provider.dart';
 import 'context_menu.dart';
-import 'sync_status_pill.dart';
 
-/// Listd 2027 top bar.
+/// Listd 2027 · Indigo Edition top bar.
 ///
 /// 40 px tall, sits above every screen that renders inside `AppShell`.
-/// Holds (left → right):
+///
+/// Per `docs/redesign/2027-indigo/03_components.md` §2:
 ///
 ///  * Drawer toggle (8 px from the left edge).
-///  * Workspace identity ("Listd" + serif glyph).
+///  * Active page title (Inter 18 px, weight 600).
 ///  * Spacer.
-///  * `SyncStatusPill` (reads the same `syncStateProvider` as the
-///    legacy sidebar so the two views stay in sync without separate
-///    state).
-///  * Avatar (initials chip; tap opens the profile menu — wired in
-///    P7).
+///  * Avatar (initials chip — 28 × 28).
+///
+/// The legacy "Listd" workspace pill and the duplicate `SyncStatusPill`
+/// have been removed — the title carries the page identity, and the
+/// sync pill lives **once** in the sidebar drawer footer.
 class TopBar extends ConsumerWidget {
   const TopBar({super.key});
 
@@ -33,6 +34,7 @@ class TopBar extends ConsumerWidget {
     final isOpen = ref.watch(sidebarDrawerOpenProvider);
     final auth = ref.watch(authNotifierProvider);
     final email = auth is AuthAuthenticated ? auth.session.user.email : null;
+    final title = _pageTitle(context, ref);
 
     return Container(
       height: 40,
@@ -57,25 +59,60 @@ class TopBar extends ConsumerWidget {
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           ),
-          const SizedBox(width: 4),
-          const AppLogo(size: 18),
           const SizedBox(width: 8),
-          Text(
-            'Listd',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              height: 18 / 14,
-              fontWeight: FontWeight.w600,
-              color: scheme.onSurface,
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                height: 24 / 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.18,
+                color: scheme.onSurface,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
-          const Spacer(),
-          const SyncStatusPill(),
           const SizedBox(width: 8),
           _Avatar(email: email),
         ],
       ),
     );
+  }
+
+  /// Derive the active page title from the matched go_router location.
+  /// For `/list/:id`, look the list name up in `taskListsNotifierProvider`.
+  String _pageTitle(BuildContext context, WidgetRef ref) {
+    final state = GoRouterState.of(context);
+    final loc = state.matchedLocation;
+    switch (loc) {
+      case '/today':
+        return 'Today';
+      case '/inbox':
+        return 'Inbox';
+      case '/important':
+        return 'Important';
+      case '/planned':
+        return 'Planned';
+      case '/all':
+        return 'All Tasks';
+      case '/folders':
+        return 'Folders';
+      case '/settings':
+        return 'Settings';
+    }
+    if (loc.startsWith('/list/')) {
+      final id = state.pathParameters['id'] ?? '';
+      final lists = ref.watch(taskListsNotifierProvider).valueOrNull;
+      if (lists != null) {
+        for (final l in lists) {
+          if (l.id == id) return l.title;
+        }
+      }
+      return 'List';
+    }
+    return 'Listd';
   }
 }
 
