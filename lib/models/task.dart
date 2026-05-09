@@ -156,6 +156,7 @@ class Task {
     this.syncStatus = SyncStatus.synced,
     this.completedAt,
     this.isStarred = false,
+    this.manuallyAddedToToday = false,
     this.steps = const [],
     this.reminder,
     this.repeat,
@@ -188,8 +189,10 @@ class Task {
   /// Parent task ID (for subtasks), null for top-level tasks
   final String? parentId;
 
-  /// Position within the task list (for ordering)
-  final int position;
+  /// Position within the task list (for ordering).
+  /// Uses double for fractional insertion (e.g. insert between 1024 and
+  /// 2048 → 1536). New tasks get `max(position in list) + 1024`.
+  final double position;
 
   /// Sync status with remote
   final SyncStatus syncStatus;
@@ -199,6 +202,9 @@ class Task {
 
   /// Whether this task is starred/favorited
   final bool isStarred;
+
+  /// Whether this task was manually added to the Today smart bucket.
+  final bool manuallyAddedToToday;
 
   /// Steps/subtasks within this task
   final List<TaskStep> steps;
@@ -249,11 +255,12 @@ class Task {
     String? taskListId,
     String? parentId,
     bool clearParentId = false,
-    int? position,
+    double? position,
     SyncStatus? syncStatus,
     DateTime? completedAt,
     bool clearCompletedAt = false,
     bool? isStarred,
+    bool? manuallyAddedToToday,
     List<TaskStep>? steps,
     DateTime? reminder,
     bool clearReminder = false,
@@ -275,6 +282,7 @@ class Task {
       syncStatus: syncStatus ?? this.syncStatus,
       completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
       isStarred: isStarred ?? this.isStarred,
+      manuallyAddedToToday: manuallyAddedToToday ?? this.manuallyAddedToToday,
       steps: steps ?? this.steps,
       reminder: clearReminder ? null : (reminder ?? this.reminder),
       repeat: clearRepeat ? null : (repeat ?? this.repeat),
@@ -299,6 +307,7 @@ class Task {
         other.syncStatus == syncStatus &&
         other.completedAt == completedAt &&
         other.isStarred == isStarred &&
+        other.manuallyAddedToToday == manuallyAddedToToday &&
         _listEqualsSteps(other.steps, steps) &&
         other.reminder == reminder &&
         other.repeat == repeat &&
@@ -320,6 +329,7 @@ class Task {
     syncStatus,
     completedAt,
     isStarred,
+    manuallyAddedToToday,
     steps,
     reminder,
     repeat,

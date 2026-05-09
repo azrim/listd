@@ -35,8 +35,16 @@ class Tasks extends Table {
   /// Parent task ID for subtasks (null for top-level tasks)
   TextColumn get parentId => text().nullable()();
 
-  /// Position within the task list for ordering
-  IntColumn get position => integer().withDefault(const Constant(0))();
+  /// Position within the task list for ordering.
+  /// Uses a real (double) to support fractional insertion:
+  /// inserting between positions 1024 and 2048 → 1536.
+  RealColumn get position => real().withDefault(const Constant(0))();
+
+  /// Whether this task was manually added to the Today smart bucket.
+  /// Default false — only true when the user explicitly drags/adds a
+  /// task to Today that wouldn't otherwise appear there.
+  BoolColumn get manuallyAddedToToday =>
+      boolean().withDefault(const Constant(false))();
 
   /// Whether this task is starred/favorited
   BoolColumn get isStarred => boolean().withDefault(const Constant(false))();
