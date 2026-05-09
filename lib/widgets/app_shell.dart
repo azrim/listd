@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/overlays_provider.dart';
 import '../providers/shell_state_provider.dart';
 import '../theme/spring.dart';
+import 'capture_sheet.dart';
+import 'command_palette.dart';
 import 'sidebar_drawer.dart';
 import 'top_bar.dart';
+import 'undo_toast.dart';
 
 /// Listd 2027 app shell.
 ///
@@ -73,9 +77,30 @@ class _AppShellState extends ConsumerState<AppShell> {
       ref.read(sidebarDrawerOpenProvider.notifier).update((v) => !v);
       return KeyEventResult.handled;
     }
+    if (isCtrl && event.logicalKey == LogicalKeyboardKey.keyK) {
+      // Toggle the command palette. Closing the capture sheet first
+      // means Ctrl+K is always a one-shot route to a known overlay.
+      ref.read(captureSheetOpenProvider.notifier).state = false;
+      ref.read(commandPaletteOpenProvider.notifier).update((v) => !v);
+      return KeyEventResult.handled;
+    }
+    if (isCtrl && event.logicalKey == LogicalKeyboardKey.keyN) {
+      ref.read(commandPaletteOpenProvider.notifier).state = false;
+      ref.read(captureSheetOpenProvider.notifier).update((v) => !v);
+      return KeyEventResult.handled;
+    }
     if (event.logicalKey == LogicalKeyboardKey.escape) {
-      final isOpen = ref.read(sidebarDrawerOpenProvider);
-      if (isOpen) {
+      // Close overlays first; only fall through to the drawer if no
+      // overlay was open.
+      if (ref.read(commandPaletteOpenProvider)) {
+        ref.read(commandPaletteOpenProvider.notifier).state = false;
+        return KeyEventResult.handled;
+      }
+      if (ref.read(captureSheetOpenProvider)) {
+        ref.read(captureSheetOpenProvider.notifier).state = false;
+        return KeyEventResult.handled;
+      }
+      if (ref.read(sidebarDrawerOpenProvider)) {
         ref.read(sidebarDrawerOpenProvider.notifier).state = false;
         return KeyEventResult.handled;
       }
@@ -86,6 +111,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final isOpen = ref.watch(sidebarDrawerOpenProvider);
+    final captureOpen = ref.watch(captureSheetOpenProvider);
+    final paletteOpen = ref.watch(commandPaletteOpenProvider);
 
     return Focus(
       focusNode: _focusNode,
@@ -148,6 +175,37 @@ class _AppShellState extends ConsumerState<AppShell> {
             left: isOpen ? 0 : -SidebarDrawer.width,
             child: const SidebarDrawer(),
           ),
+
+          // Bottom-center undo toast — always mounted so the
+          // notifier can show without a route hop.
+          const Positioned.fill(
+            child: IgnorePointer(ignoring: false, child: UndoToast()),
+          ),
+
+          // P6 overlays. Backdrop scrim + dialog are mounted only when
+          // open. Backdrop closes on tap.
+          if (paletteOpen) ...[
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () =>
+                    ref.read(commandPaletteOpenProvider.notifier).state = false,
+                child: Container(color: Colors.black.withValues(alpha: 0.18)),
+              ),
+            ),
+            const Positioned.fill(child: CommandPalette()),
+          ],
+          if (captureOpen) ...[
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () =>
+                    ref.read(captureSheetOpenProvider.notifier).state = false,
+                child: Container(color: Colors.black.withValues(alpha: 0.18)),
+              ),
+            ),
+            const Positioned.fill(child: CaptureSheet()),
+          ],
         ],
       ),
     );
