@@ -352,98 +352,125 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final duration = reduced ? Duration.zero : ListdSpring.duration;
     const curve = Curves.easeOutCubic;
 
-    // Collapsed-state fill: indigo-soft on selection, sunken on hover,
-    // otherwise transparent.
+    // Collapsed-state fill: indigo-soft on selection, slate-600 wash
+    // on hover (one slate stop above the canvas, so the tint is
+    // actually visible), otherwise transparent.
     final Color collapsedFill;
     if (widget.isSelected) {
       collapsedFill = scheme.primaryContainer;
     } else if (_hovered) {
-      collapsedFill = scheme.surfaceContainerHighest.withValues(alpha: 0.4);
+      collapsedFill = surfaces?.chip ?? scheme.surfaceContainerHigh;
     } else {
       collapsedFill = Colors.transparent;
     }
 
-    // ── Two BoxDecorations with matching shape (4-sided Border + radius)
-    // so AnimatedContainer can lerp between them frame-perfectly. The
-    // collapsed shape is "round-radius 0, transparent top/right, indigo
-    // left bar (when selected), hairline bottom"; the expanded shape is
-    // "round-radius 16, indigo on all four sides". `Border.lerp` walks
-    // each side, so the silhouette morphs continuously — no
-    // square-for-a-millisec, no indigo rectangle on hover for a
-    // collapsed row.
-    final BoxDecoration decoration = isExpanded
-        ? BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: scheme.primary, width: 1.5),
-            boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
-          )
-        : BoxDecoration(
-            color: collapsedFill,
-            borderRadius: BorderRadius.zero,
-            border: Border(
-              left: BorderSide(
-                color: widget.isSelected ? scheme.primary : Colors.transparent,
-                width: 2,
-              ),
-              top: const BorderSide(color: Colors.transparent, width: 0),
-              right: const BorderSide(color: Colors.transparent, width: 0),
-              bottom: BorderSide(
-                color: scheme.outlineVariant.withValues(alpha: 0.6),
-                width: 1,
-              ),
-            ),
-          );
+    // ── Uniform Border.all in both states.
+    //
+    // The previous attempt had a 4-sided non-uniform Border for the
+    // collapsed state (transparent top/right, indigo left bar,
+    // hairline bottom). When AnimatedContainer.lerp ran between that
+    // and the expanded uniform indigo border, the intermediate
+    // frames had non-uniform colors AND a borderRadius — which
+    // throws `A borderRadius can only be given on borders with
+    // uniform colors` and freezes the whole list.
+    //
+    // Both states are now Border.all so Border.lerp produces
+    // uniform borders frame-by-frame; the bottom hairline + the
+    // selected indigo left bar are pulled out as separate sibling
+    // widgets so they don't break the uniformity invariant.
+    final BoxDecoration decoration = BoxDecoration(
+      color: isExpanded ? cardBg : collapsedFill,
+      borderRadius: BorderRadius.circular(isExpanded ? 16 : 0),
+      border: Border.all(
+        color: isExpanded ? scheme.primary : Colors.transparent,
+        width: isExpanded ? 1.5 : 0,
+      ),
+      boxShadow: isExpanded
+          ? [surfaces?.shadowMd ?? const BoxShadow()]
+          : const [],
+    );
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       cursor: SystemMouseCursors.click,
-      child: AnimatedPadding(
-        duration: duration,
-        curve: curve,
-        padding: isExpanded
-            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
-            : EdgeInsets.zero,
-        child: AnimatedContainer(
-          duration: duration,
-          curve: curve,
-          decoration: decoration,
-          clipBehavior: Clip.antiAlias,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                widget.onToggleExpand();
-                widget.onTap?.call();
-              },
-              onSecondaryTapDown: (details) =>
-                  _showContextMenu(details.globalPosition),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildCollapsedRow(scheme, theme),
-                  // AnimatedSize handles the body's height transition
-                  // through Flutter's official layout machinery — so
-                  // ListView.builder always gets correct intrinsic
-                  // heights, even mid-transition. Switching to a
-                  // zero-height SizedBox when collapsed (instead of
-                  // omitting the child) keeps the AnimatedSize
-                  // anchored across the collapse.
-                  AnimatedSize(
-                    duration: duration,
-                    curve: curve,
-                    alignment: Alignment.topLeft,
-                    child: isExpanded
-                        ? _buildExpandedBody(scheme, theme)
-                        : const SizedBox(width: double.infinity),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedPadding(
+            duration: duration,
+            curve: curve,
+            padding: isExpanded
+                ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+                : EdgeInsets.zero,
+            child: AnimatedContainer(
+              duration: duration,
+              curve: curve,
+              decoration: decoration,
+              clipBehavior: Clip.antiAlias,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  // Bound the splash to the rounded shape so the
+                  // hover overlay can't bleed past the indigo border
+                  // when the card is expanded.
+                  borderRadius: BorderRadius.circular(isExpanded ? 16 : 0),
+                  onTap: () {
+                    widget.onToggleExpand();
+                    widget.onTap?.call();
+                  },
+                  onSecondaryTapDown: (details) =>
+                      _showContextMenu(details.globalPosition),
+                  child: Stack(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildCollapsedRow(scheme, theme),
+                          // AnimatedSize uses RenderAnimatedSize, an
+                          // actual layout-participating RenderObject,
+                          // so ListView.builder always sees the
+                          // correct intrinsic height even mid-flight.
+                          AnimatedSize(
+                            duration: duration,
+                            curve: curve,
+                            alignment: Alignment.topLeft,
+                            child: isExpanded
+                                ? _buildExpandedBody(scheme, theme)
+                                : const SizedBox(width: double.infinity),
+                          ),
+                        ],
+                      ),
+                      // Selected collapsed rows get a 2 px indigo
+                      // left bar painted as an overlay — kept out of
+                      // the BoxDecoration so the latter stays a
+                      // uniform Border.all (see comment above).
+                      if (!isExpanded && widget.isSelected)
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: Container(width: 2, color: scheme.primary),
+                        ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+          // Bottom hairline between collapsed task rows. Animates
+          // away to zero height when the card expands so the
+          // expanded card's own border isn't doubled-up underneath.
+          AnimatedContainer(
+            duration: duration,
+            curve: curve,
+            height: isExpanded ? 0 : 1,
+            color: isExpanded
+                ? Colors.transparent
+                : scheme.outlineVariant.withValues(alpha: 0.6),
+          ),
+        ],
       ),
     );
   }
@@ -487,18 +514,19 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                       fontSize: 15,
                       height: 22 / 15,
                       fontWeight: FontWeight.w500,
-                      // Completed titles step down one tier (slate-600
-                      // light / slate-300 dark) instead of dropping all
-                      // the way to `scheme.outline` — which painted
-                      // them at the same weight as the hairline border
-                      // and made them illegible on the slate-700 card.
+                      // Completed titles dim down to onSurface @ 0.7
+                      // (effective slate-200 dark / slate-700 light),
+                      // which keeps them clearly legible while still
+                      // reading as muted. `onSurfaceVariant` was too
+                      // close to the hairline weight on the slate-700
+                      // card; `outline` was completely illegible.
                       color: task.isCompleted
-                          ? scheme.onSurfaceVariant
+                          ? scheme.onSurface.withValues(alpha: 0.7)
                           : scheme.onSurface,
                       decoration: task.isCompleted
                           ? TextDecoration.lineThrough
                           : null,
-                      decorationColor: scheme.onSurfaceVariant,
+                      decorationColor: scheme.onSurface.withValues(alpha: 0.7),
                       decorationThickness: 1,
                     ),
                     overflow: TextOverflow.ellipsis,
