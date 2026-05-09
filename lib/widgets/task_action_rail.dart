@@ -81,7 +81,8 @@ class TaskActionRail extends StatelessWidget {
         _ActionRow(
           icon: PhosphorIcons.tag(),
           label: 'Tags',
-          value: task.tags.isEmpty ? 'Add tags' : task.tags.join(', '),
+          value: task.tags.isEmpty ? 'Add tags' : null,
+          valueWidget: task.tags.isEmpty ? null : _TagChips(tags: task.tags),
           tinted: task.tags.isNotEmpty,
           onTap: onEditTags,
         ),
@@ -133,6 +134,7 @@ class _ActionRow extends StatefulWidget {
     required this.icon,
     required this.label,
     this.value,
+    this.valueWidget,
     this.tinted = false,
     this.destructive = false,
     this.iconOverride,
@@ -142,6 +144,11 @@ class _ActionRow extends StatefulWidget {
   final IconData icon;
   final String label;
   final String? value;
+
+  /// Optional rich value widget that renders to the right of [label]
+  /// instead of the plain `value` text. Used by the Tags row to show
+  /// `#tag` indigo-soft chips per `04_task_expanded_light.png`.
+  final Widget? valueWidget;
   final bool tinted;
   final bool destructive;
   final Color? iconOverride;
@@ -194,7 +201,10 @@ class _ActionRowState extends State<_ActionRow> {
                     ),
                   ),
                 ),
-                if (widget.value != null) ...[
+                if (widget.valueWidget != null) ...[
+                  const SizedBox(width: 8),
+                  Flexible(child: widget.valueWidget!),
+                ] else if (widget.value != null) ...[
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
@@ -216,6 +226,44 @@ class _ActionRowState extends State<_ActionRow> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// `#tag` chips rendered to the right of the Tags label per
+/// `docs/redesign/2027-indigo/mockups/04_task_expanded_light.png`. Each
+/// chip is an indigo-soft pill with a `#`-prefixed label.
+class _TagChips extends StatelessWidget {
+  const _TagChips({required this.tags});
+
+  final List<String> tags;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      alignment: WrapAlignment.end,
+      children: [
+        for (final t in tags)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              t.startsWith('#') ? t : '#$t',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                height: 14 / 11,
+                fontWeight: FontWeight.w500,
+                color: scheme.primary,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
