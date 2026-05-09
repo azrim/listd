@@ -4,11 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../models/task_list.dart';
 import '../providers/auth_provider.dart';
 import '../providers/overlays_provider.dart';
 import '../providers/shell_state_provider.dart';
 import '../providers/task_lists_provider.dart';
 import '../theme/app_theme.dart';
+import 'context_menu.dart';
+import 'rename_dialog.dart';
 import 'sync_status_pill.dart';
 
 /// Listd 2027 sidebar drawer.
@@ -102,6 +105,13 @@ class SidebarDrawer extends ConsumerWidget {
                               isSelected: currentLocation == '/list/${l.id}',
                               onTap: () =>
                                   _navigate(context, ref, '/list/${l.id}'),
+                              onSecondaryTapDown: (details) =>
+                                  _showListContextMenu(
+                                    context,
+                                    ref,
+                                    details.globalPosition,
+                                    l,
+                                  ),
                             ),
                           )
                           .toList(),
@@ -169,6 +179,56 @@ class SidebarDrawer extends ConsumerWidget {
     // Auto-close the drawer once the user navigates so the canvas
     // takes back the full width.
     ref.read(sidebarDrawerOpenProvider.notifier).state = false;
+  }
+
+  void _showListContextMenu(
+    BuildContext context,
+    WidgetRef ref,
+    Offset globalPosition,
+    TaskList list,
+  ) {
+    showListdContextMenu(context, globalPosition, [
+      ListdContextMenuItem(
+        icon: PhosphorIcons.pencilSimple(),
+        label: 'Rename',
+        onTap: () async {
+          final next = await showRenameDialog(
+            context,
+            title: 'Rename list',
+            initial: list.title,
+            confirmLabel: 'Rename',
+            hintText: 'List name',
+          );
+          if (next == null || next == list.title) return;
+          await ref
+              .read(taskListsNotifierProvider.notifier)
+              .updateTaskList(list.copyWith(title: next));
+        },
+      ),
+      const ListdContextMenuDivider(),
+      ListdContextMenuItem(
+        icon: PhosphorIcons.trash(),
+        label: 'Delete list',
+        destructive: true,
+        onTap: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          final confirmed = await showDestructiveConfirm(
+            context,
+            title: 'Delete list?',
+            message:
+                'Delete "${list.title}" and all of its tasks? This can\'t be undone.',
+            confirmLabel: 'Delete',
+          );
+          if (confirmed != true) return;
+          await ref
+              .read(taskListsNotifierProvider.notifier)
+              .deleteTaskList(list.id);
+          messenger.showSnackBar(
+            SnackBar(content: Text('Deleted "${list.title}"')),
+          );
+        },
+      ),
+    ]);
   }
 }
 
@@ -270,12 +330,17 @@ class _DrawerItem extends StatefulWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.onSecondaryTapDown,
   });
 
   final IconData icon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+
+  /// Right-click handler. When non-null, secondary taps surface a
+  /// 2027 context menu instead of being absorbed by the InkWell.
+  final GestureTapDownCallback? onSecondaryTapDown;
 
   @override
   State<_DrawerItem> createState() => _DrawerItemState();
@@ -310,6 +375,7 @@ class _DrawerItemState extends State<_DrawerItem> {
           borderRadius: BorderRadius.circular(10),
           child: InkWell(
             onTap: widget.onTap,
+            onSecondaryTapDown: widget.onSecondaryTapDown,
             borderRadius: BorderRadius.circular(10),
             child: SizedBox(
               height: 36,

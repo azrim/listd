@@ -9,6 +9,7 @@ import '../providers/task_lists_provider.dart';
 import '../providers/tasks_provider.dart';
 import '../providers/ui_state_providers.dart';
 import '../theme/app_theme.dart';
+import 'context_menu.dart';
 import 'task_card.dart';
 
 /// Filter the aggregate task stream into the slice that belongs to a virtual
@@ -84,17 +85,22 @@ class TaskListPanel extends ConsumerWidget {
           else
             const SizedBox(height: 4),
           Expanded(
-            child: tasksAsync.when(
-              data: (tasks) =>
-                  _buildContent(context, ref, tasks, selectedTaskId),
-              loading: () => const Center(
-                child: SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 1.5),
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onSecondaryTapDown: (details) =>
+                  _showEmptyAreaMenu(context, ref, details.globalPosition),
+              child: tasksAsync.when(
+                data: (tasks) =>
+                    _buildContent(context, ref, tasks, selectedTaskId),
+                loading: () => const Center(
+                  child: SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 1.5),
+                  ),
                 ),
+                error: (e, _) => _buildError(context, ref, e),
               ),
-              error: (e, _) => _buildError(context, ref, e),
             ),
           ),
         ],
@@ -236,6 +242,182 @@ class TaskListPanel extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showEmptyAreaMenu(
+    BuildContext context,
+    WidgetRef ref,
+    Offset globalPosition,
+  ) {
+    showListdContextMenu(context, globalPosition, [
+      ListdContextMenuItem(
+        icon: Icons.add,
+        label: 'New task',
+        onTap: () => _quickCreateTask(context, ref),
+      ),
+    ]);
+  }
+
+  Future<void> _quickCreateTask(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final title = await _promptForTitle(context);
+    if (title == null || title.trim().isEmpty) return;
+
+    String targetListId = listId;
+    DateTime? defaultDue;
+    bool defaultStarred = false;
+    if (listId.startsWith('@')) {
+      final lists =
+          ref.read(taskListsNotifierProvider).valueOrNull ?? const <TaskList>[];
+      final target = _resolveTargetList(lists);
+      if (target == null) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Create a list first to add tasks here'),
+          ),
+        );
+        return;
+      }
+      targetListId = target.id;
+      if (listId == SpecialListIds.myDay) {
+        final now = DateTime.now();
+        defaultDue = DateTime(now.year, now.month, now.day);
+      } else if (listId == SpecialListIds.important) {
+        defaultStarred = true;
+      }
+    }
+
+    final task = Task(
+      id: const Uuid().v4(),
+      title: title.trim(),
+      updated: DateTime.now(),
+      taskListId: targetListId,
+      due: defaultDue,
+      isStarred: defaultStarred,
+    );
+    await ref
+        .read(tasksNotifierProvider(targetListId).notifier)
+        .createTask(task);
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Task added'),
+        duration: Duration(milliseconds: 1400),
+      ),
+    );
+  }
+
+  /// Inline single-line dialog for the empty-area "New task" right-click
+  /// flow. Returns the entered title or `null` on cancel.
+  Future<String?> _promptForTitle(BuildContext context) async {
+    final controller = TextEditingController();
+    final focus = FocusNode();
+    WidgetsBinding.instance.addPostFrameCallback((_) => focus.requestFocus());
+    return showDialog<String?>(
+      context: context,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final scheme = theme.colorScheme;
+        final surfaces = theme.extension<ListdSurfaces>();
+        return Dialog(
+          backgroundColor: surfaces?.panel ?? scheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: scheme.outlineVariant, width: 1),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'New task',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      height: 22 / 16,
+                      fontWeight: FontWeight.w600,
+                      color: scheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    focusNode: focus,
+                    cursorColor: scheme.primary,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: scheme.onSurface,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Task title',
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: scheme.outlineVariant),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: scheme.outlineVariant),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: scheme.primary, width: 2),
+                      ),
+                    ),
+                    onSubmitted: (v) => Navigator.of(ctx).pop(v),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: Text(
+                          'Cancel',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      FilledButton(
+                        onPressed: () => Navigator.of(ctx).pop(controller.text),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: scheme.primary,
+                          foregroundColor: scheme.onPrimary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'Add',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -6,6 +6,8 @@ import '../../models/task_list.dart';
 import '../../providers/task_lists_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../providers/ui_state_providers.dart';
+import '../../widgets/context_menu.dart';
+import '../../widgets/rename_dialog.dart';
 
 /// "Folders" bento grid screen — visual list of task lists.
 class ManageFoldersScreen extends ConsumerWidget {
@@ -151,6 +153,12 @@ class ManageFoldersScreen extends ConsumerWidget {
                 ref.read(selectedTaskListIdProvider.notifier).state = list.id;
                 Navigator.of(context).maybePop();
               },
+              onSecondaryTapDown: (details) => _showFolderContextMenu(
+                context,
+                ref,
+                details.globalPosition,
+                list,
+              ),
             );
           },
         );
@@ -193,6 +201,56 @@ class ManageFoldersScreen extends ConsumerWidget {
     );
   }
 
+  void _showFolderContextMenu(
+    BuildContext context,
+    WidgetRef ref,
+    Offset globalPosition,
+    TaskList list,
+  ) {
+    showListdContextMenu(context, globalPosition, [
+      ListdContextMenuItem(
+        icon: Icons.drive_file_rename_outline,
+        label: 'Rename',
+        onTap: () async {
+          final next = await showRenameDialog(
+            context,
+            title: 'Rename folder',
+            initial: list.title,
+            confirmLabel: 'Rename',
+            hintText: 'Folder name',
+          );
+          if (next == null || next == list.title) return;
+          await ref
+              .read(taskListsNotifierProvider.notifier)
+              .updateTaskList(list.copyWith(title: next));
+        },
+      ),
+      const ListdContextMenuDivider(),
+      ListdContextMenuItem(
+        icon: Icons.delete_outline,
+        label: 'Delete folder',
+        destructive: true,
+        onTap: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          final confirmed = await showDestructiveConfirm(
+            context,
+            title: 'Delete folder?',
+            message:
+                'Delete "${list.title}" and all of its tasks? This can\'t be undone.',
+            confirmLabel: 'Delete',
+          );
+          if (confirmed != true) return;
+          await ref
+              .read(taskListsNotifierProvider.notifier)
+              .deleteTaskList(list.id);
+          messenger.showSnackBar(
+            SnackBar(content: Text('Deleted "${list.title}"')),
+          );
+        },
+      ),
+    ]);
+  }
+
   Future<void> _showCreateDialog(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController();
     final result = await showDialog<String>(
@@ -232,6 +290,7 @@ class _FolderCard extends StatelessWidget {
     required this.title,
     required this.activeTaskCount,
     required this.onTap,
+    this.onSecondaryTapDown,
   });
 
   final Color accent;
@@ -239,6 +298,7 @@ class _FolderCard extends StatelessWidget {
   final String title;
   final int activeTaskCount;
   final VoidCallback onTap;
+  final GestureTapDownCallback? onSecondaryTapDown;
 
   @override
   Widget build(BuildContext context) {
@@ -247,6 +307,7 @@ class _FolderCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        onSecondaryTapDown: onSecondaryTapDown,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
