@@ -415,6 +415,20 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                   // hover overlay can't bleed past the indigo border
                   // when the card is expanded.
                   borderRadius: BorderRadius.circular(isExpanded ? 16 : 0),
+                  // The collapsed card's hover fill is driven
+                  // explicitly by `_hovered → collapsedFill = chip`
+                  // on the AnimatedContainer above. Letting InkWell
+                  // paint its own hover overlay on top would (a)
+                  // double-tint the collapsed row and (b) actively
+                  // *darken* the expanded card in dark mode, because
+                  // the global `theme.hoverColor` resolves to
+                  // `scheme.surfaceContainer` (= dark canvas, slate-800)
+                  // which lays a darker square on top of the
+                  // brighter `card` token. Disabling it here keeps
+                  // the expanded card at its resting brightness on
+                  // hover and the collapsed row driven by exactly
+                  // one hover-fill source.
+                  hoverColor: Colors.transparent,
                   onTap: () {
                     widget.onToggleExpand();
                     widget.onTap?.call();

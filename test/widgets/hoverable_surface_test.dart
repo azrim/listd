@@ -7,12 +7,14 @@ import 'package:listd/widgets/hoverable_surface.dart';
 
 /// Regression: hover/select fills used to snap instantly across every
 /// nav surface (sidebar, top bar, command palette, action rail, list
-/// picker). The 2027 · Indigo spec mandates that "Default state changes
-/// — sidebar selection move, color theme swap" run on
-/// [AppMotion.settle] (`docs/redesign/2027-indigo/04_motion.md`
-/// §When to use which) and that "reduced motion is total" — every
-/// duration zeroes when `MediaQuery.disableAnimations` is on
-/// (§3, plus `05_accessibility.md`).
+/// picker). HoverableSurface cross-fades the fill on [AppMotion.flick]
+/// (160 ms) — the spec literally lists `settle | hover/select` in
+/// `docs/redesign/2027-indigo/04_motion.md` line 33, but a 220 ms
+/// ramp on the low-contrast light-mode chip (`#F1F5F9` on `#F8FAFC`)
+/// reads as a sluggish gradient and produces ghosty cross-talk on
+/// fast cursor sweeps, so we step down to the next spec-canonical
+/// calibration (`flick`, "immediate physical response"). Reduced
+/// motion still zeroes every duration per `04_motion.md` §3.
 ///
 /// These tests pin the motion contract so a future copy-paste of the
 /// snap pattern can't sneak back in.
@@ -53,13 +55,13 @@ void main() {
     );
   }
 
-  testWidgets('animates the fill on AppMotion.settle by default', (
+  testWidgets('animates the fill on AppMotion.flick by default', (
     tester,
   ) async {
     final surface = await pumpHarness(tester);
     final animated = animatedContainerOf(tester, surface);
-    expect(animated.duration, AppMotion.settleDuration);
-    expect(animated.curve, AppMotion.settleCurve);
+    expect(animated.duration, AppMotion.flickDuration);
+    expect(animated.curve, AppMotion.flickCurve);
   });
 
   testWidgets('collapses the duration to Duration.zero under reduced motion', (
@@ -93,7 +95,7 @@ void main() {
     );
 
     // Move pointer onto the surface to start the cross-fade and let the
-    // settle window run to completion.
+    // flick window run to completion.
     await gesture.moveTo(tester.getCenter(surface));
     await tester.pumpAndSettle();
     final settled = animatedContainerOf(tester, surface);
@@ -116,7 +118,7 @@ void main() {
 
   testWidgets('selected fill takes precedence over hover fill', (tester) async {
     final surface = await pumpHarness(tester, selected: true);
-    await tester.pump(AppMotion.settleDuration * 2);
+    await tester.pump(AppMotion.flickDuration * 2);
     final animated = animatedContainerOf(tester, surface);
     expect(
       (animated.decoration as BoxDecoration).color,

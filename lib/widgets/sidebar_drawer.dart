@@ -389,17 +389,17 @@ class _NewListItem extends StatelessWidget {
         fillFor: (_, {required hovered, required selected}) =>
             hovered ? scheme.surfaceContainerHighest : Colors.transparent,
         builder: (_, {required hovered, required selected}) {
-          // Foreground colour rides the same `settle` calibration so
-          // the typography "lift" on hover doesn't snap while the
-          // fill cross-fades.
+          // Foreground colour rides the same `flick` calibration as
+          // the surface fill so the typography "lift" on hover stays
+          // in lockstep with the fill cross-fade.
           return SizedBox(
             height: 36,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: TweenAnimationBuilder<double>(
                 tween: Tween<double>(end: hovered ? 1 : 0),
-                duration: AppMotion.settleFor(context),
-                curve: AppMotion.settleCurve,
+                duration: AppMotion.flickFor(context),
+                curve: AppMotion.flickCurve,
                 builder: (_, t, _) {
                   final fg = Color.lerp(
                     scheme.onSurfaceVariant,

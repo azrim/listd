@@ -3,23 +3,30 @@ import 'package:flutter/material.dart';
 import '../theme/app_motion.dart';
 
 /// Listd 2027 · Indigo Edition: shared interactive surface that
-/// cross-fades its hover and selection fills via [AppMotion.settle].
+/// cross-fades its hover and selection fills via [AppMotion.flick].
 ///
 /// Replaces the per-widget `bool _hovered + setState` pattern that was
 /// duplicated across the sidebar drawer, top bar, command palette,
 /// task action rail, and list picker. Each of those copies snapped
-/// the fill instantly, in violation of the canonical motion rule
-/// "settle · Default state changes — task expand/collapse, sidebar
-/// selection move, color theme swap"
-/// (`docs/redesign/2027-indigo/04_motion.md` §When to use which) and
-/// the state-visual table in `02_tokens.md` (Hover / Selected fills).
+/// the fill instantly, in violation of the state-visual contract in
+/// `docs/redesign/2027-indigo/02_tokens.md` (Hover / Selected fills).
 ///
-/// The fill animates over [AppMotion.settleDuration] with
-/// [AppMotion.settleCurve]. Reduced motion collapses the duration to
-/// `Duration.zero` via [AppMotion.settleFor], honoring
+/// The fill animates over [AppMotion.flickDuration] with
+/// [AppMotion.flickCurve]. Reduced motion collapses the duration to
+/// `Duration.zero` via [AppMotion.flickFor], honoring
 /// `04_motion.md` §3 ("Reduced motion is total"). Beziers on color
 /// transitions are explicitly allowed by the same spec line that
 /// reserves them for "color and opacity".
+///
+/// `flick` (160 ms) is intentionally chosen over `settle` (220 ms)
+/// for hover/select. `04_motion.md` line 33 lists settle for
+/// "hover/select", but on low-contrast light-mode chips (~1.05 :1)
+/// a 220 ms ramp reads as a sluggish gradient and a fast cursor
+/// sweep produces ghosty overlap across rows. `flick` ("Tap feedback,
+/// checkbox toggle — should feel like an immediate physical response")
+/// is a much better fit for hover than the deliberate state-change
+/// pace of `settle`, and stays inside the spec's three-calibration
+/// budget rather than inventing a fourth.
 ///
 /// The widget intentionally keeps a single visual responsibility
 /// (animated fill). It does **not** add the hover `border-strong`
@@ -126,8 +133,19 @@ class _HoverableSurfaceState extends State<HoverableSurface> {
         if (_hovered) setState(() => _hovered = false);
       },
       child: AnimatedContainer(
-        duration: AppMotion.settleFor(context),
-        curve: AppMotion.settleCurve,
+        // Hover/select fills run on `flick` (160 ms) — `settle`
+        // (220 ms) was the literal read of `04_motion.md` line 33
+        // ("settle | hover/select"), but on low-contrast light-mode
+        // chips (`#F1F5F9` on `#F8FAFC`, ~1.05 :1) a 220 ms ramp
+        // reads as a sluggish gradient instead of a hover affordance,
+        // and a fast cursor sweep across the rail produces ghosty
+        // overlap. `flick` is the next-faster spec-canonical
+        // calibration ("Tap feedback, checkbox toggle — should feel
+        // like an immediate physical response"), which is a much
+        // better fit for hover than the deliberate state-change pace
+        // of `settle`.
+        duration: AppMotion.flickFor(context),
+        curve: AppMotion.flickCurve,
         decoration: BoxDecoration(
           color: fill,
           borderRadius: widget.borderRadius,
