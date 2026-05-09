@@ -111,7 +111,7 @@ class SupabaseTasksProvider implements ITaskProvider {
         'due': task.due?.toIso8601String(),
         'is_completed': task.isCompleted,
         'is_important': task.isStarred,
-        'is_my_day': false,
+        'is_my_day': task.manuallyAddedToToday,
         'position': task.position,
         'parent_id': task.parentId,
         'completed_at': task.completedAt?.toIso8601String(),
@@ -148,6 +148,7 @@ class SupabaseTasksProvider implements ITaskProvider {
         'due': task.due?.toIso8601String(),
         'is_completed': task.isCompleted,
         'is_important': task.isStarred,
+        'is_my_day': task.manuallyAddedToToday,
         'position': task.position,
         'parent_id': task.parentId,
         'completed_at': task.completedAt?.toIso8601String(),
@@ -351,8 +352,9 @@ class SupabaseTasksProvider implements ITaskProvider {
       status: row['is_completed'] == true ? 'completed' : 'needsAction',
       updated: DateTime.parse(row['updated_at'] as String),
       taskListId: row['task_list_id'] as String,
-      position: row['position'] as int? ?? 0,
+      position: (row['position'] as num?)?.toDouble() ?? 0.0,
       isStarred: row['is_important'] as bool? ?? false,
+      manuallyAddedToToday: row['is_my_day'] as bool? ?? false,
       reminder: row['reminder'] != null
           ? DateTime.parse(row['reminder'] as String)
           : null,

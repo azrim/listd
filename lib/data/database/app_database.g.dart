@@ -93,13 +93,27 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
     'position',
   );
   @override
-  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+  late final GeneratedColumn<double> position = GeneratedColumn<double>(
     'position',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _manuallyAddedToTodayMeta =
+      const VerificationMeta('manuallyAddedToToday');
+  @override
+  late final GeneratedColumn<bool> manuallyAddedToToday = GeneratedColumn<bool>(
+    'manually_added_to_today',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("manually_added_to_today" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
   );
   static const VerificationMeta _isStarredMeta = const VerificationMeta(
     'isStarred',
@@ -200,6 +214,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
     taskListId,
     parentId,
     position,
+    manuallyAddedToToday,
     isStarred,
     reminder,
     repeatConfig,
@@ -279,6 +294,15 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
       context.handle(
         _positionMeta,
         position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    }
+    if (data.containsKey('manually_added_to_today')) {
+      context.handle(
+        _manuallyAddedToTodayMeta,
+        manuallyAddedToToday.isAcceptableOrUnknown(
+          data['manually_added_to_today']!,
+          _manuallyAddedToTodayMeta,
+        ),
       );
     }
     if (data.containsKey('is_starred')) {
@@ -377,8 +401,12 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
         data['${effectivePrefix}parent_id'],
       ),
       position: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}position'],
+      )!,
+      manuallyAddedToToday: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}manually_added_to_today'],
       )!,
       isStarred: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -446,8 +474,15 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
   /// Parent task ID for subtasks (null for top-level tasks)
   final String? parentId;
 
-  /// Position within the task list for ordering
-  final int position;
+  /// Position within the task list for ordering.
+  /// Uses a real (double) to support fractional insertion:
+  /// inserting between positions 1024 and 2048 → 1536.
+  final double position;
+
+  /// Whether this task was manually added to the Today smart bucket.
+  /// Default false — only true when the user explicitly drags/adds a
+  /// task to Today that wouldn't otherwise appear there.
+  final bool manuallyAddedToToday;
 
   /// Whether this task is starred/favorited
   final bool isStarred;
@@ -482,6 +517,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     required this.taskListId,
     this.parentId,
     required this.position,
+    required this.manuallyAddedToToday,
     required this.isStarred,
     this.reminder,
     this.repeatConfig,
@@ -506,7 +542,8 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     if (!nullToAbsent || parentId != null) {
       map['parent_id'] = Variable<String>(parentId);
     }
-    map['position'] = Variable<int>(position);
+    map['position'] = Variable<double>(position);
+    map['manually_added_to_today'] = Variable<bool>(manuallyAddedToToday);
     map['is_starred'] = Variable<bool>(isStarred);
     if (!nullToAbsent || reminder != null) {
       map['reminder'] = Variable<String>(reminder);
@@ -541,6 +578,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           ? const Value.absent()
           : Value(parentId),
       position: Value(position),
+      manuallyAddedToToday: Value(manuallyAddedToToday),
       isStarred: Value(isStarred),
       reminder: reminder == null && nullToAbsent
           ? const Value.absent()
@@ -574,7 +612,10 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
       updated: serializer.fromJson<String>(json['updated']),
       taskListId: serializer.fromJson<String>(json['taskListId']),
       parentId: serializer.fromJson<String?>(json['parentId']),
-      position: serializer.fromJson<int>(json['position']),
+      position: serializer.fromJson<double>(json['position']),
+      manuallyAddedToToday: serializer.fromJson<bool>(
+        json['manuallyAddedToToday'],
+      ),
       isStarred: serializer.fromJson<bool>(json['isStarred']),
       reminder: serializer.fromJson<String?>(json['reminder']),
       repeatConfig: serializer.fromJson<String?>(json['repeatConfig']),
@@ -597,7 +638,8 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
       'updated': serializer.toJson<String>(updated),
       'taskListId': serializer.toJson<String>(taskListId),
       'parentId': serializer.toJson<String?>(parentId),
-      'position': serializer.toJson<int>(position),
+      'position': serializer.toJson<double>(position),
+      'manuallyAddedToToday': serializer.toJson<bool>(manuallyAddedToToday),
       'isStarred': serializer.toJson<bool>(isStarred),
       'reminder': serializer.toJson<String?>(reminder),
       'repeatConfig': serializer.toJson<String?>(repeatConfig),
@@ -618,7 +660,8 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     String? updated,
     String? taskListId,
     Value<String?> parentId = const Value.absent(),
-    int? position,
+    double? position,
+    bool? manuallyAddedToToday,
     bool? isStarred,
     Value<String?> reminder = const Value.absent(),
     Value<String?> repeatConfig = const Value.absent(),
@@ -637,6 +680,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     taskListId: taskListId ?? this.taskListId,
     parentId: parentId.present ? parentId.value : this.parentId,
     position: position ?? this.position,
+    manuallyAddedToToday: manuallyAddedToToday ?? this.manuallyAddedToToday,
     isStarred: isStarred ?? this.isStarred,
     reminder: reminder.present ? reminder.value : this.reminder,
     repeatConfig: repeatConfig.present ? repeatConfig.value : this.repeatConfig,
@@ -659,6 +703,9 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           : this.taskListId,
       parentId: data.parentId.present ? data.parentId.value : this.parentId,
       position: data.position.present ? data.position.value : this.position,
+      manuallyAddedToToday: data.manuallyAddedToToday.present
+          ? data.manuallyAddedToToday.value
+          : this.manuallyAddedToToday,
       isStarred: data.isStarred.present ? data.isStarred.value : this.isStarred,
       reminder: data.reminder.present ? data.reminder.value : this.reminder,
       repeatConfig: data.repeatConfig.present
@@ -688,6 +735,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           ..write('taskListId: $taskListId, ')
           ..write('parentId: $parentId, ')
           ..write('position: $position, ')
+          ..write('manuallyAddedToToday: $manuallyAddedToToday, ')
           ..write('isStarred: $isStarred, ')
           ..write('reminder: $reminder, ')
           ..write('repeatConfig: $repeatConfig, ')
@@ -711,6 +759,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     taskListId,
     parentId,
     position,
+    manuallyAddedToToday,
     isStarred,
     reminder,
     repeatConfig,
@@ -733,6 +782,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           other.taskListId == this.taskListId &&
           other.parentId == this.parentId &&
           other.position == this.position &&
+          other.manuallyAddedToToday == this.manuallyAddedToToday &&
           other.isStarred == this.isStarred &&
           other.reminder == this.reminder &&
           other.repeatConfig == this.repeatConfig &&
@@ -752,7 +802,8 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
   final Value<String> updated;
   final Value<String> taskListId;
   final Value<String?> parentId;
-  final Value<int> position;
+  final Value<double> position;
+  final Value<bool> manuallyAddedToToday;
   final Value<bool> isStarred;
   final Value<String?> reminder;
   final Value<String?> repeatConfig;
@@ -772,6 +823,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     this.taskListId = const Value.absent(),
     this.parentId = const Value.absent(),
     this.position = const Value.absent(),
+    this.manuallyAddedToToday = const Value.absent(),
     this.isStarred = const Value.absent(),
     this.reminder = const Value.absent(),
     this.repeatConfig = const Value.absent(),
@@ -792,6 +844,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     required String taskListId,
     this.parentId = const Value.absent(),
     this.position = const Value.absent(),
+    this.manuallyAddedToToday = const Value.absent(),
     this.isStarred = const Value.absent(),
     this.reminder = const Value.absent(),
     this.repeatConfig = const Value.absent(),
@@ -813,7 +866,8 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     Expression<String>? updated,
     Expression<String>? taskListId,
     Expression<String>? parentId,
-    Expression<int>? position,
+    Expression<double>? position,
+    Expression<bool>? manuallyAddedToToday,
     Expression<bool>? isStarred,
     Expression<String>? reminder,
     Expression<String>? repeatConfig,
@@ -834,6 +888,8 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
       if (taskListId != null) 'task_list_id': taskListId,
       if (parentId != null) 'parent_id': parentId,
       if (position != null) 'position': position,
+      if (manuallyAddedToToday != null)
+        'manually_added_to_today': manuallyAddedToToday,
       if (isStarred != null) 'is_starred': isStarred,
       if (reminder != null) 'reminder': reminder,
       if (repeatConfig != null) 'repeat_config': repeatConfig,
@@ -855,7 +911,8 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     Value<String>? updated,
     Value<String>? taskListId,
     Value<String?>? parentId,
-    Value<int>? position,
+    Value<double>? position,
+    Value<bool>? manuallyAddedToToday,
     Value<bool>? isStarred,
     Value<String?>? reminder,
     Value<String?>? repeatConfig,
@@ -876,6 +933,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
       taskListId: taskListId ?? this.taskListId,
       parentId: parentId ?? this.parentId,
       position: position ?? this.position,
+      manuallyAddedToToday: manuallyAddedToToday ?? this.manuallyAddedToToday,
       isStarred: isStarred ?? this.isStarred,
       reminder: reminder ?? this.reminder,
       repeatConfig: repeatConfig ?? this.repeatConfig,
@@ -916,7 +974,12 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
       map['parent_id'] = Variable<String>(parentId.value);
     }
     if (position.present) {
-      map['position'] = Variable<int>(position.value);
+      map['position'] = Variable<double>(position.value);
+    }
+    if (manuallyAddedToToday.present) {
+      map['manually_added_to_today'] = Variable<bool>(
+        manuallyAddedToToday.value,
+      );
     }
     if (isStarred.present) {
       map['is_starred'] = Variable<bool>(isStarred.value);
@@ -960,6 +1023,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
           ..write('taskListId: $taskListId, ')
           ..write('parentId: $parentId, ')
           ..write('position: $position, ')
+          ..write('manuallyAddedToToday: $manuallyAddedToToday, ')
           ..write('isStarred: $isStarred, ')
           ..write('reminder: $reminder, ')
           ..write('repeatConfig: $repeatConfig, ')
@@ -1461,7 +1525,8 @@ typedef $$TasksTableCreateCompanionBuilder =
       required String updated,
       required String taskListId,
       Value<String?> parentId,
-      Value<int> position,
+      Value<double> position,
+      Value<bool> manuallyAddedToToday,
       Value<bool> isStarred,
       Value<String?> reminder,
       Value<String?> repeatConfig,
@@ -1482,7 +1547,8 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<String> updated,
       Value<String> taskListId,
       Value<String?> parentId,
-      Value<int> position,
+      Value<double> position,
+      Value<bool> manuallyAddedToToday,
       Value<bool> isStarred,
       Value<String?> reminder,
       Value<String?> repeatConfig,
@@ -1542,8 +1608,13 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get position => $composableBuilder(
+  ColumnFilters<double> get position => $composableBuilder(
     column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get manuallyAddedToToday => $composableBuilder(
+    column: $table.manuallyAddedToToday,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1637,8 +1708,13 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get position => $composableBuilder(
+  ColumnOrderings<double> get position => $composableBuilder(
     column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get manuallyAddedToToday => $composableBuilder(
+    column: $table.manuallyAddedToToday,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1718,8 +1794,13 @@ class $$TasksTableAnnotationComposer
   GeneratedColumn<String> get parentId =>
       $composableBuilder(column: $table.parentId, builder: (column) => column);
 
-  GeneratedColumn<int> get position =>
+  GeneratedColumn<double> get position =>
       $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<bool> get manuallyAddedToToday => $composableBuilder(
+    column: $table.manuallyAddedToToday,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get isStarred =>
       $composableBuilder(column: $table.isStarred, builder: (column) => column);
@@ -1788,7 +1869,8 @@ class $$TasksTableTableManager
                 Value<String> updated = const Value.absent(),
                 Value<String> taskListId = const Value.absent(),
                 Value<String?> parentId = const Value.absent(),
-                Value<int> position = const Value.absent(),
+                Value<double> position = const Value.absent(),
+                Value<bool> manuallyAddedToToday = const Value.absent(),
                 Value<bool> isStarred = const Value.absent(),
                 Value<String?> reminder = const Value.absent(),
                 Value<String?> repeatConfig = const Value.absent(),
@@ -1808,6 +1890,7 @@ class $$TasksTableTableManager
                 taskListId: taskListId,
                 parentId: parentId,
                 position: position,
+                manuallyAddedToToday: manuallyAddedToToday,
                 isStarred: isStarred,
                 reminder: reminder,
                 repeatConfig: repeatConfig,
@@ -1828,7 +1911,8 @@ class $$TasksTableTableManager
                 required String updated,
                 required String taskListId,
                 Value<String?> parentId = const Value.absent(),
-                Value<int> position = const Value.absent(),
+                Value<double> position = const Value.absent(),
+                Value<bool> manuallyAddedToToday = const Value.absent(),
                 Value<bool> isStarred = const Value.absent(),
                 Value<String?> reminder = const Value.absent(),
                 Value<String?> repeatConfig = const Value.absent(),
@@ -1848,6 +1932,7 @@ class $$TasksTableTableManager
                 taskListId: taskListId,
                 parentId: parentId,
                 position: position,
+                manuallyAddedToToday: manuallyAddedToToday,
                 isStarred: isStarred,
                 reminder: reminder,
                 repeatConfig: repeatConfig,

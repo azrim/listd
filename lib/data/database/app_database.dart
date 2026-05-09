@@ -17,7 +17,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -38,6 +38,24 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(tasks, tasks.userId);
           await m.addColumn(taskLists, taskLists.userId);
           await m.addColumn(taskLists, taskLists.position);
+        }
+        if (from < 3) {
+          // v3: 2027 redesign P2 — add manuallyAddedToToday and
+          // backfill position with 1024-spaced values per list.
+          await m.addColumn(tasks, tasks.manuallyAddedToToday);
+          // Position column type changed from INTEGER to REAL in Drift.
+          // SQLite is dynamically typed so existing int values read as
+          // doubles; no ALTER needed. Backfill rows still at 0.
+          await customStatement('''
+            UPDATE tasks
+            SET position = 1024.0 * (
+              SELECT COUNT(*)
+              FROM tasks AS t2
+              WHERE t2.task_list_id = tasks.task_list_id
+                AND t2.rowid <= tasks.rowid
+            )
+            WHERE position = 0
+          ''');
         }
       },
       beforeOpen: (details) async {

@@ -9,6 +9,10 @@ final selectedTaskListIdProvider = StateProvider<String?>((ref) => null);
 /// Provider for selected task ID (to show in detail panel)
 final selectedTaskIdProvider = StateProvider<String?>((ref) => null);
 
+/// 2027 P3 — id of the task currently expanded inline. Only one card may
+/// be expanded at a time. `null` means every card is collapsed.
+final expandedTaskIdProvider = StateProvider<String?>((ref) => null);
+
 /// Resolves the currently-selected task by id against `allTasksProvider`,
 /// so the inspector pane stays in sync with edits regardless of whether
 /// the user is on a real list or a synthetic one (`@my-day`, `@important`,

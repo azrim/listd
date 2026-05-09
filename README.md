@@ -1,6 +1,6 @@
 # Listd
 
-A native Flutter task-management app for Linux desktop (Android secondary), backed by Supabase. Local-first storage with background sync, sign in with Google, and a quiet 2026 design language: hairlines, neutral surfaces, one accent.
+A native Flutter task-management app for Linux desktop (Android secondary), backed by Supabase. Local-first storage with background sync, sign in with Google, and the **2027 Listd design language**: warm neutrals, layered surfaces, flame + oat accents, Inter + Newsreader, Phosphor icons, single spring.
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -10,23 +10,25 @@ A native Flutter task-management app for Linux desktop (Android secondary), back
 - **Local-first** — Drift / SQLite is the source of truth for the UI; a background `TaskSyncService` pushes pending mutations and pulls remote changes from Supabase.
 - **Supabase backend** — Postgres + Auth, RLS-scoped per user, last-write-wins.
 - **Google sign-in** — OAuth via Supabase (identity scope only, no Google Tasks).
-- **Three-pane desktop layout** — sidebar / list / inspector. Inspector slides in over 200 ms; selection is instant.
+- **Today-first layout** — opens to Today with a Newsreader headline, 7-day calendar strip, and inline expand-in-place task cards.
+- **Smart buckets** — Today / Inbox / Important / Planned / All / list views, all driven by Drift queries (no hardcoded data).
+- **Capture in <1 s** — `Ctrl+N` opens a single-line capture sheet that parses dates, tags, list prefixes, and stars.
+- **Two keystrokes to anywhere** — `Ctrl+K` command palette searches lists, tasks, and actions.
 - **Sync status pill** — live "Synced / Syncing… / N pending / Sync failed" indicator with a manual sync action.
 - **Settings persist asynchronously** — theme, accent, font scale, notification prefs all flush via `shared_preferences` on a separate microtask so the UI never blocks.
-- **2026 design system** — Inter type ramp, 4 px grid, hairline borders, no glass blurs / gradients / shadows. See [`docs/design-system.md`](docs/design-system.md) (or `listd_design_system.md`) for the spec.
 
 ## Screenshots
 
-_Coming soon — see [docs/screenshots/](docs/screenshots/) for the previous indigo build._
+_Coming with the P4 / P5 / P6 phase PRs — see [docs/screenshots/](docs/screenshots/) for previous builds._
 
 ## Getting started
 
 ### Prerequisites
 
-- Flutter SDK 3.x (developed against 3.41.x)
-- A Supabase project (free tier is fine)
-- A Google Cloud OAuth 2.0 Client ID (Desktop or Web client; identity scope only)
-- For Linux desktop: `clang`, `cmake`, `ninja-build`, `pkg-config`, `libgtk-3-dev`, `liblzma-dev`
+- Flutter SDK 3.41.x (CI pins `3.41.9`).
+- A Supabase project (free tier is fine).
+- A Google Cloud OAuth 2.0 Client ID (Desktop or Web client; identity scope only).
+- For Linux desktop: `clang`, `cmake`, `ninja-build`, `pkg-config`, `libgtk-3-dev`, `liblzma-dev`.
 
 ### 1. Clone and install dependencies
 
@@ -77,6 +79,8 @@ You can also stash these in a shell alias or VS Code launch config; see `.env.ex
 | Sync             | `TaskSyncService` (debounced push + pull, manual sync via pill)   |
 | Auth             | Google OAuth → Supabase JWT (managed by `supabase_flutter`)       |
 | Notifications    | `flutter_local_notifications`                                     |
+| Icons            | `phosphor_flutter` (Phosphor regular, 1.5 px stroke)              |
+| Type             | `google_fonts` (Inter + Newsreader)                               |
 
 ### Data flow
 
@@ -91,7 +95,7 @@ UI ←─ Drift streams ←──── DAOs ←──── TaskSyncService ←
 
 ```
 lib/
-├── main.dart                 # App entry point + Supabase.initialize()
+├── main.dart                 # App entry — Supabase init + AppBackplate wrap
 ├── config/                   # AppConfig (--dart-define wrapper)
 ├── models/                   # Domain models (Task, TaskList, TaskStep, …)
 ├── data/database/            # Drift database, tables, DAOs (source of truth)
@@ -102,34 +106,36 @@ lib/
 │   └── sync/                 # task_sync_service.dart (background push/pull)
 ├── providers/                # Riverpod providers (UI watches Drift via these)
 ├── router/                   # go_router config
-├── theme/                    # 2026 design tokens (app_colors, app_theme, gradients)
-├── screens/                  # auth, callback, home, settings, folders
-└── widgets/                  # sidebar_panel, task_list_panel, task_detail_panel,
-                              # sync_status_pill, glass_card / glass_text_field /
-                              # gradient_button (now hairline shims for back-compat)
+├── theme/                    # 2027 design tokens (app_colors, app_theme, gradients, spring)
+├── screens/                  # Today, lists, inbox, important, planned, all, settings overlay, auth
+└── widgets/                  # task_card, command_palette, capture_sheet, calendar_strip,
+                              # sidebar_drawer, sync_status_pill, plus deprecated 2026 aliases
 ```
 
-## Design system (2026)
+## Design system (2027)
 
-| Token                | Light       | Dark        | Use                            |
-| -------------------- | ----------- | ----------- | ------------------------------ |
-| `surface`            | `#FFFFFF`   | `#0B0B0E`   | Page background, list pane     |
-| `surface-elevated`   | `#FAFAFA`   | `#121217`   | Sidebar, inspector             |
-| `surface-sunken`     | `#F4F4F5`   | `#191920`   | Capture input, hover row       |
-| `border`             | `#E5E5E7`   | `#26262C`   | 1 px hairlines                 |
-| `accent`             | `#4F46E5`   | `#7C7BFF`   | Selection, focus ring, primary |
-| `accent-soft`        | `#EEF0FF`   | `#1B1D3A`   | Selected row fill              |
-| `text-primary`       | `#0A0A0B`   | `#F2F2F4`   | Titles, body                   |
-| `text-secondary`     | `#5C5C66`   | `#9C9CA6`   | Meta, captions                 |
-| `text-tertiary`      | `#9A9AA3`   | `#5F5F6B`   | Placeholder, disabled          |
+| Token           | Light       | Dark        | Use                                      |
+| --------------- | ----------- | ----------- | ---------------------------------------- |
+| `ambient`       | `#F6F1EA`   | `#0E0C10`   | Backplate behind everything              |
+| `canvas`        | `#FFFFFF`   | `#1A171F`   | Page background — 20 px radius "island"  |
+| `panel`         | `#FBF6EE`   | `#16131A`   | Sidebar drawer, settings overlay         |
+| `card`          | `#FFFFFF`   | `#1F1B25`   | Task card — 16 px radius                 |
+| `chip`          | `#F1EAE0`   | `#26212C`   | Tag / chip / pill — 999 px radius        |
+| `flame`         | `#FF6B35`   | `#FF8A5C`   | Selection, focus ring, primary action    |
+| `flameSoft`     | `#FFE4D6`   | `#3D241A`   | Selected row fill, today calendar cell   |
+| `oat`           | `#A89878`   | `#C4B294`   | Counts, secondary chips                  |
+| `text-primary`  | `#1B1A18`   | `#F4EFE7`   | Titles, body                             |
+| `text-secondary`| `#5C564E`   | `#A8A199`   | Meta, captions                           |
+| `border`        | `#E6DFD4`   | `#2C2730`   | 1 px hairlines                           |
 
-- **One typeface** — Inter, weights 400 / 500 / 600.
+- **Two faces** — Inter (UI) + Newsreader (display, 3 places only: Today headline, empty states, About).
 - **4 px base grid** — allowed values: 4, 8, 12, 16, 24, 32, 48, 64.
-- **Hairlines, not shadows** — every border is 1 px; the focus ring is 2 px accent (no glow).
-- **Component metrics** — control height 32 px, row height 44 px, sidebar item 36 px, control radius 8 px, card radius 12 px.
-- **Motion** — hover 120 ms ease-out fill change, selection instant, inspector entry 200 ms cubic-bezier(0.2, 0, 0, 1), checkbox toggle 160 ms.
+- **Soft warm shadows** — `shadowSm` / `shadowMd` / `shadowLg` from the `ListdSurfaces` extension.
+- **Component metrics** — control 36 px, TaskCard 56 px → 200–400 px, control radius 12 px, card 16 px, panel 20 px, chip 999 px, focus ring 2 px flame.
+- **Motion** — one spring (`ListdSpring.standard`) everywhere; reduced motion → 0 ms snap.
+- **Icons** — Phosphor regular (1.5 px stroke).
 
-The full spec lives in `listd_design_system.md`.
+The full spec lives in `listd_2027_design_spec.md`. UX flows in `listd_2027_ux_plan.md`. Phase plan in `listd_2027_implementation_plan.md`.
 
 ## Privacy
 
@@ -145,3 +151,4 @@ Released under the MIT License — see [LICENSE](LICENSE).
 - [Flutter](https://flutter.dev)
 - [Riverpod](https://riverpod.dev)
 - [Drift](https://drift.simonbinder.eu)
+- [Phosphor Icons](https://phosphoricons.com)

@@ -5,9 +5,12 @@ import '../theme/app_theme.dart';
 
 /// Primary call-to-action button.
 ///
-/// In the 2026 system this is a flat filled accent button — there is no
-/// gradient and no pulsing glow. The class name is preserved so existing
-/// auth/empty-state call sites keep compiling.
+/// In the 2027 system this is a flat filled flame button — there is no
+/// gradient and no pulsing glow. The class name is preserved as an
+/// alias only so existing call sites keep compiling.
+///
+/// New code should use [FilledButton] with the global theme.
+// Deprecated — alias only. New code should use FilledButton with the global theme.
 class GradientButton extends StatelessWidget {
   const GradientButton({
     super.key,
@@ -80,7 +83,8 @@ class GradientButton extends StatelessWidget {
   }
 }
 
-/// Secondary outlined button — 32 px tall, hairline border, no glass.
+/// Secondary outlined button — 36 px tall, soft warm border, no glass.
+// Deprecated — alias only. New code should use OutlinedButton with the global theme.
 class GlassOutlinedButton extends StatelessWidget {
   const GlassOutlinedButton({
     super.key,

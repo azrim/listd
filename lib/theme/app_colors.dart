@@ -1,70 +1,111 @@
 import 'package:flutter/material.dart';
 
-/// Listd 2026 design tokens.
+/// Listd 2027 design tokens.
 ///
-/// One typeface, one accent, two surfaces. The whole product is built on
-/// the table below — there are no other hex literals anywhere in
-/// `lib/theme/`. Old aliases (`AppColors.primary`, `AppColors.bgSurface`,
-/// `AppColors.glassWhite`, …) are kept as backward-compat surfaces and
-/// just resolve back to the same tokens, so existing widgets pick up the
-/// new look automatically.
+/// Warm neutrals + two accents: `flame` (vibrant emphasis) and `oat`
+/// (muted support). Functional state colors are scoped to 6 px dots only.
+/// See `listd_2027_design_spec.md` §3.3.
+///
+/// Old 2026 token names (`primary`, `bg*`, `glass*`, …) are kept as
+/// backward-compat aliases that resolve to the corresponding 2027 token,
+/// so existing widgets pick up the new look automatically. New code
+/// should reach for `Theme.of(context).colorScheme` or the `ListdSurfaces`
+/// extension instead.
 class AppColors {
   AppColors._();
 
   // ─────────────────────────────────────────────────────────
-  //  ACCENT — the *only* hue that appears outside state pills.
+  //  ACCENTS — exactly two: flame (vibrant) + oat (muted).
   // ─────────────────────────────────────────────────────────
 
-  /// Light-mode accent (selection, focus ring, primary button).
-  static const Color accent = Color(0xFF4F46E5);
+  /// Vibrant flame — selection, focus ring, primary action, today.
+  static const Color flame = Color(0xFFFF6B35);
 
-  /// Dark-mode accent — adjusted for contrast on near-black surfaces.
-  static const Color accentDark = Color(0xFF7C7BFF);
+  /// Dark-mode flame — adjusted for contrast on warm-ink surfaces.
+  static const Color flameDark = Color(0xFFFF8A5C);
 
-  /// Tinted fill behind a selected row in light mode.
-  static const Color accentSoft = Color(0xFFEEF0FF);
+  /// Selected row fill / today's calendar cell (light).
+  static const Color flameSoft = Color(0xFFFFE4D6);
 
-  /// Tinted fill behind a selected row in dark mode.
-  static const Color accentSoftDark = Color(0xFF1B1D3A);
+  /// Selected row fill / today's calendar cell (dark).
+  static const Color flameSoftDark = Color(0xFF3D241A);
 
-  // ─────────────────────────────────────────────────────────
-  //  LIGHT NEUTRALS
-  // ─────────────────────────────────────────────────────────
+  /// Muted oat — counts, secondary chips, completed-state dot (light).
+  static const Color oat = Color(0xFFA89878);
 
-  static const Color _lSurface = Color(0xFFFFFFFF); // app background
-  static const Color _lSurfaceElevated = Color(0xFFFAFAFA); // rail/inspector
-  static const Color _lSurfaceSunken = Color(0xFFF4F4F5); // hover/capture
-  static const Color _lSurfaceDeeper = Color(0xFFEEEEF0); // press/header
-  static const Color _lBorder = Color(0xFFE5E5E7);
-  static const Color _lBorderStrong = Color(0xFFCFCFD3);
-  static const Color _lTextPrimary = Color(0xFF0A0A0B);
-  static const Color _lTextSecondary = Color(0xFF5C5C66);
-  static const Color _lTextTertiary = Color(0xFF9A9AA3);
+  /// Muted oat (dark).
+  static const Color oatDark = Color(0xFFC4B294);
+
+  /// Tag chip fill / hover row fill (light).
+  static const Color oatSoft = Color(0xFFF1EAE0);
+
+  /// Tag chip fill / hover row fill (dark).
+  static const Color oatSoftDark = Color(0xFF2A2620);
 
   // ─────────────────────────────────────────────────────────
-  //  DARK NEUTRALS
+  //  WARM NEUTRALS — the main color story.
+  //  Surface roles live on the `ListdSurfaces` extension; these are
+  //  the raw token values used to build them.
   // ─────────────────────────────────────────────────────────
 
-  static const Color _dSurface = Color(0xFF0B0B0E);
-  static const Color _dSurfaceElevated = Color(0xFF121217);
-  static const Color _dSurfaceSunken = Color(0xFF191920);
-  static const Color _dSurfaceDeeper = Color(0xFF1F1F27);
-  static const Color _dBorder = Color(0xFF26262C);
-  static const Color _dBorderStrong = Color(0xFF3A3A42);
-  static const Color _dTextPrimary = Color(0xFFF2F2F4);
-  static const Color _dTextSecondary = Color(0xFF9C9CA6);
-  static const Color _dTextTertiary = Color(0xFF5F5F6B);
+  // Light surfaces.
+  static const Color _lAmbient = Color(0xFFF6F1EA);
+  static const Color _lCanvas = Color(0xFFFFFFFF);
+  static const Color _lPanel = Color(0xFFFBF6EE);
+  static const Color _lChip = Color(0xFFF1EAE0);
+
+  // Light text + lines.
+  static const Color _lTextPrimary = Color(0xFF1B1A18);
+  static const Color _lTextSecondary = Color(0xFF5C564E);
+  static const Color _lTextTertiary = Color(0xFF9A938B);
+  static const Color _lBorder = Color(0xFFE6DFD4);
+  static const Color _lBorderStrong = Color(0xFFD6CDC0);
+  static const Color _lDivider = Color(0xFFEFEAE0);
+
+  // Dark surfaces.
+  static const Color _dAmbient = Color(0xFF0E0C10);
+  static const Color _dCanvas = Color(0xFF1A171F);
+  static const Color _dPanel = Color(0xFF16131A);
+  static const Color _dCard = Color(0xFF1F1B25);
+  static const Color _dChip = Color(0xFF26212C);
+
+  // Dark text + lines.
+  static const Color _dTextPrimary = Color(0xFFF4EFE7);
+  static const Color _dTextSecondary = Color(0xFFA8A199);
+  static const Color _dTextTertiary = Color(0xFF6E6862);
+  static const Color _dBorder = Color(0xFF2C2730);
+  static const Color _dBorderStrong = Color(0xFF3A343F);
+  static const Color _dDivider = Color(0xFF221F26);
 
   // ─────────────────────────────────────────────────────────
-  //  FUNCTIONAL — used only for state pills, never for emphasis.
+  //  AMBIENT BACKPLATE STOPS
+  //  Soft radial gradient corners. See `lib/theme/gradients.dart` →
+  //  `AppBackplate`.
   // ─────────────────────────────────────────────────────────
 
-  static const Color success = Color(0xFF16A34A);
-  static const Color successDark = Color(0xFF22C55E);
-  static const Color warning = Color(0xFFD97706);
-  static const Color warningDark = Color(0xFFF59E0B);
-  static const Color error = Color(0xFFDC2626);
-  static const Color errorDark = Color(0xFFEF4444);
+  static const Color ambientLightStartTopLeft = Color(0xFFF6E8D2);
+  static const Color ambientLightStartBottomRight = Color(0xFFEAD8E5);
+  static const Color ambientDarkStartTopLeft = Color(0xFF2A1F2E);
+  static const Color ambientDarkStartBottomRight = Color(0xFF1A2230);
+
+  // ─────────────────────────────────────────────────────────
+  //  FUNCTIONAL — used only as 6 px dots inside state pills.
+  //  Never on type or selection.
+  // ─────────────────────────────────────────────────────────
+
+  static const Color success = Color(0xFF3F8F4F);
+  static const Color successDark = Color(0xFF5BB070);
+  static const Color warning = Color(0xFFC97C2C);
+  static const Color warningDark = Color(0xFFE09A50);
+  static const Color error = Color(0xFFB84A3A);
+  static const Color errorDark = Color(0xFFD8694F);
+
+  // ─────────────────────────────────────────────────────────
+  //  SHADOW INK
+  //  Warm-tinted in light mode; pure black in dark mode.
+  // ─────────────────────────────────────────────────────────
+
+  static const Color shadowInk = Color(0xFF1C1610);
 
   // ─────────────────────────────────────────────────────────
   //  COLOR SCHEMES — explicit, no fromSeed.
@@ -72,111 +113,121 @@ class AppColors {
 
   static const ColorScheme lightScheme = ColorScheme(
     brightness: Brightness.light,
-    primary: accent,
+    primary: flame,
     onPrimary: Color(0xFFFFFFFF),
-    primaryContainer: accentSoft,
-    onPrimaryContainer: accent,
-    inversePrimary: accentDark,
-    secondary: _lTextSecondary,
+    primaryContainer: flameSoft,
+    onPrimaryContainer: flame,
+    inversePrimary: flameDark,
+    secondary: oat,
     onSecondary: Color(0xFFFFFFFF),
-    secondaryContainer: _lSurfaceSunken,
+    secondaryContainer: oatSoft,
     onSecondaryContainer: _lTextPrimary,
-    tertiary: accent,
+    tertiary: oat,
     onTertiary: Color(0xFFFFFFFF),
-    tertiaryContainer: accentSoft,
-    onTertiaryContainer: accent,
+    tertiaryContainer: oatSoft,
+    onTertiaryContainer: _lTextPrimary,
     error: error,
     onError: Color(0xFFFFFFFF),
-    errorContainer: Color(0xFFFEE2E2),
+    errorContainer: Color(0xFFF8DAD3),
     onErrorContainer: error,
-    surface: _lSurface,
+    surface: _lCanvas,
     onSurface: _lTextPrimary,
-    surfaceContainerLowest: _lSurface,
-    surfaceContainerLow: _lSurfaceElevated,
-    surfaceContainer: _lSurfaceSunken,
-    surfaceContainerHigh: _lSurfaceDeeper,
-    surfaceContainerHighest: _lSurfaceDeeper,
-    surfaceDim: _lSurfaceSunken,
-    surfaceBright: _lSurface,
+    surfaceContainerLowest: _lCanvas,
+    surfaceContainerLow: _lPanel,
+    surfaceContainer: _lAmbient,
+    surfaceContainerHigh: _lChip,
+    surfaceContainerHighest: _lDivider,
+    surfaceDim: _lAmbient,
+    surfaceBright: _lCanvas,
     onSurfaceVariant: _lTextSecondary,
     inverseSurface: _lTextPrimary,
-    onInverseSurface: _lSurface,
+    onInverseSurface: _lCanvas,
     outline: _lBorderStrong,
     outlineVariant: _lBorder,
-    shadow: Color(0xFF000000),
-    scrim: Color(0xFF000000),
-    surfaceTint: accent,
+    shadow: shadowInk,
+    scrim: Color(0xFF1C1610),
+    surfaceTint: flame,
   );
 
   static const ColorScheme darkScheme = ColorScheme(
     brightness: Brightness.dark,
-    primary: accentDark,
-    onPrimary: Color(0xFF0B0B0E),
-    primaryContainer: accentSoftDark,
-    onPrimaryContainer: accentDark,
-    inversePrimary: accent,
-    secondary: _dTextSecondary,
-    onSecondary: _dSurface,
-    secondaryContainer: _dSurfaceSunken,
+    primary: flameDark,
+    onPrimary: Color(0xFF1F1208),
+    primaryContainer: flameSoftDark,
+    onPrimaryContainer: flameDark,
+    inversePrimary: flame,
+    secondary: oatDark,
+    onSecondary: Color(0xFF1F1B12),
+    secondaryContainer: oatSoftDark,
     onSecondaryContainer: _dTextPrimary,
-    tertiary: accentDark,
-    onTertiary: _dSurface,
-    tertiaryContainer: accentSoftDark,
-    onTertiaryContainer: accentDark,
+    tertiary: oatDark,
+    onTertiary: Color(0xFF1F1B12),
+    tertiaryContainer: oatSoftDark,
+    onTertiaryContainer: _dTextPrimary,
     error: errorDark,
-    onError: Color(0xFF0B0B0E),
-    errorContainer: Color(0xFF3F1212),
+    onError: Color(0xFF1F0E0B),
+    errorContainer: Color(0xFF3F1D17),
     onErrorContainer: errorDark,
-    surface: _dSurface,
+    surface: _dCanvas,
     onSurface: _dTextPrimary,
-    surfaceContainerLowest: _dSurface,
-    surfaceContainerLow: _dSurfaceElevated,
-    surfaceContainer: _dSurfaceSunken,
-    surfaceContainerHigh: _dSurfaceDeeper,
-    surfaceContainerHighest: _dSurfaceDeeper,
-    surfaceDim: _dSurface,
-    surfaceBright: _dSurfaceElevated,
+    surfaceContainerLowest: _dAmbient,
+    surfaceContainerLow: _dPanel,
+    surfaceContainer: _dCanvas,
+    surfaceContainerHigh: _dCard,
+    surfaceContainerHighest: _dDivider,
+    surfaceDim: _dAmbient,
+    surfaceBright: _dCard,
     onSurfaceVariant: _dTextSecondary,
     inverseSurface: _dTextPrimary,
-    onInverseSurface: _dSurface,
+    onInverseSurface: _dCanvas,
     outline: _dBorderStrong,
     outlineVariant: _dBorder,
     shadow: Color(0xFF000000),
     scrim: Color(0xFF000000),
-    surfaceTint: accentDark,
+    surfaceTint: flameDark,
   );
 
   // ─────────────────────────────────────────────────────────
   //  BACKWARD-COMPAT ALIASES
-  //  Existing widgets keep referencing these names. Each one resolves to
-  //  a value from the spec above; new code should reach for
-  //  `Theme.of(context).colorScheme` instead.
+  //  The 2026 system referenced these names everywhere. Each one
+  //  resolves to the equivalent 2027 token so call sites keep
+  //  compiling and visually pick up the new look automatically.
+  //  New code must use `Theme.of(context).colorScheme` or
+  //  `ListdSurfaces` instead — these aliases will be removed in
+  //  a follow-up PR alongside the gradient-class purge.
   // ─────────────────────────────────────────────────────────
 
-  /// Brand accent. Mapped to the spec accent.
-  static const Color primary = accent;
-  static const Color primaryLight = accentDark;
-  static const Color primaryContainer = accentSoft;
-  static const Color onPrimaryContainer = accent;
-  static const Color secondary = accent;
-  static const Color secondaryContainer = accentSoft;
-  static const Color onSecondaryContainer = accent;
+  /// Mapped to 2027 flame so the 2026 indigo brand alias resolves
+  /// to the new accent.
+  static const Color accent = flame;
+  static const Color accentDark = flameDark;
+  static const Color accentSoft = flameSoft;
+  static const Color accentSoftDark = flameSoftDark;
 
-  // Dark surfaces — kept so legacy `AppColors.bg*` references resolve.
-  static const Color bgDeep = _dSurface;
-  static const Color bgSurface = _dSurface;
-  static const Color bgContainer = _dSurfaceElevated;
-  static const Color bgContainerHigh = _dSurfaceSunken;
-  static const Color bgContainerHighest = _dSurfaceDeeper;
-  static const Color bgMid = _dSurfaceElevated;
-  static const Color bgSurfaceDark = _dSurfaceElevated;
+  static const Color primary = flame;
+  static const Color primaryLight = flameDark;
+  static const Color primaryContainer = flameSoft;
+  static const Color onPrimaryContainer = flame;
+  static const Color secondary = oat;
+  static const Color secondaryContainer = oatSoft;
+  static const Color onSecondaryContainer = _lTextPrimary;
 
-  static const Color bgLight = _lSurface;
-  static const Color bgLightSurface = _lSurface;
-  static const Color bgLightContainerLow = _lSurfaceElevated;
-  static const Color bgLightContainer = _lSurfaceSunken;
-  static const Color bgLightContainerHigh = _lSurfaceDeeper;
-  static const Color bgLightContainerHighest = _lSurfaceDeeper;
+  // Dark-surface aliases.
+  static const Color bgDeep = _dAmbient;
+  static const Color bgSurface = _dCanvas;
+  static const Color bgContainer = _dPanel;
+  static const Color bgContainerHigh = _dCard;
+  static const Color bgContainerHighest = _dChip;
+  static const Color bgMid = _dPanel;
+  static const Color bgSurfaceDark = _dPanel;
+
+  // Light-surface aliases.
+  static const Color bgLight = _lAmbient;
+  static const Color bgLightSurface = _lCanvas;
+  static const Color bgLightContainerLow = _lPanel;
+  static const Color bgLightContainer = _lChip;
+  static const Color bgLightContainerHigh = _lChip;
+  static const Color bgLightContainerHighest = _lDivider;
 
   static const Color textPrimary = _dTextPrimary;
   static const Color textSecondary = _dTextSecondary;
@@ -185,7 +236,7 @@ class AppColors {
   static const Color textSecondaryLight = _lTextSecondary;
   static const Color textHintLight = _lTextTertiary;
 
-  static const Color errorContainer = Color(0xFFFEE2E2);
+  static const Color errorContainer = Color(0xFFF8DAD3);
   static const Color danger = error;
 
   static const Color outline = _lBorderStrong;
@@ -193,14 +244,14 @@ class AppColors {
   static const Color outlineDark = _dBorderStrong;
   static const Color outlineVariantDark = _dBorder;
 
-  /// Legacy "glass" tokens. There are no glass surfaces in the 2026
-  /// system — these alias to neutral hairline equivalents so old call
-  /// sites still render correctly. Do not use in new code.
-  static const Color glassWhite = _lSurfaceSunken;
+  /// Legacy "glass" tokens. There are no glass surfaces in the 2027
+  /// system — these alias to the new neutrals so old call sites still
+  /// render correctly. Do not use in new code.
+  static const Color glassWhite = _lChip;
   static const Color glassBorder = _lBorder;
   static const Color glassBorderSubtle = _lBorder;
-  static const Color glassFill = _lSurfaceElevated;
-  static const Color glassFillLight = _lSurface;
-  static const Color glassPrimary = accent;
-  static const Color glassPrimaryLight = accentDark;
+  static const Color glassFill = _lPanel;
+  static const Color glassFillLight = _lCanvas;
+  static const Color glassPrimary = flame;
+  static const Color glassPrimaryLight = flameDark;
 }
