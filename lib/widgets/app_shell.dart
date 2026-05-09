@@ -126,14 +126,16 @@ class _AppShellState extends ConsumerState<AppShell> {
       onKeyEvent: _onKeyEvent,
       child: Stack(
         children: [
-          // Main canvas — top bar + child. Slide right by 32 px when
-          // the drawer is open so the visible work area gets out of
-          // the drawer's way.
+          // Main canvas — top bar + child. When the drawer is open we
+          // SHRINK the canvas (right edge stays anchored, left edge
+          // slides in to clear the drawer) instead of translating it
+          // off-screen. That keeps centered content centered in the
+          // visible work area instead of walking off the right edge.
           AnimatedPositioned(
             duration: ListdSpring.duration,
             curve: ListdSpring.curve,
             left: isOpen ? SidebarDrawer.width + _canvasShift : 0,
-            right: isOpen ? -(SidebarDrawer.width + _canvasShift) + 0 : 0,
+            right: 0,
             top: 0,
             bottom: 0,
             child: Column(

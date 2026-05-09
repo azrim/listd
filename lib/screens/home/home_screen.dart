@@ -39,7 +39,12 @@ class HomeScreen extends ConsumerWidget {
     final listName = _resolveName(listId, taskListsAsync);
 
     final scheme = Theme.of(context).colorScheme;
-    return ColoredBox(
+    // Material (not ColoredBox) so descendant TextFields, InkWells, and
+    // other material library widgets find their required ancestor. The
+    // AppBackplate behind us still bleeds through anywhere our scheme
+    // surface is transparent.
+    return Material(
+      type: MaterialType.canvas,
       color: scheme.surface,
       child: TaskListPanel(listId: listId, listName: listName),
     );
