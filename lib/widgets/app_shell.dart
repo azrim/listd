@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/overlays_provider.dart';
 import '../providers/shell_state_provider.dart';
+import '../theme/app_theme.dart';
 import '../theme/spring.dart';
 import 'capture_sheet.dart';
 import 'command_palette.dart';
@@ -14,10 +15,13 @@ import 'undo_toast.dart';
 
 /// Listd 2027 · Indigo Edition app shell.
 ///
-/// The mockups (`docs/redesign/2027-indigo/mockups/01_today_light.png`
-/// and friends) show the sidebar permanently docked against the left
-/// edge — no hover-edge detector, no overlay scrim. The canvas sits
-/// to its right and renders its own headline / capture row / cards.
+/// The mockups (`docs/redesign/2027-indigo/mockups/01_today_light.png`,
+/// `03_list_view_light.png` …) show two **floating rounded panels** on
+/// the indigo `AppBackplate` — a 240 px sidebar card and a wider canvas
+/// card — separated by an 8 px gutter, with 16 px gutters around the
+/// outer edges so the backplate shows through. The top bar (panel
+/// toggle + page title + Search · ⌘K + avatar) lives **inside** the
+/// canvas card, not above the whole shell.
 ///
 ///  * Sidebar (240 px, always visible on desktop) + canvas (Expanded).
 ///  * `Ctrl + \` toggles the sidebar visibility (still useful on
@@ -93,6 +97,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     final paletteOpen = ref.watch(commandPaletteOpenProvider);
     final settingsOpen = ref.watch(settingsOverlayOpenProvider);
 
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final surfaces = theme.extension<ListdSurfaces>();
+
     // Wrap the shell in a Material so descendant Text widgets
     // inherit a DefaultTextStyle (otherwise Flutter renders the
     // amber double-underline debug warning over labels like SMART /
@@ -105,26 +113,77 @@ class _AppShellState extends ConsumerState<AppShell> {
         onKeyEvent: _onKeyEvent,
         child: Stack(
           children: [
-            Row(
-              children: [
-                AnimatedSize(
-                  duration: ListdSpring.duration,
-                  curve: ListdSpring.curve,
-                  alignment: Alignment.centerLeft,
-                  child: SizedBox(
-                    width: sidebarOpen ? SidebarDrawer.width : 0,
-                    child: const ClipRect(child: SidebarDrawer()),
+            // Outer 16 px gutters around both panels so the indigo
+            // backplate shows through at every edge — exactly the
+            // layering shown in `03_list_view_light.png`.
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Sidebar: 240 px slate-soft floating panel with
+                  // 20 px corners and a soft shadow. Animates to
+                  // width 0 (with an 8 px gap shrink) when toggled.
+                  AnimatedSize(
+                    duration: ListdSpring.duration,
+                    curve: ListdSpring.curve,
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      width: sidebarOpen ? SidebarDrawer.width : 0,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color:
+                                surfaces?.panel ?? scheme.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              surfaces?.shadowSm ?? const BoxShadow(),
+                            ],
+                            border: Border.all(
+                              color: scheme.outlineVariant,
+                              width: 1,
+                            ),
+                          ),
+                          child: const SidebarDrawer(),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Column(
-                    children: [
-                      const TopBar(),
-                      Expanded(child: widget.child),
-                    ],
+
+                  // 8 px gutter between the two panels — backplate
+                  // shows through here.
+                  SizedBox(width: sidebarOpen ? 16 : 0),
+
+                  // Canvas: white floating panel with 20 px corners,
+                  // soft shadow, and the top bar living inside it
+                  // (panel toggle on the left, page title beside it,
+                  // Search · ⌘K + avatar on the right).
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: scheme.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [surfaces?.shadowSm ?? const BoxShadow()],
+                          border: Border.all(
+                            color: scheme.outlineVariant,
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const TopBar(),
+                            Expanded(child: widget.child),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
 
             // Bottom-center undo toast — always mounted so the
