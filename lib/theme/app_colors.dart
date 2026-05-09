@@ -12,11 +12,9 @@ import 'package:flutter/material.dart';
 /// equivalents are committed below; see `docs/redesign/2027-indigo/02_tokens.md`
 /// for the OKLCH source values.
 ///
-/// Old token names (`flame`, `flameSoft`, `oat`, `oatSoft`, `bgDeep`,
-/// `bgLight`, `glassWhite`, …) ship as `@Deprecated` aliases that point
-/// at their indigo equivalents so existing widgets keep compiling and
-/// pick up the new look automatically. New code should reach for
-/// `Theme.of(context).colorScheme` or the `ListdSurfaces` extension.
+/// New code should reach for `Theme.of(context).colorScheme` or the
+/// `ListdSurfaces` ThemeExtension. Raw token values are only consumed
+/// inside this file and `lib/theme/app_theme.dart`.
 class AppColors {
   AppColors._();
 
@@ -93,7 +91,6 @@ class AppColors {
   // Light text + lines.
   static const Color _lTextPrimary = slate900;
   static const Color _lTextSecondary = slate500;
-  static const Color _lTextTertiary = slate400;
   static const Color _lBorder = slate200;
   static const Color _lDivider = slate100;
 
@@ -102,12 +99,10 @@ class AppColors {
   static const Color _dCanvas = slate900;
   static const Color _dPanel = slate900;
   static const Color _dCard = slate800;
-  static const Color _dChip = slate700;
 
   // Dark text + lines.
   static const Color _dTextPrimary = slate50;
   static const Color _dTextSecondary = slate400;
-  static const Color _dTextTertiary = slate500;
   static const Color _dBorder = slate700;
   static const Color _dDivider = slate800;
 
@@ -217,183 +212,4 @@ class AppColors {
     scrim: Color(0xFF000000),
     surfaceTint: indigo400,
   );
-
-  // ─────────────────────────────────────────────────────────
-  //  DEPRECATED ALIASES
-  //
-  //  Names from the 2027 warm-cream system. Each one resolves to
-  //  the equivalent indigo/slate token so existing call sites keep
-  //  compiling and visually pick up the new look automatically.
-  //  Will be removed in PR C alongside the editor + empty-state
-  //  cleanup. New code must use `Theme.of(context).colorScheme` or
-  //  `ListdSurfaces` instead.
-  // ─────────────────────────────────────────────────────────
-
-  // Flame / oat accent aliases.
-
-  @Deprecated('Use ColorScheme.primary or AppColors.indigo600.')
-  static const Color flame = indigo600;
-
-  @Deprecated('Use ColorScheme.primary (dark) or AppColors.indigo400.')
-  static const Color flameDark = indigo400;
-
-  @Deprecated('Use ColorScheme.primaryContainer or AppColors.indigo50.')
-  static const Color flameSoft = indigo50;
-
-  @Deprecated('Use ColorScheme.primaryContainer (dark).')
-  static const Color flameSoftDark = _accentSoftDark;
-
-  @Deprecated('Use ColorScheme.tertiary or AppColors.slate500.')
-  static const Color oat = slate500;
-
-  @Deprecated('Use ColorScheme.tertiary (dark) or AppColors.slate400.')
-  static const Color oatDark = slate400;
-
-  @Deprecated('Use ColorScheme.surfaceContainerHigh or AppColors.slate100.')
-  static const Color oatSoft = slate100;
-
-  @Deprecated(
-    'Use ColorScheme.surfaceContainerHigh (dark) or AppColors.slate700.',
-  )
-  static const Color oatSoftDark = slate700;
-
-  // 2026 brand aliases (still referenced by some legacy widgets).
-
-  @Deprecated('Use ColorScheme.primary.')
-  static const Color accent = indigo600;
-
-  @Deprecated('Use ColorScheme.primary (dark).')
-  static const Color accentDark = indigo400;
-
-  @Deprecated('Use ColorScheme.primaryContainer.')
-  static const Color accentSoft = indigo50;
-
-  @Deprecated('Use ColorScheme.primaryContainer (dark).')
-  static const Color accentSoftDark = _accentSoftDark;
-
-  @Deprecated('Use ColorScheme.primary.')
-  static const Color primary = indigo600;
-
-  @Deprecated('Use ColorScheme.primary (dark).')
-  static const Color primaryLight = indigo400;
-
-  @Deprecated('Use ColorScheme.primaryContainer.')
-  static const Color primaryContainer = indigo50;
-
-  @Deprecated('Use ColorScheme.onPrimaryContainer.')
-  static const Color onPrimaryContainer = indigo700;
-
-  @Deprecated('Use ColorScheme.tertiary.')
-  static const Color secondary = slate500;
-
-  @Deprecated('Use ColorScheme.tertiaryContainer.')
-  static const Color secondaryContainer = slate100;
-
-  @Deprecated('Use ColorScheme.onTertiaryContainer.')
-  static const Color onSecondaryContainer = _lTextPrimary;
-
-  // Surface aliases — dark.
-
-  @Deprecated('Use ColorScheme.surfaceContainerLowest or AppColors.slate950.')
-  static const Color bgDeep = _dAmbient;
-
-  @Deprecated('Use ColorScheme.surface or AppColors.slate900.')
-  static const Color bgSurface = _dCanvas;
-
-  @Deprecated('Use ColorScheme.surfaceContainerLow or AppColors.slate900.')
-  static const Color bgContainer = _dPanel;
-
-  @Deprecated('Use ColorScheme.surfaceContainerHigh or AppColors.slate800.')
-  static const Color bgContainerHigh = _dCard;
-
-  @Deprecated('Use ColorScheme.surfaceContainerHighest or AppColors.slate700.')
-  static const Color bgContainerHighest = _dChip;
-
-  @Deprecated('Use ColorScheme.surfaceContainerLow.')
-  static const Color bgMid = _dPanel;
-
-  @Deprecated('Use ColorScheme.surfaceContainerLow.')
-  static const Color bgSurfaceDark = _dPanel;
-
-  // Surface aliases — light.
-
-  @Deprecated('Use ColorScheme.surfaceContainer or AppColors.slate50.')
-  static const Color bgLight = _lAmbient;
-
-  @Deprecated('Use ColorScheme.surface (light) or AppColors.slate50.')
-  static const Color bgLightSurface = _lCanvas;
-
-  @Deprecated('Use ColorScheme.surfaceContainerLow or AppColors.slate50.')
-  static const Color bgLightContainerLow = _lPanel;
-
-  @Deprecated('Use ColorScheme.surfaceContainerHigh or AppColors.slate100.')
-  static const Color bgLightContainer = _lChip;
-
-  @Deprecated('Use ColorScheme.surfaceContainerHigh or AppColors.slate100.')
-  static const Color bgLightContainerHigh = _lChip;
-
-  @Deprecated('Use ColorScheme.surfaceContainerHighest or AppColors.slate100.')
-  static const Color bgLightContainerHighest = _lDivider;
-
-  // Text + outline aliases.
-
-  @Deprecated('Use ColorScheme.onSurface (dark) or AppColors.slate50.')
-  static const Color textPrimary = _dTextPrimary;
-
-  @Deprecated('Use ColorScheme.onSurfaceVariant (dark) or AppColors.slate400.')
-  static const Color textSecondary = _dTextSecondary;
-
-  @Deprecated('Use ColorScheme.outline (dark) or AppColors.slate500.')
-  static const Color textHint = _dTextTertiary;
-
-  @Deprecated('Use ColorScheme.onSurface (light) or AppColors.slate900.')
-  static const Color textPrimaryLight = _lTextPrimary;
-
-  @Deprecated('Use ColorScheme.onSurfaceVariant (light) or AppColors.slate500.')
-  static const Color textSecondaryLight = _lTextSecondary;
-
-  @Deprecated('Use ColorScheme.outline (light) or AppColors.slate400.')
-  static const Color textHintLight = _lTextTertiary;
-
-  @Deprecated('Use ColorScheme.errorContainer.')
-  static const Color errorContainer = Color(0xFFFEE2E2);
-
-  @Deprecated('Use ColorScheme.error.')
-  static const Color danger = error;
-
-  @Deprecated('Use ColorScheme.outline (light).')
-  static const Color outline = _lBorder;
-
-  @Deprecated('Use ColorScheme.outlineVariant (light).')
-  static const Color outlineVariant = _lDivider;
-
-  @Deprecated('Use ColorScheme.outline (dark).')
-  static const Color outlineDark = _dBorder;
-
-  @Deprecated('Use ColorScheme.outlineVariant (dark).')
-  static const Color outlineVariantDark = _dDivider;
-
-  // Legacy "glass" tokens — retained as aliases only.
-  // No glass surfaces exist in the indigo system.
-
-  @Deprecated('Glass surfaces removed. Use ColorScheme.surfaceContainerHigh.')
-  static const Color glassWhite = _lChip;
-
-  @Deprecated('Glass surfaces removed. Use ColorScheme.outlineVariant.')
-  static const Color glassBorder = _lBorder;
-
-  @Deprecated('Glass surfaces removed. Use ColorScheme.outlineVariant.')
-  static const Color glassBorderSubtle = _lBorder;
-
-  @Deprecated('Glass surfaces removed. Use ColorScheme.surfaceContainerLow.')
-  static const Color glassFill = _lPanel;
-
-  @Deprecated('Glass surfaces removed. Use ColorScheme.surface.')
-  static const Color glassFillLight = _lCanvas;
-
-  @Deprecated('Glass surfaces removed. Use ColorScheme.primary.')
-  static const Color glassPrimary = indigo600;
-
-  @Deprecated('Glass surfaces removed. Use ColorScheme.primary (dark).')
-  static const Color glassPrimaryLight = indigo400;
 }

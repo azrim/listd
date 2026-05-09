@@ -158,7 +158,7 @@ class _SettingsOverlayState extends ConsumerState<SettingsOverlay>
   }
 }
 
-enum _Category { appearance, account, notifications }
+enum _Category { appearance, account, notifications, about }
 
 extension on _Category {
   String get label {
@@ -169,6 +169,8 @@ extension on _Category {
         return 'Account';
       case _Category.notifications:
         return 'Notifications';
+      case _Category.about:
+        return 'About';
     }
   }
 
@@ -180,6 +182,8 @@ extension on _Category {
         return PhosphorIcons.userCircle();
       case _Category.notifications:
         return PhosphorIcons.bell();
+      case _Category.about:
+        return PhosphorIcons.info();
     }
   }
 }
@@ -332,6 +336,8 @@ class _CategoryBody extends ConsumerWidget {
         return const _AccountBody();
       case _Category.notifications:
         return const _NotificationsBody();
+      case _Category.about:
+        return const _AboutBody();
     }
   }
 }
@@ -500,6 +506,56 @@ class _SectionLabel extends StatelessWidget {
         letterSpacing: 0.6,
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
+    );
+  }
+}
+
+class _AboutBody extends StatelessWidget {
+  const _AboutBody();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '“The list is the page; the page is the work.”',
+          style: GoogleFonts.newsreader(
+            fontSize: 22,
+            height: 30 / 22,
+            fontWeight: FontWeight.w400,
+            fontStyle: FontStyle.italic,
+            letterSpacing: -0.22,
+            color: scheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _SectionLabel('Listd'),
+        const SizedBox(height: 8),
+        Text(
+          'A local-first task manager. Capture in under a second, sync in '
+          'the background, and stay focused on the list.',
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            height: 20 / 13,
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _SectionLabel('Design system'),
+        const SizedBox(height: 8),
+        Text(
+          '2027 · Indigo Edition. Indigo + slate + amber on OKLCH. '
+          'Inter and Newsreader. Phosphor icons. Single spring, three '
+          'calibrations: settle, flick, breathe.',
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            height: 20 / 13,
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }

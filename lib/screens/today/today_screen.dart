@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../models/task.dart';
 import '../../providers/today_provider.dart';
 import '../../providers/ui_state_providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/calendar_strip.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/task_card.dart';
 
 /// Listd 2027 Today canvas.
@@ -193,37 +195,14 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final typography = theme.extension<ListdTypography>();
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(48),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              isToday ? 'A clear day.' : 'Nothing here.',
-              style:
-                  typography?.displaySerif.copyWith(
-                    fontSize: 24,
-                    height: 32 / 24,
-                  ) ??
-                  theme.textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isToday
-                  ? 'Capture something with Ctrl + N — or just enjoy it.'
-                  : 'Nothing scheduled for this day.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(48),
+      child: EmptyState(
+        icon: PhosphorIcons.sun(),
+        headline: isToday ? 'A clear day.' : 'Nothing here.',
+        body: isToday
+            ? 'Capture something with Ctrl + N — or just enjoy it.'
+            : 'Nothing scheduled for this day.',
       ),
     );
   }

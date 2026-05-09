@@ -176,6 +176,15 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                         children: _buildChips(_preview, scheme),
                       ),
                     ),
+                  // AI suggestion slot · spatial reservation per
+                  // 03_components.md §9. Hidden until the user types
+                  // ≥ 4 characters. Today the slot is silent;
+                  // upcoming iterations populate it with model-driven
+                  // due-date / list / star inferences. Reserving the
+                  // surface now means we don't redesign the sheet
+                  // when AI lands.
+                  if (_controller.text.trim().length >= 4)
+                    _AiSuggestionsSlot(scheme: scheme),
                   Container(height: 1, color: scheme.outlineVariant),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 12, 10),
@@ -295,6 +304,45 @@ class _PreviewChip extends StatelessWidget {
               height: 16 / 12,
               fontWeight: FontWeight.w500,
               color: fg,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Spatial reservation for upcoming AI-driven capture suggestions.
+///
+/// Per `docs/redesign/2027-indigo/03_components.md` §9 the capture
+/// sheet reserves vertical room for model-suggested actions (due
+/// dates, list assignment, importance) so that adding them later is
+/// non-breaking. The slot stays hidden until the user has typed at
+/// least four characters, then renders as a quiet panel with a single
+/// caption row. Today no suggestions are produced; the keyboard
+/// hint text alone communicates intent.
+class _AiSuggestionsSlot extends StatelessWidget {
+  const _AiSuggestionsSlot({required this.scheme});
+
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(48, 0, 16, 12),
+      child: Row(
+        children: [
+          Icon(PhosphorIcons.sparkle(), size: 12, color: scheme.outline),
+          const SizedBox(width: 8),
+          Text(
+            'AI suggestions appear here as you type.',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              height: 16 / 11,
+              fontWeight: FontWeight.w500,
+              fontStyle: FontStyle.italic,
+              color: scheme.onSurfaceVariant,
+              letterSpacing: 0.04,
             ),
           ),
         ],

@@ -145,7 +145,7 @@ class AppBackplateStops {
 
     if (brightness == Brightness.light) {
       return AppBackplateStops(
-        base: AppColors.bgLight,
+        base: AppColors.slate50,
         topLeft: AppColors.ambientLightStartTopLeft.withValues(
           alpha: 0.50 + 0.10 * morning,
         ),
@@ -159,7 +159,7 @@ class AppBackplateStops {
       );
     }
     return AppBackplateStops(
-      base: AppColors.bgDeep,
+      base: AppColors.slate950,
       topLeft: AppColors.ambientDarkStartTopLeft.withValues(
         alpha: 0.65 + 0.15 * morning,
       ),

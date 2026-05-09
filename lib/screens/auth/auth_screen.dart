@@ -10,7 +10,7 @@ import '../../services/supabase/supabase_client_service.dart';
 import '../../widgets/app_logo.dart';
 
 /// Auth screen — minimal centered card. No orbs, no pulsing glow, no
-/// gradients; the only emphasis is the flame `FilledButton`.
+/// gradients; the only emphasis is the indigo `FilledButton`.
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 

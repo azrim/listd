@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/task.dart';
@@ -10,6 +11,7 @@ import '../providers/tasks_provider.dart';
 import '../providers/ui_state_providers.dart';
 import '../theme/app_theme.dart';
 import 'context_menu.dart';
+import 'empty_state.dart';
 import 'task_card.dart';
 
 /// Filter the aggregate task stream into the slice that belongs to a virtual
@@ -470,30 +472,31 @@ class TaskListPanel extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(48),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Nothing here yet',
-              style: theme.textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Capture your first task with the input above.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontStyle: FontStyle.italic,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(48),
+      child: EmptyState(
+        icon: PhosphorIcons.checkSquare(),
+        headline: _emptyHeadline(),
+        body: _isVirtual
+            ? null
+            : 'Capture your first task with the input above.',
       ),
     );
+  }
+
+  String _emptyHeadline() {
+    switch (listId) {
+      case SpecialListIds.myDay:
+        return 'A clear day.';
+      case SpecialListIds.important:
+        return 'No starred tasks yet.';
+      case SpecialListIds.planned:
+        return 'Nothing scheduled.';
+      case SpecialListIds.tasks:
+        return 'No tasks anywhere.';
+      default:
+        return 'Nothing here yet.';
+    }
   }
 }
 
