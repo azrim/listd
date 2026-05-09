@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
-import '../config/feature_flags.dart';
 import '../models/task.dart';
 import '../models/task_list.dart';
 import '../providers/task_lists_provider.dart';
@@ -41,13 +40,12 @@ TaskList? _resolveTargetList(List<TaskList> lists) {
   return defaults.isNotEmpty ? defaults.first : lists.first;
 }
 
-/// Listd 2026 list pane.
+/// Listd 2027 list pane.
 ///
-/// The list pane is the bright surface and reads as a single sheet of
-/// paper. The header is a 22 px H2 title plus a quiet refresh icon.
-/// Below it sits the borderless capture input on `surface-sunken`.
-/// Rows are 44 px tall with hairline separators between them — no
-/// rounded chips, no shadows.
+/// Renders a section header (display title + refresh icon), an inline
+/// capture input for real (non-virtual) lists, and the list of
+/// `TaskCard` islands. The pane is the only owner of the list-level
+/// header chrome; the cards own their own surface.
 class TaskListPanel extends ConsumerWidget {
   final String listId;
   final String listName;
@@ -187,103 +185,35 @@ class TaskListPanel extends ConsumerWidget {
 
     final scheme = Theme.of(context).colorScheme;
 
-    if (FeatureFlags.use2027Cards) {
-      // 2027 P3 — render TaskCard islands. No separators (cards are
-      // their own surface) and tap toggles inline expand instead of
-      // mounting an inspector pane.
-      final expandedId = ref.watch(expandedTaskIdProvider);
-      return RefreshIndicator(
-        onRefresh: () => _refresh(ref),
-        color: scheme.primary,
-        child: ListView.builder(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          itemCount: mainTasks.length,
-          itemBuilder: (context, index) {
-            final task = mainTasks[index];
-            final ownerListId = task.taskListId;
-            return TaskCard(
-              key: ValueKey<String>(task.id),
-              task: task,
-              listId: ownerListId,
-              isExpanded: expandedId == task.id,
-              isSelected: selectedTaskId == task.id,
-              onToggleExpand: () {
-                final notifier = ref.read(expandedTaskIdProvider.notifier);
-                notifier.state = expandedId == task.id ? null : task.id;
-                ref.read(selectedTaskIdProvider.notifier).state = task.id;
-                onTaskSelected?.call(task);
-              },
-            );
-          },
-        ),
-      );
-    }
-
+    // 2027 — render TaskCard islands. No separators (cards are their
+    // own surface) and tap toggles inline expand instead of mounting
+    // an inspector pane.
+    final expandedId = ref.watch(expandedTaskIdProvider);
     return RefreshIndicator(
       onRefresh: () => _refresh(ref),
       color: scheme.primary,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 4),
         itemCount: mainTasks.length,
-        separatorBuilder: (_, _) =>
-            Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
         itemBuilder: (context, index) {
           final task = mainTasks[index];
-          // Mutations always target the task's real owning list, not the
-          // virtual screen the user happens to be viewing.
           final ownerListId = task.taskListId;
-          return _TaskRow(
+          return TaskCard(
+            key: ValueKey<String>(task.id),
             task: task,
+            listId: ownerListId,
+            isExpanded: expandedId == task.id,
             isSelected: selectedTaskId == task.id,
-            onTap: () {
+            onToggleExpand: () {
+              final notifier = ref.read(expandedTaskIdProvider.notifier);
+              notifier.state = expandedId == task.id ? null : task.id;
               ref.read(selectedTaskIdProvider.notifier).state = task.id;
               onTaskSelected?.call(task);
             },
-            onToggle: () => ref
-                .read(tasksNotifierProvider(ownerListId).notifier)
-                .toggleComplete(task),
-            onDelete: () => _confirmDelete(context, ref, task),
           );
         },
       ),
     );
-  }
-
-  Future<void> _confirmDelete(
-    BuildContext context,
-    WidgetRef ref,
-    Task task,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        final scheme = Theme.of(context).colorScheme;
-        return AlertDialog(
-          title: const Text('Delete task'),
-          content: Text('Are you sure you want to delete "${task.title}"?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: scheme.error,
-                foregroundColor: scheme.onError,
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true) {
-      await ref
-          .read(tasksNotifierProvider(task.taskListId).notifier)
-          .deleteTask(task.id);
-    }
   }
 
   Widget _buildError(BuildContext context, WidgetRef ref, Object error) {
@@ -366,171 +296,6 @@ class _QuietIconButton extends StatelessWidget {
             child: Icon(icon, size: 18, color: scheme.onSurfaceVariant),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// 44 px task row — 18 px circular checkbox + title + meta cluster +
-/// optional star. Hover fills `surface-sunken`. Selected gets
-/// `accent-soft` fill + 2 px accent left bar.
-class _TaskRow extends StatefulWidget {
-  final Task task;
-  final bool isSelected;
-  final VoidCallback? onTap;
-  final VoidCallback? onToggle;
-  final VoidCallback? onDelete;
-
-  const _TaskRow({
-    required this.task,
-    this.isSelected = false,
-    this.onTap,
-    this.onToggle,
-    this.onDelete,
-  });
-
-  @override
-  State<_TaskRow> createState() => _TaskRowState();
-}
-
-class _TaskRowState extends State<_TaskRow> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final task = widget.task;
-    final isSelected = widget.isSelected;
-
-    Color rowColor;
-    if (isSelected) {
-      rowColor = scheme.primaryContainer;
-    } else if (_hovered) {
-      rowColor = scheme.surfaceContainerHighest;
-    } else {
-      rowColor = Colors.transparent;
-    }
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Material(
-        color: rowColor,
-        child: InkWell(
-          onTap: widget.onTap,
-          child: Stack(
-            children: [
-              if (isSelected)
-                Positioned(
-                  left: 0,
-                  top: 8,
-                  bottom: 8,
-                  child: Container(
-                    width: 2,
-                    decoration: BoxDecoration(
-                      color: scheme.primary,
-                      borderRadius: BorderRadius.circular(1),
-                    ),
-                  ),
-                ),
-              SizedBox(
-                height: 44,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Row(
-                    children: [
-                      _Checkbox(
-                        completed: task.isCompleted,
-                        onTap: widget.onToggle,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          task.title,
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            height: 22 / 15,
-                            fontWeight: FontWeight.w400,
-                            color: task.isCompleted
-                                ? scheme.outline
-                                : scheme.onSurface,
-                            decoration: task.isCompleted
-                                ? TextDecoration.lineThrough
-                                : null,
-                            decorationColor: scheme.outline,
-                            decorationThickness: 1,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                      if (task.due != null) ...[
-                        const SizedBox(width: 8),
-                        Text(
-                          _formatDate(task.due!),
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                      if (task.isStarred) ...[
-                        const SizedBox(width: 10),
-                        Icon(
-                          Icons.star,
-                          size: 14,
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = date.difference(DateTime(now.year, now.month, now.day)).inDays;
-    if (diff == 0) return 'Today';
-    if (diff == 1) return 'Tomorrow';
-    if (diff == -1) return 'Yesterday';
-    if (diff > 0 && diff < 7) return 'In $diff days';
-    return '${date.month}/${date.day}';
-  }
-}
-
-/// 18 px circular checkbox. Empty: 1 px outline. Completed: filled
-/// accent + white check.
-class _Checkbox extends StatelessWidget {
-  const _Checkbox({required this.completed, required this.onTap});
-
-  final bool completed;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        width: 18,
-        height: 18,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: completed ? scheme.primary : Colors.transparent,
-          border: Border.all(
-            color: completed ? scheme.primary : scheme.outline,
-            width: 1.5,
-          ),
-        ),
-        child: completed
-            ? Icon(Icons.check, size: 12, color: scheme.onPrimary)
-            : null,
       ),
     );
   }

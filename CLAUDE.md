@@ -36,15 +36,17 @@ lib/
 │       └── task_sync_service.dart   # Drift ↔ Supabase background sync (debounced push + pull)
 ├── screens/                         # Screens — Today (P4), List, Inbox, Settings overlay (P7), Auth
 ├── widgets/
-│   ├── task_card.dart               # 2027 expand-in-place card (P3) — replaces _TaskRow + inspector
+│   ├── app_shell.dart               # Top bar + hidden drawer + overlay mounts (P5)
+│   ├── top_bar.dart                 # 40 px bar (drawer toggle, workspace, sync pill, avatar)
+│   ├── sidebar_drawer.dart          # 280 px overlay drawer, Ctrl+\ toggles
+│   ├── task_card.dart               # 2027 expand-in-place card (P3)
+│   ├── task_list_panel.dart         # List header + capture input + TaskCard list
 │   ├── command_palette.dart         # Ctrl+K palette (P6)
 │   ├── capture_sheet.dart           # Ctrl+N quick capture (P6)
 │   ├── calendar_strip.dart          # 7-day strip on Today (P4)
-│   ├── sidebar_drawer.dart          # Hidden drawer + top bar (P5)
-│   ├── sync_status_pill.dart        # Synced / Syncing… / N pending / Sync failed
-│   ├── glass_card.dart              # @Deprecated alias — wraps the 2027 card primitive
-│   ├── glass_text_field.dart        # @Deprecated alias — wraps the 2027 TextField
-│   └── gradient_button.dart         # @Deprecated alias — wraps a 2027 FilledButton
+│   ├── settings_overlay.dart        # 560×640 modal — only allowed BackdropFilter (P7)
+│   ├── undo_toast.dart              # 6 s undo for delete/complete/list-delete (P6)
+│   └── sync_status_pill.dart        # Synced / Syncing… / N pending / Sync failed
 └── theme/
     ├── app_theme.dart               # ThemeData (light + dark) + 3 ThemeExtensions
     ├── app_colors.dart              # AppColors tokens (warm neutrals + flame + oat)
@@ -250,9 +252,12 @@ any are missing. See `lib/config/app_config.dart`:
 - Mutations should write Drift first, then call TaskSyncService.scheduleSync().
 </important>
 
-# 2027 redesign branches
+# History
 
-The 2027 redesign ships across 7 phases on the `redesign/2027` umbrella branch.
-Each phase is a short PR off the umbrella; phases land in order, gated by CI.
-The umbrella squash-merges back into `feature/supabase` at the end of P7. See
-`listd_2027_implementation_plan.md` for the full phase plan.
+The redesign shipped across 7 phases on the `redesign/2027` umbrella branch and
+squash-merged back into `feature/supabase` at the end of P7. The 2026 hairline
+layer (legacy `SidebarPanel`, `TaskDetailPanel`, `_TaskRow`, `GlassCard`,
+`GlassTextField`, `GradientButton`, the `use2027Cards` feature flag, and the
+`task_lists_screen` / `planned_screen` v1 sweep) was deleted afterwards — the
+tree now has a single 2027 code path. See `listd_2027_implementation_plan.md`
+for the original phase plan.

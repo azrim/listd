@@ -8,10 +8,9 @@ import '../../services/auth/google_auth_service.dart';
 import '../../services/auth/token_manager.dart';
 import '../../services/supabase/supabase_client_service.dart';
 import '../../widgets/app_logo.dart';
-import '../../widgets/gradient_button.dart';
 
-/// Auth screen — minimal centered card per the 2026 spec.
-/// No orbs, no pulsing glow, no gradients.
+/// Auth screen — minimal centered card. No orbs, no pulsing glow, no
+/// gradients; the only emphasis is the flame `FilledButton`.
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
@@ -98,11 +97,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 const SizedBox(height: 40),
                 SizedBox(
                   width: 240,
-                  child: GradientButton(
-                    label: _isLoading ? 'Signing in…' : 'Continue with Google',
-                    icon: Icons.g_mobiledata,
-                    isLoading: _isLoading,
+                  height: 32,
+                  child: FilledButton.icon(
                     onPressed: _isLoading ? null : _signInWithGoogle,
+                    icon: _isLoading
+                        ? SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                scheme.onPrimary,
+                              ),
+                            ),
+                          )
+                        : const Icon(Icons.g_mobiledata, size: 18),
+                    label: Text(
+                      _isLoading ? 'Signing in…' : 'Continue with Google',
+                    ),
                   ),
                 ).animate().fadeIn(delay: 240.ms, duration: 320.ms),
                 const SizedBox(height: 12),
