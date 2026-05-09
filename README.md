@@ -1,6 +1,6 @@
 # Listd
 
-A native Flutter task-management app for Linux desktop (Android secondary), backed by Supabase. Local-first storage with background sync, sign in with Google, and the **2027 Listd design language**: warm neutrals, layered surfaces, flame + oat accents, Inter + Newsreader, Phosphor icons, single spring.
+A native Flutter task-management app for Linux desktop (Android secondary), backed by Supabase. Local-first storage with background sync, sign in with Google, and the **2027 · Indigo Edition** design language: cool indigo + slate neutrals, amber-only stars, Inter + Newsreader, Phosphor icons, single spring with three calibrations (settle / flick / breathe), no glassmorphism.
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -106,36 +106,37 @@ lib/
 │   └── sync/                 # task_sync_service.dart (background push/pull)
 ├── providers/                # Riverpod providers (UI watches Drift via these)
 ├── router/                   # go_router config
-├── theme/                    # 2027 design tokens (app_colors, app_theme, gradients, spring)
-├── screens/                  # Today, lists, inbox, important, planned, all, settings overlay, auth
-└── widgets/                  # task_card, command_palette, capture_sheet, calendar_strip,
-                              # sidebar_drawer, sync_status_pill, plus deprecated 2026 aliases
+├── theme/                    # 2027 indigo design tokens (app_colors, app_theme, app_motion, app_density, gradients, spring)
+├── screens/                  # Today, lists, inbox, important, planned, all, settings drawer, auth
+└── widgets/                  # task_card, command_palette, capture_sheet, calendar_strip, inline_edit_field,
+                              # empty_state, sidebar_drawer, settings_overlay, sync_status_pill
 ```
 
-## Design system (2027)
+## Design system (2027 · Indigo Edition)
 
-| Token           | Light       | Dark        | Use                                      |
-| --------------- | ----------- | ----------- | ---------------------------------------- |
-| `ambient`       | `#F6F1EA`   | `#0E0C10`   | Backplate behind everything              |
-| `canvas`        | `#FFFFFF`   | `#1A171F`   | Page background — 20 px radius "island"  |
-| `panel`         | `#FBF6EE`   | `#16131A`   | Sidebar drawer, settings overlay         |
-| `card`          | `#FFFFFF`   | `#1F1B25`   | Task card — 16 px radius                 |
-| `chip`          | `#F1EAE0`   | `#26212C`   | Tag / chip / pill — 999 px radius        |
-| `flame`         | `#FF6B35`   | `#FF8A5C`   | Selection, focus ring, primary action    |
-| `flameSoft`     | `#FFE4D6`   | `#3D241A`   | Selected row fill, today calendar cell   |
-| `oat`           | `#A89878`   | `#C4B294`   | Counts, secondary chips                  |
-| `text-primary`  | `#1B1A18`   | `#F4EFE7`   | Titles, body                             |
-| `text-secondary`| `#5C564E`   | `#A8A199`   | Meta, captions                           |
-| `border`        | `#E6DFD4`   | `#2C2730`   | 1 px hairlines                           |
+| Token            | Light       | Dark        | Use                                      |
+| ---------------- | ----------- | ----------- | ---------------------------------------- |
+| `ambient`        | `#F8FAFC`   | `#020617`   | Backplate behind everything              |
+| `canvas`         | `#FFFFFF`   | `#0F172A`   | Page background — 16 px radius "island"  |
+| `panel`          | `#F8FAFC`   | `#0F172A`   | Sidebar drawer, settings drawer          |
+| `card`           | `#FFFFFF`   | `#1E293B`   | Task card — 12 px radius                 |
+| `chip`           | `#F1F5F9`   | `#334155`   | Tag / chip / pill — 999 px radius        |
+| `indigo`         | `#4F46E5`   | `#7376F8`   | Selection, focus ring, primary action    |
+| `indigoSoft`     | `#EEF2FF`   | `#1E1B4B`   | Selected row fill, today date cell       |
+| `amber`          | `#FBBF24`   | `#FCD34D`   | Star fill / star glyph only              |
+| `text-primary`   | `#0F172A`   | `#F8FAFC`   | Titles, body                             |
+| `text-secondary` | `#64748B`   | `#94A3B8`   | Meta, captions                           |
+| `border`         | `#E2E8F0`   | `#334155`   | 1 px hairlines                           |
 
 - **Two faces** — Inter (UI) + Newsreader (display, 3 places only: Today headline, empty states, About).
 - **4 px base grid** — allowed values: 4, 8, 12, 16, 24, 32, 48, 64.
-- **Soft warm shadows** — `shadowSm` / `shadowMd` / `shadowLg` from the `ListdSurfaces` extension.
-- **Component metrics** — control 36 px, TaskCard 56 px → 200–400 px, control radius 12 px, card 16 px, panel 20 px, chip 999 px, focus ring 2 px flame.
-- **Motion** — one spring (`ListdSpring.standard`) everywhere; reduced motion → 0 ms snap.
+- **Soft slate-tinted shadows** — `shadowSm` / `shadowMd` / `shadowLg` from the `ListdSurfaces` extension.
+- **Component metrics** — control 36 px, TaskCard 56 px (cozy) / 44 px (compact) → 200–400 px expanded, control radius 12 px, card radius 12 px, panel radius 16 px, chip 999 px, focus ring 2 px indigo. `DensityMode` toggles cozy ↔ compact.
+- **Motion** — one spring with three calibrations: `AppMotion.settle` (220 ms default), `AppMotion.flick` (160 ms light affordances), `AppMotion.breathe` (320 ms heavy surfaces). Reduced motion → 0 ms snap.
 - **Icons** — Phosphor regular (1.5 px stroke).
+- **No glassmorphism** — there is no `BackdropFilter` anywhere; the settings drawer slides in over an opaque slate scrim.
 
-The full spec lives in `listd_2027_design_spec.md`. UX flows in `listd_2027_ux_plan.md`. Phase plan in `listd_2027_implementation_plan.md`.
+The full spec lives under `docs/redesign/2027-indigo/` (00–06 plus mockups).
 
 ## Privacy
 

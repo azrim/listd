@@ -5,9 +5,11 @@ storage with background Supabase sync. Riverpod for state, Drift (SQLite) as the
 UI source of truth, Supabase for auth + cloud, go_router for navigation.
 
 > Backend is Supabase. Auth is Supabase OAuth via Google (identity only).
-> Design language is the **2027 Listd system** — warm neutrals, layered surfaces,
-> two accents (flame + oat), one typeface family pair (Inter + Newsreader),
-> Phosphor icons, single spring everywhere. See "Design System" below.
+> Design language is the **2027 · Indigo Edition** — cool indigo + slate
+> neutrals, amber-only stars, single typeface family pair (Inter + Newsreader),
+> Phosphor icons, three motion calibrations on a single spring (settle / flick
+> / breathe), no glassmorphism. See "Design System" below and the canonical
+> spec under `docs/redesign/2027-indigo/`.
 
 # Architecture
 
@@ -34,22 +36,26 @@ lib/
 │   │   └── supabase_tasks_provider.dart # ITaskProvider impl via Supabase
 │   └── sync/
 │       └── task_sync_service.dart   # Drift ↔ Supabase background sync (debounced push + pull)
-├── screens/                         # Screens — Today (P4), List, Inbox, Settings overlay (P7), Auth
+├── screens/                         # Screens — Today, List, Inbox, Settings drawer, Auth
 ├── widgets/
-│   ├── app_shell.dart               # Top bar + hidden drawer + overlay mounts (P5)
-│   ├── top_bar.dart                 # 40 px bar (drawer toggle, workspace, sync pill, avatar)
-│   ├── sidebar_drawer.dart          # 280 px overlay drawer, Ctrl+\ toggles
-│   ├── task_card.dart               # 2027 expand-in-place card (P3)
+│   ├── app_shell.dart               # Top bar + side drawer + overlay mounts
+│   ├── top_bar.dart                 # 40 px bar — drawer toggle + active page title
+│   ├── sidebar_drawer.dart          # 280 px overlay drawer, Ctrl+\ toggles, sync pill in footer
+│   ├── task_card.dart               # Expand-in-place card with InlineEditField + steps progress bar
 │   ├── task_list_panel.dart         # List header + capture input + TaskCard list
-│   ├── command_palette.dart         # Ctrl+K palette (P6)
-│   ├── capture_sheet.dart           # Ctrl+N quick capture (P6)
-│   ├── calendar_strip.dart          # 7-day strip on Today (P4)
-│   ├── settings_overlay.dart        # 560×640 modal — only allowed BackdropFilter (P7)
-│   ├── undo_toast.dart              # 6 s undo for delete/complete/list-delete (P6)
+│   ├── command_palette.dart         # Ctrl+K palette
+│   ├── capture_sheet.dart           # Ctrl+N quick capture (reserves AI suggestion slot)
+│   ├── calendar_strip.dart          # Horizontal date track on Today
+│   ├── settings_overlay.dart        # 560 px side drawer — opaque, no BackdropFilter
+│   ├── undo_toast.dart              # 6 s undo for delete/complete/list-delete
+│   ├── inline_edit_field.dart       # Hairline-rest / 2 px-focus underline editor
+│   ├── empty_state.dart             # Single reusable empty-state component
 │   └── sync_status_pill.dart        # Synced / Syncing… / N pending / Sync failed
 └── theme/
     ├── app_theme.dart               # ThemeData (light + dark) + 3 ThemeExtensions
-    ├── app_colors.dart              # AppColors tokens (warm neutrals + flame + oat)
+    ├── app_colors.dart              # AppColors tokens (indigo + slate + amber)
+    ├── app_motion.dart              # ListdMotion — settle / flick / breathe calibrations
+    ├── app_density.dart             # DensityMode (cozy / compact)
     ├── gradients.dart               # AppBackplate widget (the only allowed gradient)
     └── spring.dart                  # ListdSpring — single canonical spring physics
 ```
@@ -58,58 +64,62 @@ Data flow: **UI ← Drift streams ← DAOs ← TaskSyncService ← Supabase**.
 Mutations write Drift first (`syncStatus = created/updated/deleted`), then
 `TaskSyncService.scheduleSync()` pushes them to Supabase in the background.
 
-# Design System (2027)
+# Design System (2027 · Indigo Edition)
 
-**Aesthetic:** warm, focused, layered. Surfaces stack like islands on an ambient
-backplate. One vibrant accent (flame), one muted accent (oat), warm neutrals
+**Aesthetic:** quiet, focused, layered. Surfaces stack like islands on an
+ambient indigo-tinted backplate. One vibrant accent (indigo-600 in light /
+indigo-400 in dark), amber reserved entirely for stars, slate neutrals
 everywhere else. Hierarchy is carried by **type, weight, and surface depth** —
-not bright color.
+not bright color. The full canonical spec lives in
+`docs/redesign/2027-indigo/` (00–06).
 
 **Allowed**:
 
-- One ambient backplate, one BackdropFilter (settings overlay only, P7).
-- Soft warm shadows (`shadowSm/Md/Lg` from `ListdSurfaces`).
+- One ambient backplate (`AppBackplate`).
 - Layered surfaces: ambient → canvas → panel → card → chip.
-- Single spring everywhere (`ListdSpring.standard`).
+- Soft slate-tinted shadows (`shadowSm/Md/Lg` from `ListdSurfaces`).
+- One spring with three calibrations (`AppMotion.settle / flick / breathe`).
 
 **Forbidden**:
 
 - Hardcoded colors outside `lib/theme/app_colors.dart`.
-- Multiple springs / curves. There is **one** spring.
-- Gradients other than `AppBackplate` (P7 enforces `grep -R 'AppGradients' lib/` → 0).
-- BackdropFilter outside the settings overlay (P7 enforces exactly 1 result).
+- Gradients other than `AppBackplate` (CI gate `grep -R 'AppGradients' lib/` → 0).
+- BackdropFilter anywhere (CI gate `grep -R 'BackdropFilter' lib/` → 0; the
+  settings drawer uses an opaque scrim, not a blur).
 - Material icons. Use `phosphor_flutter` everywhere.
 - Manrope, Space Grotesk, or any typeface other than Inter / Newsreader.
+- Multiple springs / curves. There is one spring with three calibrations.
+- Deprecated 2027-warm tokens (`flameSoft`, `oat`, `oatSoft`, `warmCream`).
+  CI gate: `grep -R 'flameSoft\|oat\|warmCream' lib/` → 0.
 
 ## Surface stack
 
 | Token       | Light       | Dark        | Use                                          |
 | ----------- | ----------- | ----------- | -------------------------------------------- |
-| `ambient`   | `#F6F1EA`   | `#0E0C10`   | Backplate behind everything (`AppBackplate`) |
-| `canvas`    | `#FFFFFF`   | `#1A171F`   | Page background — 20 px radius "island"      |
-| `panel`     | `#FBF6EE`   | `#16131A`   | Sidebar drawer, settings overlay             |
-| `card`      | `#FFFFFF`   | `#1F1B25`   | Task card — 16 px radius                     |
-| `chip`      | `#F1EAE0`   | `#26212C`   | Tag / chip / pill — 999 px radius            |
+| `ambient`   | `#F8FAFC`   | `#020617`   | Backplate behind everything (`AppBackplate`) |
+| `canvas`    | `#FFFFFF`   | `#0F172A`   | Page background — 16 px radius "island"      |
+| `panel`     | `#F8FAFC`   | `#0F172A`   | Sidebar drawer, settings drawer              |
+| `card`      | `#FFFFFF`   | `#1E293B`   | Task card — 12 px radius                     |
+| `chip`      | `#F1F5F9`   | `#334155`   | Tag / chip / pill — 999 px radius            |
 
 ## Color tokens
 
 | Token              | Light       | Dark        | Use                            |
 | ------------------ | ----------- | ----------- | ------------------------------ |
-| `flame`            | `#FF6B35`   | `#FF8A5C`   | Selection, focus ring, primary |
-| `flameSoft`        | `#FFE4D6`   | `#3D241A`   | Selected row fill, today cell  |
-| `oat`              | `#A89878`   | `#C4B294`   | Counts, secondary chips        |
-| `oatSoft`          | `#F1EAE0`   | `#2A2620`   | Tag chip fill, hover row       |
-| `text-primary`     | `#1B1A18`   | `#F4EFE7`   | Titles, body                   |
-| `text-secondary`   | `#5C564E`   | `#A8A199`   | Meta, captions                 |
-| `text-tertiary`    | `#9A938B`   | `#6E6862`   | Placeholder, disabled          |
-| `border`           | `#E6DFD4`   | `#2C2730`   | 1 px hairlines                 |
-| `divider`          | `#EFEAE0`   | `#221F26`   | List separators                |
+| `indigo` (primary) | `#4F46E5`   | `#7376F8`   | Selection, focus ring, primary |
+| `indigoSoft`       | `#EEF2FF`   | `#1E1B4B`   | Selected row fill, today cell  |
+| `amber` (star)     | `#FBBF24`   | `#FCD34D`   | Star fill / star glyph only    |
+| `text-primary`     | `#0F172A`   | `#F8FAFC`   | Titles, body                   |
+| `text-secondary`   | `#64748B`   | `#94A3B8`   | Meta, captions                 |
+| `text-tertiary`    | `#94A3B8`   | `#64748B`   | Placeholder, disabled          |
+| `border`           | `#E2E8F0`   | `#334155`   | 1 px hairlines                 |
+| `divider`          | `#F1F5F9`   | `#1E293B`   | List separators                |
 
 | Functional | Light       | Dark        | Use                       |
 | ---------- | ----------- | ----------- | ------------------------- |
-| `success`  | `#3F8F4F`   | `#5BB070`   | "Synced" pill dot only    |
-| `warning`  | `#C97C2C`   | `#E09A50`   | "N pending" pill dot only |
-| `error`    | `#B84A3A`   | `#D8694F`   | "Sync failed" pill dot only |
+| `success`  | `#10B981`   | `#34D399`   | "Synced" pill dot only    |
+| `warning`  | `#F59E0B`   | `#FBBF24`   | "N pending" pill dot only |
+| `error`    | `#EF4444`   | `#F87171`   | "Sync failed" pill dot only |
 
 Functional colors are scoped to **6 px state-pill dots only**. They never appear
 on type, selection, or backgrounds.
@@ -132,34 +142,43 @@ places: Today headline, empty states, About quote.
 ## Component metrics (4 px grid: 4, 8, 12, 16, 24, 32, 48, 64)
 
 - Control height (button, input, sync pill): **36 px**
-- TaskCard collapsed: **56 px**, expanded: **200–400 px**
-- Sidebar drawer width: **240 px**, top bar: **40 px**
+- TaskCard collapsed: **56 px** (cozy) / **44 px** (compact); expanded: **200–400 px**
+- Sidebar drawer width: **280 px**, top bar: **40 px**, settings drawer: **560 px**
 - Control radius: **12 px**
-- Card radius: **16 px**
-- Panel / canvas radius: **20 px**
+- Card radius: **12 px**
+- Panel / canvas radius: **16 px**
 - Chip / pill radius: **999 px**
-- Settings overlay: **560 × 640 px**
-- Border: 1 px on `border` / `divider`. Focus ring: 2 px `flame`.
+- Border: 1 px on `border` / `divider`. Focus ring: 2 px `indigo`.
+- Density: `cozy` (default, 56/36/36) and `compact` (44/32/32) via `DensityMode`.
 
-## Motion — single spring
+## Motion — single spring, three calibrations
 
-`ListdSpring.standard`: mass 1.0, stiffness 280, damping 28, settles in ~220 ms.
-The reverse path waits 40 ms before unwinding so collapse motions don't read as
-nervous. Reduced motion (`MediaQuery.disableAnimations`) → `Duration.zero`.
+Defined in `lib/theme/app_motion.dart` as `AppMotion`. All UI transitions pick
+one of these three presets — never invent a new curve.
+
+| Calibration | Mass | Stiffness | Damping | Settles | Use                              |
+| ----------- | ---- | --------- | ------- | ------- | -------------------------------- |
+| `settle`    | 1.0  | 280       | 28      | 220 ms  | Default — card expand, pickers   |
+| `flick`     | 1.0  | 380       | 30      | 160 ms  | Light affordances (pill, chip)   |
+| `breathe`   | 1.0  | 180       | 24      | 320 ms  | Heavy surfaces (drawer, sheets)  |
+
+Reduced motion (`MediaQuery.disableAnimations`) → `Duration.zero` for all of
+the above. A single component must never use two springs — if it does, it's
+doing two jobs.
 
 ```dart
-import '../theme/spring.dart';
+import '../theme/app_motion.dart';
 
-final duration = ListdSpring.durationFor(context); // 220 ms or 0 ms
+final duration = AppMotion.settle.durationFor(context);
+final curve = AppMotion.settle.curve;
 ```
 
 ## Backplate
 
 The single allowed gradient lives behind everything as `AppBackplate` (in
 `lib/theme/gradients.dart`). It renders two soft radial corners on the ambient
-base color. The corner alphas drift subtly with the time of day (warmer in the
-morning, cooler in the evening) — this is the only place ambient color is
-allowed to move.
+slate base color. The corner alphas drift subtly with the time of day —
+this is the only place ambient color is allowed to move.
 
 # Commands
 
@@ -174,8 +193,11 @@ allowed to move.
 | `dart run build_runner build` | Regenerate Drift / Riverpod files |
 
 CI runs the same gates on every PR: format check, analyze with fatal-infos,
-tests, build. P7 adds two extra greps: `AppGradients` → 0 results, and
-`BackdropFilter` → exactly 1 result.
+tests, build. The indigo redesign adds three pre-merge greps:
+
+- `AppGradients` → 0 results in `lib/`
+- `BackdropFilter` → 0 results in `lib/` (no glassmorphism)
+- `flameSoft|oat|warmCream` → 0 results in `lib/` (no warm tokens)
 
 # Key Dependencies
 
@@ -190,7 +212,7 @@ phosphor_flutter: ^2.0.0  # icons (Phosphor regular, 1.5 px stroke)
 shared_preferences: ^2.x
 flutter_animate: ^4.5.0
 flutter_local_notifications: ^17.x
-reorderables: ^0.6.0      # added in P3 for drag-reordering tasks
+reorderables: ^0.6.0      # drag-reordering tasks
 ```
 
 # Supabase Setup
@@ -226,20 +248,25 @@ any are missing. See `lib/config/app_config.dart`:
 </important>
 
 <important if="you are adding new UI screens or widgets">
-- Follow the 2027 design system above. Use `Theme.of(context).colorScheme` and
-  the `ListdSurfaces` / `ListdMotion` / `ListdTypography` ThemeExtensions; do
-  NOT hardcode colors.
+- Follow the 2027 · Indigo Edition design system above. Use
+  `Theme.of(context).colorScheme` and the `ListdSurfaces` / `ListdMotion` /
+  `ListdTypography` ThemeExtensions; do NOT hardcode colors.
 - Use `GoogleFonts.inter(...)` / `GoogleFonts.newsreader(...)` — or just lean
   on the TextTheme. No other typefaces.
 - Use `phosphor_flutter` for icons — no Material icons.
 - Stick to the 4 px grid: 4, 8, 12, 16, 24, 32, 48, 64.
-- Selection / focus pattern: `flameSoft` fill + 2 px `flame` ring.
+- Selection / focus pattern: `indigoSoft` fill + 2 px `indigo` ring.
+- Inline-editable text fields use `InlineEditField` (hairline-rest / 2 px
+  indigo focus underline). Never roll a `TextField` for title / notes / step /
+  list-name editing.
+- Empty surfaces use the `EmptyState` widget (icon / headline / body / CTA).
+  Never hand-roll an empty layout.
 - All screens must handle AsyncValue loading/error/data states from Riverpod.
-- Animations: import `lib/theme/spring.dart` and use `ListdSpring.standard` /
-  `ListdSpring.durationFor(context)`. One spring everywhere — never invent a
-  new curve.
-- BackdropFilter is forbidden everywhere except the P7 settings overlay.
-  P7's pre-merge gate enforces exactly 1 BackdropFilter in `lib/`.
+- Animations: import `lib/theme/app_motion.dart` and pick `AppMotion.settle`,
+  `AppMotion.flick`, or `AppMotion.breathe`. One spring everywhere — never
+  invent a new curve.
+- BackdropFilter is forbidden everywhere. The settings drawer slides in over
+  an opaque slate scrim, not a blurred backdrop.
 - Target is Linux desktop — verify on the Linux renderer.
 </important>
 
@@ -254,10 +281,19 @@ any are missing. See `lib/config/app_config.dart`:
 
 # History
 
-The redesign shipped across 7 phases on the `redesign/2027` umbrella branch and
-squash-merged back into `feature/supabase` at the end of P7. The 2026 hairline
-layer (legacy `SidebarPanel`, `TaskDetailPanel`, `_TaskRow`, `GlassCard`,
-`GlassTextField`, `GradientButton`, the `use2027Cards` feature flag, and the
-`task_lists_screen` / `planned_screen` v1 sweep) was deleted afterwards — the
-tree now has a single 2027 code path. See `listd_2027_implementation_plan.md`
-for the original phase plan.
+The original 2026 hairline redesign and 2027 warm-flame redesign are both
+retired. The active code path is the **2027 · Indigo Edition**, shipped in
+three sequential PRs off `feature/supabase`:
+
+- **PR A — Tokens.** OKLCH-derived indigo / slate / amber palette,
+  `AppMotion` calibrations, `DensityMode`, indigo `AppBackplate`.
+- **PR B — Surfaces.** Top bar shows the active page title, sidebar drawer
+  hosts the single sync pill, calendar strip becomes a horizontal date track,
+  settings overlay becomes an opaque side drawer (no `BackdropFilter`),
+  list-panel header gets a caption + H1 + progress bar.
+- **PR C — Editor + empty states.** `InlineEditField` for titles / notes /
+  steps / list names, indigo Complete pill with a steps progress bar, single
+  reusable `EmptyState`, capture sheet reserves an AI suggestion slot, About
+  pane added to the settings drawer. All deprecated warm tokens removed.
+
+The canonical spec lives under `docs/redesign/2027-indigo/`.

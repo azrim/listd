@@ -11,7 +11,7 @@ import '../theme/app_theme.dart';
 /// can pick one. Returns the selected `TaskList` or `null` on cancel.
 ///
 /// Used for "Move to list…" right-click flows. The currently-owning
-/// list (if any) is highlighted with the flame accent and skipped from
+/// list (if any) is highlighted with the indigo accent and skipped from
 /// the navigable rows.
 Future<TaskList?> showListPicker(
   BuildContext context, {

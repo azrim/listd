@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/task.dart';
 import '../utils/url_detector.dart';
+import 'inline_edit_field.dart';
 
 /// Inline editor for `Task.steps`. Renders each step as a circular
 /// checkbox + editable label, with a trailing link icon (one-click to
@@ -172,27 +173,15 @@ class _TaskStepsEditorState extends State<TaskStepsEditor> {
                 ),
               ),
               Expanded(
-                child: TextField(
+                child: InlineEditField(
                   controller: _newStep,
                   onSubmitted: (_) => _addStep(),
+                  placeholder: 'Add step',
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     height: 20 / 14,
                     fontWeight: FontWeight.w400,
                     color: scheme.onSurface,
-                  ),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    hintText: 'Add step',
-                    hintStyle: GoogleFonts.inter(
-                      fontSize: 14,
-                      height: 20 / 14,
-                      color: scheme.outline,
-                    ),
                   ),
                 ),
               ),
@@ -244,23 +233,17 @@ class _StepRowState extends State<_StepRow> {
             _StepCheckbox(completed: completed, onTap: widget.onToggle),
             const SizedBox(width: 12),
             Expanded(
-              child: TextField(
+              child: InlineEditField(
                 controller: widget.controller,
                 onChanged: widget.onChanged,
                 onSubmitted: (_) => widget.onSubmit(),
+                textInputAction: TextInputAction.next,
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   height: 20 / 14,
                   fontWeight: FontWeight.w400,
                   color: completed ? scheme.outline : scheme.onSurface,
                   decoration: completed ? TextDecoration.lineThrough : null,
-                ),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
                 ),
               ),
             ),
@@ -327,8 +310,8 @@ class _StepCheckbox extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: 16,
-        height: 16,
+        width: 18,
+        height: 18,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: completed ? scheme.primary : Colors.transparent,
@@ -339,7 +322,7 @@ class _StepCheckbox extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: completed
-            ? Icon(Icons.check, size: 10, color: scheme.onPrimary)
+            ? Icon(Icons.check, size: 11, color: scheme.onPrimary)
             : null,
       ),
     );

@@ -9,7 +9,7 @@ import '../utils/url_detector.dart';
 /// the link without expanding the task — that's the
 /// "see the links directly even when looking at other tasks" goal.
 ///
-/// Visually: 24 px tall pill, oat-soft fill, link glyph, host label.
+/// Visually: 24 px tall pill, slate fill, link glyph, host label.
 /// Truncates aggressively so 3 chips comfortably fit on a row at the
 /// app's narrowest sane width (~720 px canvas).
 class LinkChip extends StatelessWidget {

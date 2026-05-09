@@ -14,6 +14,7 @@ import '../theme/app_theme.dart';
 import '../theme/spring.dart';
 import '../utils/url_detector.dart';
 import 'context_menu.dart';
+import 'inline_edit_field.dart';
 import 'link_chip.dart';
 import 'list_picker_sheet.dart';
 import 'repeat_picker_sheet.dart';
@@ -384,10 +385,10 @@ class _TaskCardState extends ConsumerState<TaskCard>
     if (widget.isExpanded) {
       fill = isDark ? expandedDarkFill : cardBg;
     } else if (widget.isSelected) {
-      // Light: warm peach `flameSoft`. Dark: keep the card surface —
-      // `flameSoftDark` (#3D241A) on top of the card fill (#1F1B25)
-      // reads as a muddy chocolate-brown. The 2 px flame ring carries
-      // the selection signal on its own in dark mode.
+      // Light: indigo-50 selected fill. Dark: keep the card surface —
+      // a tinted primaryContainer on top of the card reads as muddy.
+      // The 2 px indigo ring carries the selection signal on its own
+      // in dark mode.
       fill = isDark ? cardBg : scheme.primaryContainer;
     } else if (_hovered) {
       fill = Color.alphaBlend(scheme.primary.withValues(alpha: 0.04), cardBg);
@@ -576,9 +577,10 @@ class _TaskCardState extends ConsumerState<TaskCard>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        TextField(
+                        InlineEditField(
                           controller: _titleController,
                           onChanged: _onTitleChanged,
+                          placeholder: 'Task title',
                           style: GoogleFonts.inter(
                             fontSize: 18,
                             height: 24 / 18,
@@ -591,51 +593,24 @@ class _TaskCardState extends ConsumerState<TaskCard>
                                 ? TextDecoration.lineThrough
                                 : null,
                           ),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                            hintText: 'Task title',
-                            hintStyle: GoogleFonts.inter(
-                              fontSize: 18,
-                              height: 24 / 18,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.18,
-                              color: scheme.outline,
-                            ),
-                          ),
                         ),
-                        const SizedBox(height: 6),
-                        TextField(
+                        const SizedBox(height: 8),
+                        InlineEditField(
                           controller: _notesController,
                           onChanged: _onNotesChanged,
                           maxLines: 3,
                           minLines: 1,
+                          placeholder: 'Notes',
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             height: 18 / 13,
                             fontWeight: FontWeight.w400,
                             color: scheme.onSurfaceVariant,
                           ),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                            hintText: 'Notes',
-                            hintStyle: GoogleFonts.inter(
-                              fontSize: 13,
-                              height: 18 / 13,
-                              color: scheme.outline,
-                            ),
-                          ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         Text(
-                          'Steps',
+                          'STEPS',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             height: 16 / 11,
@@ -650,6 +625,10 @@ class _TaskCardState extends ConsumerState<TaskCard>
                           onStepsChanged: _updateSteps,
                           maxHeight: 220,
                         ),
+                        if (task.steps.length >= 2) ...[
+                          const SizedBox(height: 12),
+                          _StepsProgressBar(steps: task.steps),
+                        ],
                         const SizedBox(height: 12),
                         Row(
                           children: [
@@ -659,7 +638,9 @@ class _TaskCardState extends ConsumerState<TaskCard>
                                   : PhosphorIcons.check(),
                               label: task.isCompleted ? 'Reopen' : 'Complete',
                               onTap: _toggleComplete,
-                              tinted: !task.isCompleted,
+                              variant: task.isCompleted
+                                  ? _ActionPillVariant.quiet
+                                  : _ActionPillVariant.primary,
                             ),
                             const Spacer(),
                             _CreatedFooter(updated: task.updated),
@@ -773,26 +754,30 @@ class _MetaChip extends StatelessWidget {
 
 /// 28 px action pill in the expanded body. Tinted when the action is
 /// in its "on" state (e.g. starred, complete).
+enum _ActionPillVariant { primary, quiet }
+
 class _ActionPill extends StatelessWidget {
   const _ActionPill({
     required this.icon,
     required this.label,
     required this.onTap,
-    this.tinted = false,
+    this.variant = _ActionPillVariant.quiet,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool tinted;
+  final _ActionPillVariant variant;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final fg = tinted ? scheme.primary : scheme.onSurfaceVariant;
-    final bg = tinted
-        ? scheme.primaryContainer
-        : scheme.surfaceContainerHighest;
+    // 2027 indigo · Complete pill is the `accent` indigo-600 fill
+    // with white text. Reopen / quiet calls render against the
+    // surface chip.
+    final isPrimary = variant == _ActionPillVariant.primary;
+    final fg = isPrimary ? scheme.onPrimary : scheme.onSurfaceVariant;
+    final bg = isPrimary ? scheme.primary : scheme.surfaceContainerHighest;
     return Material(
       color: bg,
       borderRadius: BorderRadius.circular(14),
@@ -855,6 +840,52 @@ class _CreatedFooter extends StatelessWidget {
         color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
+    );
+  }
+}
+
+/// 4 px hairline progress bar shown above the Complete pill when a
+/// task has 2+ steps. Track is `outlineVariant`; fill is the indigo
+/// accent.
+class _StepsProgressBar extends StatelessWidget {
+  const _StepsProgressBar({required this.steps});
+
+  final List<TaskStep> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final total = steps.length;
+    final done = steps.where((s) => s.isCompleted).length;
+    final value = total == 0 ? 0.0 : done / total;
+    return Row(
+      children: [
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: SizedBox(
+              height: 4,
+              child: LinearProgressIndicator(
+                value: value,
+                backgroundColor: scheme.outlineVariant,
+                valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
+                minHeight: 4,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          '$done/$total done',
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            height: 16 / 11,
+            fontWeight: FontWeight.w500,
+            color: scheme.onSurfaceVariant,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ],
     );
   }
 }
