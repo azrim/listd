@@ -47,104 +47,108 @@ class SidebarDrawer extends ConsumerWidget {
     final plannedCount =
         ref.watch(plannedTasksProvider).valueOrNull?.length ?? 0;
 
-    return Container(
+    // Sidebar panel chrome now lives on `AppShell` (rounded corner +
+    // shadow + 16 px outer gutter against the indigo backplate). This
+    // widget renders only the *contents* — section labels, drawer
+    // items, sync pill — sized to fit a 240 px column.
+    return SizedBox(
       width: width,
-      decoration: BoxDecoration(
+      child: ColoredBox(
         color: surfaces?.panel ?? scheme.surfaceContainerLow,
-        border: Border(right: BorderSide(color: scheme.outlineVariant)),
-        boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 16),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              children: [
-                _SectionHeader(label: 'SMART'),
-                _DrawerItem(
-                  icon: PhosphorIcons.sun(),
-                  label: 'Today',
-                  count: todayCount > 0 ? todayCount : null,
-                  isSelected: currentLocation == '/today',
-                  onTap: () => _navigate(context, ref, '/today'),
-                ),
-                _DrawerItem(
-                  icon: PhosphorIcons.tray(),
-                  label: 'Inbox',
-                  count: inboxCount > 0 ? inboxCount : null,
-                  isSelected: currentLocation == '/inbox',
-                  onTap: () => _navigate(context, ref, '/inbox'),
-                ),
-                _DrawerItem(
-                  icon: PhosphorIcons.star(PhosphorIconsStyle.fill),
-                  iconTint: AppColors.amber400,
-                  label: 'Important',
-                  count: importantCount > 0 ? importantCount : null,
-                  isSelected: currentLocation == '/important',
-                  onTap: () => _navigate(context, ref, '/important'),
-                ),
-                _DrawerItem(
-                  icon: PhosphorIcons.calendar(),
-                  label: 'Planned',
-                  count: plannedCount > 0 ? plannedCount : null,
-                  isSelected: currentLocation == '/planned',
-                  onTap: () => _navigate(context, ref, '/planned'),
-                ),
-                _DrawerItem(
-                  icon: PhosphorIcons.listChecks(),
-                  label: 'All Tasks',
-                  isSelected: currentLocation == '/all',
-                  onTap: () => _navigate(context, ref, '/all'),
-                ),
-                const SizedBox(height: 16),
-                _SectionHeader(label: 'LISTS'),
-                taskListsAsync.when(
-                  data: (lists) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final l in lists)
-                        _DrawerItem(
-                          icon: PhosphorIcons.bookmark(),
-                          label: l.title,
-                          isSelected: currentLocation == '/list/${l.id}',
-                          onTap: () => _navigate(context, ref, '/list/${l.id}'),
-                          onSecondaryTapDown: (details) => _showListContextMenu(
-                            context,
-                            ref,
-                            details.globalPosition,
-                            l,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                children: [
+                  _SectionHeader(label: 'SMART'),
+                  _DrawerItem(
+                    icon: PhosphorIcons.sun(),
+                    label: 'Today',
+                    count: todayCount > 0 ? todayCount : null,
+                    isSelected: currentLocation == '/today',
+                    onTap: () => _navigate(context, ref, '/today'),
+                  ),
+                  _DrawerItem(
+                    icon: PhosphorIcons.tray(),
+                    label: 'Inbox',
+                    count: inboxCount > 0 ? inboxCount : null,
+                    isSelected: currentLocation == '/inbox',
+                    onTap: () => _navigate(context, ref, '/inbox'),
+                  ),
+                  _DrawerItem(
+                    icon: PhosphorIcons.star(PhosphorIconsStyle.fill),
+                    iconTint: AppColors.amber400,
+                    label: 'Important',
+                    count: importantCount > 0 ? importantCount : null,
+                    isSelected: currentLocation == '/important',
+                    onTap: () => _navigate(context, ref, '/important'),
+                  ),
+                  _DrawerItem(
+                    icon: PhosphorIcons.calendar(),
+                    label: 'Planned',
+                    count: plannedCount > 0 ? plannedCount : null,
+                    isSelected: currentLocation == '/planned',
+                    onTap: () => _navigate(context, ref, '/planned'),
+                  ),
+                  _DrawerItem(
+                    icon: PhosphorIcons.listChecks(),
+                    label: 'All Tasks',
+                    isSelected: currentLocation == '/all',
+                    onTap: () => _navigate(context, ref, '/all'),
+                  ),
+                  const SizedBox(height: 16),
+                  _SectionHeader(label: 'LISTS'),
+                  taskListsAsync.when(
+                    data: (lists) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final l in lists)
+                          _DrawerItem(
+                            icon: PhosphorIcons.bookmark(),
+                            label: l.title,
+                            isSelected: currentLocation == '/list/${l.id}',
+                            onTap: () =>
+                                _navigate(context, ref, '/list/${l.id}'),
+                            onSecondaryTapDown: (details) =>
+                                _showListContextMenu(
+                                  context,
+                                  ref,
+                                  details.globalPosition,
+                                  l,
+                                ),
                           ),
-                        ),
-                      _NewListItem(onTap: () => _createList(context, ref)),
-                    ],
-                  ),
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 1.5),
+                        _NewListItem(onTap: () => _createList(context, ref)),
+                      ],
+                    ),
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 1.5),
+                      ),
+                    ),
+                    error: (_, _) => Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        'Failed to load lists',
+                        style: theme.textTheme.bodySmall,
+                      ),
                     ),
                   ),
-                  error: (_, _) => Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      'Failed to load lists',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Divider(height: 1, color: scheme.outlineVariant),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
-            child: SyncStatusPill(),
-          ),
-        ],
+            Divider(height: 1, color: scheme.outlineVariant),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
+              child: SyncStatusPill(),
+            ),
+          ],
+        ),
       ),
     );
   }
