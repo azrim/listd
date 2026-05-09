@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/task_list.dart';
-import '../providers/shell_state_provider.dart';
 import '../providers/task_lists_provider.dart';
 import '../providers/today_provider.dart';
 import '../theme/app_colors.dart';
@@ -48,116 +47,114 @@ class SidebarDrawer extends ConsumerWidget {
     final plannedCount =
         ref.watch(plannedTasksProvider).valueOrNull?.length ?? 0;
 
-    return MouseRegion(
-      onEnter: (_) => ref.read(sidebarDrawerOpenProvider.notifier).state = true,
-      child: Container(
-        width: width,
-        decoration: BoxDecoration(
-          color: surfaces?.panel ?? scheme.surfaceContainerLow,
-          border: Border(right: BorderSide(color: scheme.outlineVariant)),
-          boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                children: [
-                  _SectionHeader(label: 'SMART'),
-                  _DrawerItem(
-                    icon: PhosphorIcons.sun(),
-                    label: 'Today',
-                    count: todayCount > 0 ? todayCount : null,
-                    isSelected: currentLocation == '/today',
-                    onTap: () => _navigate(context, ref, '/today'),
-                  ),
-                  _DrawerItem(
-                    icon: PhosphorIcons.tray(),
-                    label: 'Inbox',
-                    count: inboxCount > 0 ? inboxCount : null,
-                    isSelected: currentLocation == '/inbox',
-                    onTap: () => _navigate(context, ref, '/inbox'),
-                  ),
-                  _DrawerItem(
-                    icon: PhosphorIcons.star(PhosphorIconsStyle.fill),
-                    iconTint: AppColors.amber400,
-                    label: 'Important',
-                    count: importantCount > 0 ? importantCount : null,
-                    isSelected: currentLocation == '/important',
-                    onTap: () => _navigate(context, ref, '/important'),
-                  ),
-                  _DrawerItem(
-                    icon: PhosphorIcons.calendar(),
-                    label: 'Planned',
-                    count: plannedCount > 0 ? plannedCount : null,
-                    isSelected: currentLocation == '/planned',
-                    onTap: () => _navigate(context, ref, '/planned'),
-                  ),
-                  _DrawerItem(
-                    icon: PhosphorIcons.listChecks(),
-                    label: 'All Tasks',
-                    isSelected: currentLocation == '/all',
-                    onTap: () => _navigate(context, ref, '/all'),
-                  ),
-                  const SizedBox(height: 16),
-                  _SectionHeader(label: 'LISTS'),
-                  taskListsAsync.when(
-                    data: (lists) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (final l in lists)
-                          _DrawerItem(
-                            icon: PhosphorIcons.bookmark(),
-                            label: l.title,
-                            isSelected: currentLocation == '/list/${l.id}',
-                            onTap: () =>
-                                _navigate(context, ref, '/list/${l.id}'),
-                            onSecondaryTapDown: (details) =>
-                                _showListContextMenu(
-                                  context,
-                                  ref,
-                                  details.globalPosition,
-                                  l,
-                                ),
+    return Container(
+      width: width,
+      decoration: BoxDecoration(
+        color: surfaces?.panel ?? scheme.surfaceContainerLow,
+        border: Border(right: BorderSide(color: scheme.outlineVariant)),
+        boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              children: [
+                _SectionHeader(label: 'SMART'),
+                _DrawerItem(
+                  icon: PhosphorIcons.sun(),
+                  label: 'Today',
+                  count: todayCount > 0 ? todayCount : null,
+                  isSelected: currentLocation == '/today',
+                  onTap: () => _navigate(context, ref, '/today'),
+                ),
+                _DrawerItem(
+                  icon: PhosphorIcons.tray(),
+                  label: 'Inbox',
+                  count: inboxCount > 0 ? inboxCount : null,
+                  isSelected: currentLocation == '/inbox',
+                  onTap: () => _navigate(context, ref, '/inbox'),
+                ),
+                _DrawerItem(
+                  icon: PhosphorIcons.star(PhosphorIconsStyle.fill),
+                  iconTint: AppColors.amber400,
+                  label: 'Important',
+                  count: importantCount > 0 ? importantCount : null,
+                  isSelected: currentLocation == '/important',
+                  onTap: () => _navigate(context, ref, '/important'),
+                ),
+                _DrawerItem(
+                  icon: PhosphorIcons.calendar(),
+                  label: 'Planned',
+                  count: plannedCount > 0 ? plannedCount : null,
+                  isSelected: currentLocation == '/planned',
+                  onTap: () => _navigate(context, ref, '/planned'),
+                ),
+                _DrawerItem(
+                  icon: PhosphorIcons.listChecks(),
+                  label: 'All Tasks',
+                  isSelected: currentLocation == '/all',
+                  onTap: () => _navigate(context, ref, '/all'),
+                ),
+                const SizedBox(height: 16),
+                _SectionHeader(label: 'LISTS'),
+                taskListsAsync.when(
+                  data: (lists) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final l in lists)
+                        _DrawerItem(
+                          icon: PhosphorIcons.bookmark(),
+                          label: l.title,
+                          isSelected: currentLocation == '/list/${l.id}',
+                          onTap: () => _navigate(context, ref, '/list/${l.id}'),
+                          onSecondaryTapDown: (details) => _showListContextMenu(
+                            context,
+                            ref,
+                            details.globalPosition,
+                            l,
                           ),
-                        _NewListItem(onTap: () => _createList(context, ref)),
-                      ],
-                    ),
-                    loading: () => const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 1.5),
-                      ),
-                    ),
-                    error: (_, _) => Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Text(
-                        'Failed to load lists',
-                        style: theme.textTheme.bodySmall,
-                      ),
+                        ),
+                      _NewListItem(onTap: () => _createList(context, ref)),
+                    ],
+                  ),
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 1.5),
                     ),
                   ),
-                ],
-              ),
+                  error: (_, _) => Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      'Failed to load lists',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            Divider(height: 1, color: scheme.outlineVariant),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
-              child: SyncStatusPill(),
-            ),
-          ],
-        ),
+          ),
+          Divider(height: 1, color: scheme.outlineVariant),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: SyncStatusPill(),
+          ),
+        ],
       ),
     );
   }
 
   void _navigate(BuildContext context, WidgetRef ref, String path) {
+    // Sidebar is permanently docked on the indigo edition — only the
+    // route changes here; closing the rail would defeat the docked
+    // behavior the mockups call for. `Ctrl + \` is still available
+    // for users who want a chrome-free canvas on a small viewport.
     context.go(path);
-    ref.read(sidebarDrawerOpenProvider.notifier).state = false;
   }
 
   Future<void> _createList(BuildContext context, WidgetRef ref) async {
