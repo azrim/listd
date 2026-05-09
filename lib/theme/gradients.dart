@@ -5,102 +5,10 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// Listd 2027 — surface stack uses solid warm-neutral fills, not gradients.
-/// The single allowed gradient lives behind the canvas as the
-/// [AppBackplate].
-///
-/// The 2026 [AppGradients] class is kept as a transitional alias-only API:
-/// each value resolves to the matching 2027 token so legacy
-/// `BoxDecoration(gradient: AppGradients.foo)` call sites keep compiling
-/// without churn. New code must use a plain `color:` from
-/// `Theme.of(context).colorScheme` or the [ListdSurfaces] extension. The
-/// `AppGradients` symbol will be removed in P7 (the implementation plan
-/// asserts `grep -R 'AppGradients' lib/` returns 0).
-// Deprecated — alias only.
-// New code should use Theme.of(context).colorScheme / ListdSurfaces / AppBackplate.
-// The @Deprecated annotation will be added in P7 once all call sites are migrated.
-class AppGradients {
-  AppGradients._();
-
-  /// Brand "gradient" — flat flame.
-  static const LinearGradient primary = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [AppColors.flame, AppColors.flame],
-  );
-
-  /// Dark-mode brand "gradient".
-  static const LinearGradient primaryDark = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [AppColors.flameDark, AppColors.flameDark],
-  );
-
-  /// Auth screen background — flat ambient surface.
-  static const LinearGradient backgroundDark = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [AppColors.bgDeep, AppColors.bgDeep],
-  );
-
-  /// Generic screen background — flat surface (legacy callers picked up
-  /// the 2027 ambient via the back-compat alias).
-  static const LinearGradient screenBackground = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [AppColors.bgDeep, AppColors.bgDeep],
-  );
-
-  /// Selected sidebar item background — resolves to the 2027 flame-soft.
-  static const LinearGradient navActiveGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [AppColors.flameSoft, AppColors.flameSoft],
-  );
-
-  /// Light auth/screen background.
-  static const LinearGradient backgroundLight = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [AppColors.bgLight, AppColors.bgLight],
-  );
-
-  /// Subtle elevated surface — flat panel surface.
-  static const LinearGradient surfaceGlow = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [AppColors.bgLightContainerLow, AppColors.bgLightContainerLow],
-  );
-
-  /// Card surface — flat neutral.
-  static const LinearGradient cardGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [AppColors.bgContainer, AppColors.bgContainer],
-  );
-
-  /// Success surface (state pill).
-  static const LinearGradient success = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [AppColors.success, AppColors.success],
-  );
-
-  /// Error surface (state pill).
-  static const LinearGradient error = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [AppColors.error, AppColors.error],
-  );
-
-  /// Modal scrim — kept as a true two-stop gradient since this is a
-  /// functional darkening overlay, not a brand gradient.
-  static const LinearGradient overlay = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Colors.transparent, Color(0x80000000)],
-  );
-}
+/// Listd 2027 — the surface stack uses solid warm-neutral fills, not
+/// gradients. The single allowed gradient lives behind the canvas
+/// as the [AppBackplate]. New code uses a plain `color:` from
+/// `Theme.of(context).colorScheme` or the [ListdSurfaces] extension.
 
 /// Listd 2027 — ambient backplate.
 ///
