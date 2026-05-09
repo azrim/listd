@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>06 · Context menu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="_tokens.css">
+  <style>
+    .ctx {
+      position: absolute;
+      width: 240px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-card);
+      box-shadow: var(--el-3);
+      padding: 6px;
+      z-index: 4;
+    }
+    .ctx-row {
+      display: grid;
+      grid-template-columns: 18px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .ctx-row:hover { background: var(--chip); }
+    .ctx-row .icon { color: var(--text-secondary); }
+    .ctx-row .kbd { color: var(--text-tertiary); font-size: 11px; font-feature-settings: 'tnum'; }
+    .ctx-row.is-danger { color: var(--error); }
+    .ctx-row.is-danger .icon { color: var(--error); }
+    .ctx-row.is-danger:hover { background: rgba(239, 68, 68, 0.06); }
+    .ctx-sep {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="window" style="width:1400px;margin:24px auto;">
+    <div class="window-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="title">Listd — Personal</span>
+    </div>
+    <div class="window-body">
+      <div class="backplate"></div>
+      <div class="shell">
+        <aside class="sidebar">
+          <div class="side-section">
+            <div class="side-caption">Smart</div>
+            <div class="side-row"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg><span>Today</span></div>
+            <div class="side-row"><svg class="icon" viewBox="0 0 24 24"><path d="M22 13h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 13v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-7.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg><span>Inbox</span><span style="flex:1"></span><span class="pill" style="height:20px;padding:0 8px;font-size:11px;">3</span></div>
+            <div class="side-row"><svg class="icon" viewBox="0 0 24 24" style="color:var(--star)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="currentColor"/></svg><span>Important</span></div>
+            <div class="side-row"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Planned</span></div>
+            <div class="side-row"><svg class="icon" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>All Tasks</span></div>
+          </div>
+          <div class="side-section">
+            <div class="side-caption">Lists</div>
+            <div class="side-row is-selected"><svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span>Personal</span></div>
+            <div class="side-row"><svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span>Reading</span></div>
+            <div class="side-row"><svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span>Side projects</span></div>
+            <div class="side-row" style="color:var(--text-tertiary)"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>New list</span></div>
+          </div>
+          <div class="side-spacer"></div>
+          <div class="sync-pill">
+            <span class="sync-dot"></span><span>Synced</span>
+            <span style="margin-left:auto;color:var(--text-tertiary)"><svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></span>
+          </div>
+        </aside>
+
+        <main class="canvas">
+          <div class="topbar">
+            <span class="toggle"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span>
+            <span class="title">Personal</span>
+            <span class="spacer"></span>
+            <span class="avatar">M</span>
+          </div>
+          <div class="page" style="position:relative;">
+            <div class="page-caption">List</div>
+            <h1 class="page-title-h1">Personal</h1>
+            <div class="progress" style="width:240px;margin-bottom:24px;">
+              <div class="progress-fill" style="width:34%"></div>
+            </div>
+
+            <div class="capture-row">
+              <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Add a task</span>
+              <span class="kbd-hint">
+                <kbd style="display:inline-flex;align-items:center;height:22px;padding:0 6px;border-radius:6px;background:var(--chip);border:1px solid var(--border);color:var(--text-primary);font-size:11px;font-family:var(--font-inter);">Ctrl</kbd>
+                <kbd style="display:inline-flex;align-items:center;height:22px;padding:0 6px;border-radius:6px;background:var(--chip);border:1px solid var(--border);color:var(--text-primary);font-size:11px;font-family:var(--font-inter);">N</kbd>
+              </span>
+            </div>
+
+            <div style="border-top:1px solid var(--divider);"></div>
+
+            <div class="task-row">
+              <span class="checkbox"></span>
+              <span class="title">Renew library books</span>
+              <span class="count"></span>
+              <span class="star is-empty"><svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+            </div>
+            <div class="task-row" style="background:var(--chip)">
+              <span class="checkbox"></span>
+              <span class="title">Pay May electricity bill <span class="pill is-tag" style="margin-left:8px;height:20px;padding:0 8px;font-size:11px;">due Mon 11</span></span>
+              <span class="count"></span>
+              <span class="star is-empty"><svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+            </div>
+            <div class="task-row">
+              <span class="checkbox"></span>
+              <span class="title">Pick up dry cleaning</span>
+              <span class="count"></span>
+              <span class="star"><svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+            </div>
+
+            <!-- Context menu floating over the second row -->
+            <div class="ctx" style="left:380px;top:280px;">
+              <div class="ctx-row">
+                <svg class="icon icon-sm" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" style="color:var(--star)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>Star</span>
+                <span class="kbd">⌘I</span>
+              </div>
+              <div class="ctx-row">
+                <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Mark complete</span>
+                <span class="kbd">⌘↵</span>
+              </div>
+              <div class="ctx-sep"></div>
+              <div class="ctx-row">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>Set due date</span>
+                <span class="kbd">⌘D</span>
+              </div>
+              <div class="ctx-row">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                <span>Set reminder</span>
+                <span class="kbd">⌘R</span>
+              </div>
+              <div class="ctx-row">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                <span>Set repeat</span>
+                <span></span>
+              </div>
+              <div class="ctx-row">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                <span>Edit tags</span>
+                <span class="kbd">⌘T</span>
+              </div>
+              <div class="ctx-sep"></div>
+              <div class="ctx-row">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <span>Move to list…</span>
+                <span class="kbd">⌘M</span>
+              </div>
+              <div class="ctx-row">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                <span>Copy task</span>
+                <span class="kbd">⌘C</span>
+              </div>
+              <div class="ctx-sep"></div>
+              <div class="ctx-row is-danger">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 012-2h2a2 2 0 012 2v2"/></svg>
+                <span>Delete</span>
+                <span class="kbd">⌫</span>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

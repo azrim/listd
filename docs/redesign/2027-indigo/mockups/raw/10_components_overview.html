@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>10 · Component states overview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="_tokens.css">
+  <style>
+    body { padding: 32px 48px; }
+    .reference {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    h1.ref-h1 {
+      font-family: var(--font-news);
+      font-size: 36px;
+      line-height: 44px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      margin: 0 0 6px;
+    }
+    .ref-meta {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin-bottom: 32px;
+    }
+    .section { margin-bottom: 36px; }
+    .section h2 {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin: 0 0 12px;
+    }
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .demo-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      border: 1px solid var(--border);
+    }
+    .demo-card h3 {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin: 0 0 10px;
+    }
+    .row-stack { display: flex; flex-direction: column; gap: 8px; }
+    .button-stack { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-tall {
+      height: 36px;
+      padding: 0 16px;
+      border-radius: var(--r-control);
+      font-family: var(--font-inter);
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-primary);
+    }
+    .btn-tall.btn-primary { background: var(--accent); color: var(--accent-fg); }
+    .btn-tall.btn-secondary { background: var(--canvas); border: 1px solid var(--border); }
+    .btn-tall.btn-ghost { color: var(--text-secondary); }
+    .btn-tall.btn-danger { color: var(--error); }
+    .btn-tall.is-disabled { opacity: 0.6; cursor: not-allowed; }
+    .focus-demo { outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.24); }
+    .syncs { display: flex; flex-direction: column; gap: 6px; }
+    .pill-state {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 32px;
+      padding: 0 12px;
+      border-radius: var(--r-pill);
+      background: var(--chip);
+      font-size: 13px;
+      width: fit-content;
+    }
+    .pill-state.is-success .dot { background: var(--success); }
+    .pill-state.is-syncing .dot { background: var(--accent); animation: blink 1s ease-in-out infinite; }
+    .pill-state.is-pending .dot { background: var(--warning); }
+    .pill-state.is-error .dot { background: var(--error); }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex: none;
+    }
+    @keyframes blink { 50% { opacity: 0.3; } }
+
+    .row-states { display: flex; flex-direction: column; gap: 4px; background: white; padding: 8px 0; border-radius: var(--r-card); border: 1px solid var(--border); }
+    .row-states .task-row { padding: 0 16px; }
+
+    .field-states { display: flex; flex-direction: column; gap: 14px; }
+    .field-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+
+    .empty-mini {
+      background: white;
+      border-radius: 14px;
+      padding: 32px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .empty-mini .icon-bg {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--chip);
+      display: grid;
+      place-items: center;
+      color: var(--text-tertiary);
+      margin: 0 auto 8px;
+    }
+    .empty-mini .head {
+      font-family: var(--font-news);
+      font-size: 20px;
+      line-height: 28px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .empty-mini .body {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="reference">
+    <h1 class="ref-h1">Components overview</h1>
+    <div class="ref-meta">Quick states reference · see 03_components.md for full anatomy.</div>
+
+    <!-- Buttons -->
+    <div class="section">
+      <h2>Buttons</h2>
+      <div class="grid-cards">
+        <div class="demo-card">
+          <h3>Primary</h3>
+          <div class="button-stack">
+            <button class="btn-tall btn-primary">Complete</button>
+            <button class="btn-tall btn-primary focus-demo">Focused</button>
+            <button class="btn-tall btn-primary is-disabled">Disabled</button>
+          </div>
+        </div>
+        <div class="demo-card">
+          <h3>Secondary &amp; ghost</h3>
+          <div class="button-stack">
+            <button class="btn-tall btn-secondary">Cancel</button>
+            <button class="btn-tall btn-ghost">More</button>
+            <button class="btn-tall btn-danger">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task row states -->
+    <div class="section">
+      <h2>Task row · states</h2>
+      <div class="row-states">
+        <div class="task-row">
+          <span class="checkbox"></span>
+          <span class="title">Default — at rest</span>
+          <span class="count"></span>
+          <span class="star is-empty"><svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+        </div>
+        <div class="task-row" style="background:var(--chip);border-radius:8px;">
+          <span class="checkbox"></span>
+          <span class="title">Hover — chip fill</span>
+          <span class="count"></span>
+          <span class="star is-empty"><svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+        </div>
+        <div class="task-row is-selected">
+          <span class="checkbox"></span>
+          <span class="title">Selected — accent-soft + 2-px left edge</span>
+          <span class="count">2/4</span>
+          <span class="star"><svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+        </div>
+        <div class="task-row" style="outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px;">
+          <span class="checkbox"></span>
+          <span class="title">Keyboard focus — 2-px ring</span>
+          <span class="count"></span>
+          <span class="star is-empty"><svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+        </div>
+        <div class="task-row is-completed">
+          <span class="checkbox is-done"><svg class="icon icon-sm" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <span class="title">Completed — strikethrough + tertiary</span>
+          <span class="count"></span>
+          <span class="star is-empty"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Field states -->
+    <div class="section">
+      <h2>Inline-edit field · states</h2>
+      <div class="grid-cards">
+        <div class="demo-card">
+          <h3>Rest &amp; hover</h3>
+          <div class="field-states">
+            <div>
+              <div class="field-label">Rest</div>
+              <input class="field" value="Plan Sunday hike route">
+            </div>
+            <div>
+              <div class="field-label">Hover (border thickens)</div>
+              <input class="field" value="Plan Sunday hike route" style="border-bottom-color:var(--border-strong);">
+            </div>
+          </div>
+        </div>
+        <div class="demo-card">
+          <h3>Focus &amp; placeholder</h3>
+          <div class="field-states">
+            <div>
+              <div class="field-label">Focused (2-px accent)</div>
+              <input class="field" value="Plan Sunday hike route" style="border-bottom: 2px solid var(--accent); padding-bottom: 3px;">
+            </div>
+            <div>
+              <div class="field-label">Placeholder (italic, tertiary)</div>
+              <input class="field" placeholder="Notes (optional)">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sync pill states -->
+    <div class="section">
+      <h2>Sync pill · states</h2>
+      <div class="syncs">
+        <div class="pill-state is-success"><span class="dot"></span><span>Synced</span><span style="margin-left:6px;color:var(--text-tertiary)"><svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></span></div>
+        <div class="pill-state is-syncing"><span class="dot"></span><span>Syncing…</span></div>
+        <div class="pill-state is-pending"><span class="dot"></span><span>3 pending</span></div>
+        <div class="pill-state is-error" style="color:var(--error)"><span class="dot"></span><span>Sync failed — tap to retry</span></div>
+      </div>
+    </div>
+
+    <!-- Empty states -->
+    <div class="section">
+      <h2>Empty states</h2>
+      <div class="grid-cards">
+        <div class="empty-mini">
+          <div class="icon-bg"><svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M22 13h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 13v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-7.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg></div>
+          <div class="head">Inbox is clear.</div>
+          <div class="body">Ctrl + N to add the next thing.</div>
+        </div>
+        <div class="empty-mini">
+          <div class="icon-bg"><svg class="icon icon-lg" viewBox="0 0 24 24" style="color:var(--star)" fill="currentColor" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+          <div class="head">Nothing starred.</div>
+          <div class="body">Click the star on any task to mark it important.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar row states -->
+    <div class="section">
+      <h2>Sidebar row · states</h2>
+      <div class="grid-cards">
+        <div class="demo-card">
+          <h3>Default · hover · selected</h3>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div class="side-row" style="background:white;">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+              <span>Today (default)</span>
+            </div>
+            <div class="side-row" style="background:var(--chip);">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+              <span>Today (hover)</span>
+            </div>
+            <div class="side-row is-selected">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+              <span>Today (selected)</span>
+            </div>
+            <div class="side-row focus-demo" style="background:white;">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+              <span>Today (keyboard focus)</span>
+            </div>
+          </div>
+        </div>
+        <div class="demo-card">
+          <h3>Density toggle</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);">Cozy · 36 px row</div>
+            <div class="side-row" style="background:white;">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+              <span>Personal</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);margin-top:8px;">Compact · 32 px row</div>
+            <div class="side-row" style="background:white;height:32px;font-size:13px;">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+              <span>Personal</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pills + chips -->
+    <div class="section">
+      <h2>Chips &amp; tags</h2>
+      <div class="grid-cards">
+        <div class="demo-card">
+          <h3>Tag (indigo soft)</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="pill is-tag">#outdoors</span>
+            <span class="pill is-tag">#reading</span>
+            <span class="pill is-tag">#urgent</span>
+          </div>
+        </div>
+        <div class="demo-card">
+          <h3>Count / meta (slate)</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="pill">2 / 5 done</span>
+            <span class="pill">due Mon 11</span>
+            <span class="pill">12 tasks</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

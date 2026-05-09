@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>09 · Palette / type / space reference</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="_tokens.css">
+  <style>
+    body {
+      padding: 32px 48px;
+    }
+    .reference {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    h1.ref-h1 {
+      font-family: var(--font-news);
+      font-size: 36px;
+      line-height: 44px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      margin: 0 0 6px;
+    }
+    .ref-meta {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin-bottom: 32px;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    .section h2 {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin: 0 0 12px;
+    }
+    .ramp {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 4px;
+    }
+    .swatch {
+      border-radius: 8px;
+      padding: 12px 10px 14px;
+      border: 1px solid var(--border);
+      background: white;
+      font-size: 11px;
+    }
+    .swatch .chip {
+      height: 56px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .swatch .step {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .swatch .hex {
+      color: var(--text-secondary);
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 10px;
+    }
+    .semantic-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .semantic-row {
+      display: grid;
+      grid-template-columns: 32px 160px 100px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: white;
+      font-size: 12px;
+    }
+    .semantic-row .swatch-box {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 1px solid var(--border-strong);
+    }
+    .semantic-row .role {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    }
+    .semantic-row .value {
+      color: var(--text-secondary);
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    }
+    .semantic-row .desc {
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+    .type-row {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 24px;
+      padding: 16px 0;
+      border-top: 1px solid var(--divider);
+    }
+    .type-row:first-child { border-top: none; }
+    .type-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    }
+    .type-meta .label {
+      font-family: var(--font-inter);
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 13px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .space-grid {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+    .space-bar {
+      background: var(--accent);
+      border-radius: 4px 4px 0 0;
+      width: 32px;
+    }
+    .space-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    }
+    .radius-grid {
+      display: flex;
+      gap: 16px;
+    }
+    .radius-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .radius-shape {
+      width: 96px;
+      height: 64px;
+      background: var(--accent-soft);
+      border: 2px solid var(--accent);
+    }
+    .elev-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .elev-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .elev-card .lvl { font-weight: 600; color: var(--text-primary); font-size: 14px; margin-bottom: 4px; display: block; }
+    .focus-demo {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+    .focus-input {
+      width: 240px;
+      height: 40px;
+      border-radius: var(--r-control);
+      background: white;
+      border: 1px solid var(--border);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .focus-input.is-focused {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.24);
+    }
+  </style>
+</head>
+<body>
+  <div class="reference">
+    <h1 class="ref-h1">Listd 2027 · Indigo edition</h1>
+    <div class="ref-meta">Token reference · perceptually uniform OKLCH — see 02_tokens.md for full spec.</div>
+
+    <!-- Indigo ramp -->
+    <div class="section">
+      <h2>Indigo</h2>
+      <div class="ramp">
+        <div class="swatch"><div class="chip" style="background:var(--indigo-50)"></div><div class="step">50</div><div class="hex">#F0F1FF</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--indigo-100)"></div><div class="step">100</div><div class="hex">#E0E2FF</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--indigo-200)"></div><div class="step">200</div><div class="hex">#C2C5FF</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--indigo-300)"></div><div class="step">300</div><div class="hex">#A0A2FA</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--indigo-400)"></div><div class="step">400</div><div class="hex">#7376F8</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--indigo-500)"></div><div class="step">500</div><div class="hex">#5A52E8</div></div>
+        <div class="swatch" style="border-color:var(--accent);"><div class="chip" style="background:var(--indigo-600)"></div><div class="step">600 ★</div><div class="hex">#4F46E5</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--indigo-700)"></div><div class="step">700</div><div class="hex">#4338CA</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--indigo-800)"></div><div class="step">800</div><div class="hex">#3730A3</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--indigo-900)"></div><div class="step">900</div><div class="hex">#312E81</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--indigo-950)"></div><div class="step">950</div><div class="hex">#1E1B4B</div></div>
+      </div>
+    </div>
+
+    <!-- Slate ramp -->
+    <div class="section">
+      <h2>Slate</h2>
+      <div class="ramp">
+        <div class="swatch"><div class="chip" style="background:var(--slate-50)"></div><div class="step">50</div><div class="hex">#F8FAFC</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--slate-100)"></div><div class="step">100</div><div class="hex">#F1F5F9</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--slate-200)"></div><div class="step">200</div><div class="hex">#E2E8F0</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--slate-300)"></div><div class="step">300</div><div class="hex">#CBD5E1</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--slate-400)"></div><div class="step">400</div><div class="hex">#94A3B8</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--slate-500)"></div><div class="step">500</div><div class="hex">#64748B</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--slate-600)"></div><div class="step">600</div><div class="hex">#475569</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--slate-700)"></div><div class="step">700</div><div class="hex">#334155</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--slate-800)"></div><div class="step">800</div><div class="hex">#1E293B</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--slate-900)"></div><div class="step">900</div><div class="hex">#0F172A</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--slate-950)"></div><div class="step">950</div><div class="hex">#0B1224</div></div>
+      </div>
+    </div>
+
+    <!-- Amber + functional -->
+    <div class="section">
+      <h2>Amber (co-accent · stars only) &nbsp;&middot;&nbsp; Functional (state dots only)</h2>
+      <div style="display:grid;grid-template-columns:repeat(6, 1fr); gap: 4px;">
+        <div class="swatch"><div class="chip" style="background:var(--amber-300)"></div><div class="step">amber 300</div><div class="hex">#FCD34D</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--amber-400)"></div><div class="step">amber 400 ★</div><div class="hex">#FBBF24</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--amber-500)"></div><div class="step">amber 500</div><div class="hex">#F59E0B</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--success)"></div><div class="step">success</div><div class="hex">#10B981</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--warning)"></div><div class="step">warning</div><div class="hex">#F59E0B</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--error)"></div><div class="step">error</div><div class="hex">#EF4444</div></div>
+      </div>
+    </div>
+
+    <!-- Semantic roles -->
+    <div class="section">
+      <h2>Semantic roles · light theme</h2>
+      <div class="semantic-grid">
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--ambient)"></div><div class="role">ambient</div><div class="value">slate-50</div><div class="desc">Page beneath everything</div></div>
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--canvas)"></div><div class="role">canvas</div><div class="value">white</div><div class="desc">Main content island</div></div>
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--panel)"></div><div class="role">panel</div><div class="value">slate-50</div><div class="desc">Sidebar, drawer</div></div>
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--card)"></div><div class="role">card</div><div class="value">white</div><div class="desc">Task card, popover</div></div>
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--chip)"></div><div class="role">chip</div><div class="value">slate-100</div><div class="desc">Pill, hover row</div></div>
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--accent)"></div><div class="role">accent</div><div class="value">indigo-600</div><div class="desc">Primary, selection, today</div></div>
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--accent-soft)"></div><div class="role">accent-soft</div><div class="value">indigo-50</div><div class="desc">Selected row, today cell</div></div>
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--text-primary)"></div><div class="role">text-primary</div><div class="value">slate-900</div><div class="desc">Body, heading</div></div>
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--text-secondary)"></div><div class="role">text-secondary</div><div class="value">slate-500</div><div class="desc">Meta, caption</div></div>
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--text-tertiary)"></div><div class="role">text-tertiary</div><div class="value">slate-400</div><div class="desc">Placeholder, disabled</div></div>
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--border)"></div><div class="role">border</div><div class="value">slate-200</div><div class="desc">1-px hairline</div></div>
+        <div class="semantic-row"><div class="swatch-box" style="background:var(--star)"></div><div class="role">star</div><div class="value">amber-400</div><div class="desc">Star icon, important list</div></div>
+      </div>
+    </div>
+
+    <!-- Type ramp -->
+    <div class="section">
+      <h2>Type ramp</h2>
+      <div class="type-row">
+        <div class="type-meta"><span class="label">Display Serif</span>Newsreader · 40 / 48 · 500 · -0.02 em</div>
+        <div style="font-family:var(--font-news);font-size:40px;line-height:48px;font-weight:500;letter-spacing:-0.02em;">Today, Sat May 9</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><span class="label">H1</span>Inter · 22 / 30 · 700 · -0.02 em</div>
+        <div style="font-size:22px;line-height:30px;font-weight:700;letter-spacing:-0.02em;">Personal</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><span class="label">H2 / list name</span>Inter · 18 / 26 · 600 · -0.01 em</div>
+        <div style="font-size:18px;line-height:26px;font-weight:600;letter-spacing:-0.01em;">Side projects</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><span class="label">Body</span>Inter · 15 / 22 · 400</div>
+        <div>The body face is Inter at 15 / 22 — comfortable for task titles and inline editor copy.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><span class="label">Body emph</span>Inter · 15 / 22 · 500</div>
+        <div style="font-weight:500;">Plan Sunday hike route</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><span class="label">Meta</span>Inter · 13 / 18 · 400</div>
+        <div style="font-size:13px;line-height:18px;color:var(--text-secondary);">Edited 2 hours ago · saves automatically</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><span class="label">Caption</span>Inter · 11 / 16 · 600 · 0.06 em · UPPER</div>
+        <div style="font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-secondary);">Smart list</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><span class="label">Tabular</span>Inter · 13 / 18 · 500 · tnum</div>
+        <div style="font-size:13px;line-height:18px;font-weight:500;font-feature-settings:'tnum';">2 / 5 done · 09:42</div>
+      </div>
+    </div>
+
+    <!-- Space -->
+    <div class="section">
+      <h2>Space — 4-pixel grid</h2>
+      <div class="space-grid">
+        <div class="space-cell"><div class="space-bar" style="height:2px;"></div><span>2</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:4px;"></div><span>4</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:8px;"></div><span>8</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:12px;"></div><span>12</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:16px;"></div><span>16</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:20px;"></div><span>20</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:24px;"></div><span>24</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:32px;"></div><span>32</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:40px;"></div><span>40</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:48px;"></div><span>48</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:64px;"></div><span>64</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:80px;"></div><span>80</span></div>
+        <div class="space-cell"><div class="space-bar" style="height:96px;"></div><span>96</span></div>
+      </div>
+    </div>
+
+    <!-- Radius -->
+    <div class="section">
+      <h2>Radius</h2>
+      <div class="radius-grid">
+        <div class="radius-cell">
+          <div class="radius-shape" style="border-radius:10px;"></div>
+          <span>control · 10</span>
+        </div>
+        <div class="radius-cell">
+          <div class="radius-shape" style="border-radius:14px;"></div>
+          <span>card · 14</span>
+        </div>
+        <div class="radius-cell">
+          <div class="radius-shape" style="border-radius:20px;"></div>
+          <span>panel · 20</span>
+        </div>
+        <div class="radius-cell">
+          <div class="radius-shape" style="border-radius:24px;"></div>
+          <span>sheet · 24</span>
+        </div>
+        <div class="radius-cell">
+          <div class="radius-shape" style="border-radius:999px;width:96px;height:32px;"></div>
+          <span>pill · 999</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Elevation -->
+    <div class="section">
+      <h2>Elevation · light</h2>
+      <div class="elev-grid">
+        <div class="elev-card" style="box-shadow:none;border:1px solid var(--border);"><span class="lvl">0</span>none — sidebar items at rest</div>
+        <div class="elev-card" style="box-shadow:var(--el-1);"><span class="lvl">1</span>canvas, drawer</div>
+        <div class="elev-card" style="box-shadow:var(--el-2);"><span class="lvl">2</span>expanded card, popover</div>
+        <div class="elev-card" style="box-shadow:var(--el-3);"><span class="lvl">3</span>menu, palette</div>
+      </div>
+    </div>
+
+    <!-- Focus -->
+    <div class="section">
+      <h2>Focus ring</h2>
+      <div class="focus-demo">
+        <div class="focus-input">Default</div>
+        <div class="focus-input is-focused">Focused</div>
+        <div style="font-size:12px;color:var(--text-secondary);font-style:italic;">2-px outline + 4-px halo @ 24% — never the same as a hover or selection fill.</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
