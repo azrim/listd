@@ -6,9 +6,13 @@ import '../providers/sync_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
-/// Compact sync status pill — 32 px tall, hairline border, full width
-/// of its parent. Renders one of four states with a 6 px functional
-/// dot (success / warning / error / accent for in-flight) plus a
+/// Compact sync status pill — 32 px tall, hairline border, sized to
+/// its content (it must work both in the 2027 top bar `Row` — where
+/// the parent constraint is unbounded — and in the legacy sidebar
+/// column — where the pill simply takes its natural width).
+///
+/// Renders one of four states with a 6 px functional dot
+/// (success / warning / error / accent for in-flight) plus a
 /// trailing `sync` glyph or a 14 px spinner. Tap fires
 /// `syncStateProvider.notifier.syncNow()`.
 class SyncStatusPill extends ConsumerWidget {
@@ -40,6 +44,7 @@ class SyncStatusPill extends ConsumerWidget {
               border: Border.all(color: scheme.outlineVariant),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 if (state.isSyncing)
                   SizedBox(
@@ -60,7 +65,7 @@ class SyncStatusPill extends ConsumerWidget {
                     ),
                   ),
                 const SizedBox(width: 8),
-                Expanded(
+                Flexible(
                   child: Text(
                     label,
                     style: GoogleFonts.inter(
@@ -70,8 +75,10 @@ class SyncStatusPill extends ConsumerWidget {
                       color: scheme.onSurface,
                     ),
                     overflow: TextOverflow.ellipsis,
+                    softWrap: false,
                   ),
                 ),
+                const SizedBox(width: 8),
                 if (!state.isSyncing)
                   Icon(Icons.sync, size: 14, color: scheme.onSurfaceVariant),
               ],
