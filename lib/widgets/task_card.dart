@@ -437,7 +437,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
               decoration: BoxDecoration(
                 color: cardBg,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: scheme.primary, width: 2),
+                border: Border.all(color: scheme.primary, width: 1.5),
                 boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
               ),
               clipBehavior: Clip.antiAlias,
@@ -945,7 +945,7 @@ class _CreatedFooter extends StatelessWidget {
         ? '${delta.inMinutes}m ago'
         : 'Just now';
     return Text(
-      'Edited $label',
+      'Edited $label · saves automatically',
       style: GoogleFonts.inter(
         fontSize: 11,
         height: 16 / 11,
