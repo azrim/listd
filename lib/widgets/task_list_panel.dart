@@ -128,50 +128,98 @@ class TaskListPanel extends ConsumerWidget {
     WidgetRef ref,
     AsyncValue<List<Task>> tasksAsync,
   ) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final count = tasksAsync.valueOrNull
-        ?.where((t) => t.parentId == null && !t.isCompleted)
-        .length;
+    final scheme = Theme.of(context).colorScheme;
+    final tasks = tasksAsync.valueOrNull
+        ?.where((t) => t.parentId == null)
+        .toList();
+    final total = tasks?.length ?? 0;
+    final completed = tasks?.where((t) => t.isCompleted).length ?? 0;
+    final remaining = total - completed;
+    final caption = _isVirtual ? 'SMART' : 'LIST';
+    final showProgress = total > 0 && completed > 0;
+    final progress = total == 0 ? 0.0 : completed / total;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Flexible(
-                  child: Text(
-                    listName,
-                    style: theme.textTheme.headlineLarge,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (count != null && count > 0) ...[
-                  const SizedBox(width: 10),
-                  Text(
-                    '$count',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      height: 22 / 15,
-                      fontWeight: FontWeight.w400,
-                      color: scheme.onSurfaceVariant,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ],
-              ],
+          // Caption — sets the kind of list. SMART for virtual buckets
+          // (Today / Inbox / Important / Planned / All Tasks),
+          // LIST for user-created lists.
+          Text(
+            caption,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              height: 16 / 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.06,
+              color: scheme.onSurfaceVariant,
             ),
           ),
-          _QuietIconButton(
-            icon: Icons.refresh,
-            tooltip: 'Refresh',
-            onPressed: () => _refresh(ref),
+          const SizedBox(height: 4),
+          // H1 22 px / 28 line / 600 weight per indigo type ramp.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        listName,
+                        style: GoogleFonts.inter(
+                          fontSize: 22,
+                          height: 28 / 22,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.22,
+                          color: scheme.onSurface,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (remaining > 0) ...[
+                      const SizedBox(width: 10),
+                      Text(
+                        '$remaining',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          height: 22 / 15,
+                          fontWeight: FontWeight.w400,
+                          color: scheme.onSurfaceVariant,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              _QuietIconButton(
+                icon: Icons.refresh,
+                tooltip: 'Refresh',
+                onPressed: () => _refresh(ref),
+              ),
+            ],
           ),
+          if (showProgress) ...[
+            const SizedBox(height: 12),
+            // Progress bar — 4 px tall hairline track, indigo fill.
+            // Surfaces silently when at least one task is complete.
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: SizedBox(
+                height: 4,
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: scheme.outlineVariant,
+                  valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
+                  minHeight: 4,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

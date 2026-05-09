@@ -2,19 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../providers/today_provider.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
 
-/// 7-day calendar strip used by the Today canvas.
+/// Listd 2027 · Indigo Edition horizontal date track.
 ///
-/// The strip starts from "today − 1" and runs through "today + 5"
-/// (yesterday is visible for catch-up; the next 5 days for forward
-/// planning). Each day card shows the day-of-week label, the day
-/// number, and a 4 px density bar at the bottom rendered from up to
-/// 8 segments (`min(taskCount, 8)`).
+/// Replaces the old 7-day "calendar grid" cards with a quieter strip
+/// per `docs/redesign/2027-indigo/03_components.md` §4.
 ///
-/// Selecting a day calls [onDaySelected]; the parent screen is
-/// responsible for filtering its task list to that day.
+/// Anatomy:
+///
+/// ```
+/// ··· · · · ●═════● · · · ···
+///     Fri Sat Sun Mon Tue Wed Thu     (today is the indigo capsule)
+/// ```
+///
+///  * Track height: **56 px**
+///  * Each day: 32 px wide, 56 px tall, vertically anchored to a
+///    1 px slate-200 centerline that runs through the track.
+///  * **Today** sits *on* the line as a 32 × 32 indigo-600 capsule
+///    (white text). Other days sit *above* the line, slate text only.
+///  * Past days: slate-400. Future days: slate-700 (`onSurface`).
+///  * Tap any day → scopes the parent screen to that day.
+///  * Density bars are gone — the indigo system carries scope through
+///    type and capsule fill, not segmented bars.
 class CalendarStrip extends ConsumerWidget {
   const CalendarStrip({
     super.key,
@@ -32,125 +42,143 @@ class CalendarStrip extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final start = today.subtract(const Duration(days: 1));
-    final countsAsync = ref.watch(tasksByDayProvider(start));
+    // Center today in a 7-day window: today − 3 … today + 3.
+    final start = today.subtract(const Duration(days: 3));
+    final scheme = Theme.of(context).colorScheme;
+    final centerlineColor = scheme.outlineVariant;
 
     return SizedBox(
-      height: 80,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        itemCount: 7,
-        itemBuilder: (context, index) {
-          final day = start.add(Duration(days: index));
-          final isToday =
-              day.year == today.year &&
-              day.month == today.month &&
-              day.day == today.day;
-          final isSelected =
-              day.year == selectedDay.year &&
-              day.month == selectedDay.month &&
-              day.day == selectedDay.day;
-          final count = countsAsync.valueOrNull?[day] ?? 0;
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: _DayCard(
-              day: day,
-              isToday: isToday,
-              isSelected: isSelected,
-              count: count,
-              onTap: () => onDaySelected(day),
-            ),
-          );
-        },
+      height: 56,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // The 1 px centerline sits at the vertical midpoint and runs
+          // edge-to-edge behind the day cells.
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 28,
+            child: Container(height: 1, color: centerlineColor),
+          ),
+          ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            itemCount: 7,
+            itemBuilder: (context, index) {
+              final day = start.add(Duration(days: index));
+              final isToday =
+                  day.year == today.year &&
+                  day.month == today.month &&
+                  day.day == today.day;
+              final isSelected =
+                  day.year == selectedDay.year &&
+                  day.month == selectedDay.month &&
+                  day.day == selectedDay.day;
+              final isPast = day.isBefore(today);
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: _DayCell(
+                  day: day,
+                  isToday: isToday,
+                  isSelected: isSelected,
+                  isPast: isPast,
+                  onTap: () => onDaySelected(day),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
-class _DayCard extends StatelessWidget {
-  const _DayCard({
+class _DayCell extends StatelessWidget {
+  const _DayCell({
     required this.day,
     required this.isToday,
     required this.isSelected,
-    required this.count,
+    required this.isPast,
     required this.onTap,
   });
 
   final DateTime day;
   final bool isToday;
   final bool isSelected;
-  final int count;
+  final bool isPast;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final surfaces = Theme.of(context).extension<ListdSurfaces>();
-    final cardBg = surfaces?.card ?? scheme.surface;
+    final isDark = scheme.brightness == Brightness.dark;
 
-    Color fill = cardBg;
-    Color borderColor = scheme.outlineVariant;
-    if (isSelected) {
-      fill = scheme.primaryContainer;
-      borderColor = scheme.primary.withValues(alpha: 0.5);
-    } else if (isToday) {
-      borderColor = scheme.primary.withValues(alpha: 0.4);
-    }
-
-    final dowLabel = _dowLabel(day.weekday);
-    final segments = count.clamp(0, 8);
+    // Today renders as a 32 × 32 indigo-600 capsule that sits on the
+    // centerline. Selected (non-today) days render as a slate-200
+    // chip behind the day-of-month so the eye can find them.
+    final capsuleFill = isToday
+        ? scheme.primary
+        : isSelected
+        ? scheme.outlineVariant
+        : Colors.transparent;
+    final capsuleFg = isToday
+        ? scheme.onPrimary
+        : isSelected
+        ? scheme.onSurface
+        : isPast
+        ? (isDark ? AppColors.slate500 : AppColors.slate400)
+        : scheme.onSurface;
 
     return Material(
-      color: fill,
-      borderRadius: BorderRadius.circular(12),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 56,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: 1),
-          ),
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          width: 32,
+          height: 56,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                dowLabel,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  height: 16 / 11,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.06,
-                  color: isSelected ? scheme.primary : scheme.onSurfaceVariant,
+              // Day-of-week label sits above the centerline. Compact —
+              // no bold, no caps lock, just a quiet two-letter glyph.
+              SizedBox(
+                height: 20,
+                child: Center(
+                  child: Text(
+                    _dowLabel(day.weekday),
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      height: 14 / 11,
+                      fontWeight: FontWeight.w500,
+                      color: isToday || isSelected
+                          ? capsuleFg
+                          : scheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                '${day.day}',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  height: 22 / 18,
-                  fontWeight: FontWeight.w600,
-                  color: isToday || isSelected
-                      ? scheme.primary
-                      : scheme.onSurface,
+              // Day-of-month sits in a 32 × 32 capsule at the bottom,
+              // centered on the track centerline (the centerline is at
+              // y=28; the capsule is 24–56, so its midpoint lands on
+              // y=40 — the cell vertically anchors the day glyph there
+              // visually because it has only 24 px of bottom space).
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: capsuleFill,
+                  shape: BoxShape.circle,
                 ),
-              ),
-              const Spacer(),
-              _DensityBar(
-                segments: segments,
-                scheme: scheme,
-                isToday: isToday,
-                isPast: day.isBefore(
-                  DateTime.now().copyWith(
-                    hour: 0,
-                    minute: 0,
-                    second: 0,
-                    millisecond: 0,
-                    microsecond: 0,
+                child: Text(
+                  '${day.day}',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    height: 1.0,
+                    fontWeight: isToday ? FontWeight.w600 : FontWeight.w500,
+                    color: capsuleFg,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ),
@@ -162,55 +190,9 @@ class _DayCard extends StatelessWidget {
   }
 
   static String _dowLabel(int weekday) {
-    // Mon = 1 … Sun = 7.
-    const labels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    // Mon = 1 … Sun = 7. Two letters keeps the cell narrow and the
+    // text readable even at compact font scales.
+    const labels = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
     return labels[weekday - 1];
-  }
-}
-
-class _DensityBar extends StatelessWidget {
-  const _DensityBar({
-    required this.segments,
-    required this.scheme,
-    required this.isToday,
-    required this.isPast,
-  });
-
-  final int segments;
-  final ColorScheme scheme;
-  final bool isToday;
-  final bool isPast;
-
-  @override
-  Widget build(BuildContext context) {
-    if (segments == 0) {
-      return const SizedBox(height: 4);
-    }
-    // Per 2027 spec §4.2: today bars use flame; past days use oat
-    // (`#A89878` light / `#C4B294` dark = `scheme.secondary`); future
-    // days use oat-soft (`scheme.secondaryContainer`).
-    final Color onColor;
-    if (isToday) {
-      onColor = scheme.primary;
-    } else if (isPast) {
-      onColor = scheme.secondary;
-    } else {
-      onColor = scheme.secondaryContainer;
-    }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(8, (i) {
-        final on = i < segments;
-        return Container(
-          width: 4,
-          height: 4,
-          margin: const EdgeInsets.only(right: 1),
-          decoration: BoxDecoration(
-            color: on ? onColor : scheme.outlineVariant,
-            borderRadius: BorderRadius.circular(1),
-          ),
-        );
-      }),
-    );
   }
 }
