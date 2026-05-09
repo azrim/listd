@@ -140,7 +140,20 @@ class _DayCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              _DensityBar(segments: segments, scheme: scheme),
+              _DensityBar(
+                segments: segments,
+                scheme: scheme,
+                isToday: isToday,
+                isPast: day.isBefore(
+                  DateTime.now().copyWith(
+                    hour: 0,
+                    minute: 0,
+                    second: 0,
+                    millisecond: 0,
+                    microsecond: 0,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -156,15 +169,33 @@ class _DayCard extends StatelessWidget {
 }
 
 class _DensityBar extends StatelessWidget {
-  const _DensityBar({required this.segments, required this.scheme});
+  const _DensityBar({
+    required this.segments,
+    required this.scheme,
+    required this.isToday,
+    required this.isPast,
+  });
 
   final int segments;
   final ColorScheme scheme;
+  final bool isToday;
+  final bool isPast;
 
   @override
   Widget build(BuildContext context) {
     if (segments == 0) {
       return const SizedBox(height: 4);
+    }
+    // Per 2027 spec §4.2: today bars use flame; past days use oat
+    // (`#A89878` light / `#C4B294` dark = `scheme.secondary`); future
+    // days use oat-soft (`scheme.secondaryContainer`).
+    final Color onColor;
+    if (isToday) {
+      onColor = scheme.primary;
+    } else if (isPast) {
+      onColor = scheme.secondary;
+    } else {
+      onColor = scheme.secondaryContainer;
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -175,9 +206,7 @@ class _DensityBar extends StatelessWidget {
           height: 4,
           margin: const EdgeInsets.only(right: 1),
           decoration: BoxDecoration(
-            color: on
-                ? scheme.primary.withValues(alpha: 0.7)
-                : scheme.outlineVariant,
+            color: on ? onColor : scheme.outlineVariant,
             borderRadius: BorderRadius.circular(1),
           ),
         );

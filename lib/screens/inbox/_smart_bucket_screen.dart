@@ -10,9 +10,10 @@ import '../../widgets/task_card.dart';
 /// Shared canvas for smart buckets that don't need a calendar strip
 /// (Inbox / Important / Planned / All Tasks).
 ///
-/// Mirrors the Today layout: 720 px max-width canvas, Newsreader
-/// headline, list of TaskCard islands. The Today screen has its own
-/// implementation because it adds the calendar strip on top.
+/// Mirrors the Today layout: 720 px max-width canvas, Inter H1 headline,
+/// list of TaskCard islands. Newsreader is reserved for the Today date
+/// headline, empty-state lines, and the About screen — every other
+/// heading uses Inter 24/700 (`ListdTypography.h1`).
 class SmartBucketScreen extends ConsumerWidget {
   // Subclasses pass non-const Provider literals, so this constructor
   // can't be `const` — silencing the lint rather than chasing it.
@@ -54,12 +55,12 @@ class SmartBucketScreen extends ConsumerWidget {
                     child: Text(
                       title,
                       style:
-                          typography?.displaySerif ??
+                          typography?.h1 ??
                           GoogleFonts.inter(
-                            fontSize: 32,
-                            height: 40 / 32,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: -0.64,
+                            fontSize: 24,
+                            height: 32 / 24,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.48,
                             color: scheme.onSurface,
                           ),
                     ),

@@ -147,7 +147,7 @@ class TaskListPanel extends ConsumerWidget {
                 Flexible(
                   child: Text(
                     listName,
-                    style: theme.textTheme.headlineSmall,
+                    style: theme.textTheme.headlineLarge,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

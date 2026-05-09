@@ -372,10 +372,23 @@ class _TaskCardState extends ConsumerState<TaskCard>
     final scheme = theme.colorScheme;
     final surfaces = theme.extension<ListdSurfaces>();
     final cardBg = surfaces?.card ?? scheme.surface;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Dark expanded fill uses the chip-level surface (#26212C) so the
+    // elevated state reads against the card surface. Light mode keeps
+    // the card surface — the spring + shadow already separate the
+    // expanded body from the page.
+    const expandedDarkFill = Color(0xFF26212C);
 
     Color fill = cardBg;
-    if (widget.isSelected) {
-      fill = scheme.primaryContainer;
+    if (widget.isExpanded) {
+      fill = isDark ? expandedDarkFill : cardBg;
+    } else if (widget.isSelected) {
+      // Light: warm peach `flameSoft`. Dark: keep the card surface —
+      // `flameSoftDark` (#3D241A) on top of the card fill (#1F1B25)
+      // reads as a muddy chocolate-brown. The 2 px flame ring carries
+      // the selection signal on its own in dark mode.
+      fill = isDark ? cardBg : scheme.primaryContainer;
     } else if (_hovered) {
       fill = Color.alphaBlend(scheme.primary.withValues(alpha: 0.04), cardBg);
     }
@@ -395,9 +408,9 @@ class _TaskCardState extends ConsumerState<TaskCard>
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: widget.isSelected
-                    ? scheme.primary.withValues(alpha: 0.4)
+                    ? scheme.primary
                     : scheme.outlineVariant,
-                width: 1,
+                width: widget.isSelected ? 2 : 1,
               ),
               boxShadow: t > 0
                   ? [surfaces?.shadowSm ?? const BoxShadow()]
