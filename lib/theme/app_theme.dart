@@ -4,24 +4,26 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'spring.dart';
 
-/// Listd 2027 theme.
+/// Listd 2027 · Indigo Edition theme.
 ///
-/// Two faces (Inter + Newsreader), two accents (flame + oat), warm
-/// neutrals, soft shadows, single spring. All metrics derive from the
-/// 4 px base grid.
+/// Two faces (Inter + Newsreader), one indigo primary, slate neutrals,
+/// amber stars, soft slate-tinted shadows, single spring (named
+/// calibrations live on `AppMotion`). All metrics derive from the 4 px
+/// base grid.
 ///
 /// Component metrics:
-///   - control radius: 12 px
-///   - card radius:    16 px
+///   - control radius: 10 px
+///   - card radius:    14 px
 ///   - panel radius:   20 px
+///   - sheet radius:   24 px
 ///   - chip radius:    999 px
-///   - control height: 36 px
-///   - row height:     56 px (TaskCard collapsed)
+///   - control height: 36 px (cozy) / 32 px (compact)
+///   - row height:     56 px (cozy) / 44 px (compact)
 class AppTheme {
   AppTheme._();
 
-  static const double controlRadius = 12;
-  static const double cardRadius = 16;
+  static const double controlRadius = 10;
+  static const double cardRadius = 14;
   static const double panelRadius = 20;
   static const double sheetRadius = 24;
   static const double pillRadius = 999;
@@ -247,7 +249,7 @@ class AppTheme {
       ),
 
       chipTheme: ChipThemeData(
-        backgroundColor: isLight ? AppColors.oatSoft : AppColors.oatSoftDark,
+        backgroundColor: isLight ? AppColors.slate100 : AppColors.slate700,
         labelStyle: GoogleFonts.inter(
           fontSize: 13,
           height: 18 / 13,
@@ -323,19 +325,19 @@ class AppTheme {
   static ListdSurfaces _surfacesFor(ColorScheme scheme) {
     final isLight = scheme.brightness == Brightness.light;
     return ListdSurfaces(
-      ambient: isLight ? AppColors.bgLight : AppColors.bgDeep,
+      ambient: isLight ? AppColors.slate50 : AppColors.slate950,
       canvas: scheme.surface,
-      panel: isLight ? AppColors.bgLightContainerLow : AppColors.bgContainer,
-      card: isLight ? const Color(0xFFFFFFFF) : const Color(0xFF1F1B25),
-      chip: isLight ? AppColors.oatSoft : AppColors.oatSoftDark,
-      sidebar: isLight ? AppColors.bgLightContainerLow : AppColors.bgContainer,
-      detailPanel: isLight
-          ? AppColors.bgLightContainerLow
-          : AppColors.bgContainer,
+      panel: isLight ? AppColors.slate50 : AppColors.slate900,
+      card: isLight ? const Color(0xFFFFFFFF) : AppColors.slate800,
+      chip: isLight ? AppColors.slate100 : AppColors.slate700,
+      sidebar: isLight ? AppColors.slate50 : AppColors.slate900,
+      detailPanel: isLight ? AppColors.slate50 : AppColors.slate900,
       surfaceTint: scheme.primary,
+      // Soft slate-ink shadows — warm tinting removed so shadows read
+      // as cool, even on indigo washes.
       shadowSm: isLight
           ? const BoxShadow(
-              color: Color(0x0A1C1610),
+              color: Color(0x0A0F172A),
               blurRadius: 2,
               offset: Offset(0, 1),
             )
@@ -346,7 +348,7 @@ class AppTheme {
             ),
       shadowMd: isLight
           ? const BoxShadow(
-              color: Color(0x0F1C1610),
+              color: Color(0x0F0F172A),
               blurRadius: 20,
               offset: Offset(0, 6),
             )
@@ -357,7 +359,7 @@ class AppTheme {
             ),
       shadowLg: isLight
           ? const BoxShadow(
-              color: Color(0x1A1C1610),
+              color: Color(0x1A0F172A),
               blurRadius: 48,
               offset: Offset(0, 24),
             )
