@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/overlays_provider.dart';
 import '../providers/shell_state_provider.dart';
 import '../providers/task_lists_provider.dart';
 import '../theme/app_theme.dart';
@@ -137,7 +138,12 @@ class SidebarDrawer extends ConsumerWidget {
                     child: _FooterAction(
                       icon: PhosphorIcons.gear(),
                       label: 'Settings',
-                      onTap: () => _navigate(context, ref, '/settings'),
+                      onTap: () {
+                        ref.read(sidebarDrawerOpenProvider.notifier).state =
+                            false;
+                        ref.read(settingsOverlayOpenProvider.notifier).state =
+                            true;
+                      },
                     ),
                   ),
                   const SizedBox(width: 8),

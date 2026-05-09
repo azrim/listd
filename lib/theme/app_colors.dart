@@ -194,7 +194,7 @@ class AppColors {
   //  compiling and visually pick up the new look automatically.
   //  New code must use `Theme.of(context).colorScheme` or
   //  `ListdSurfaces` instead — these aliases will be removed in
-  //  P7 alongside the `AppGradients` purge.
+  //  a follow-up PR alongside the gradient-class purge.
   // ─────────────────────────────────────────────────────────
 
   /// Mapped to 2027 flame so the 2026 indigo brand alias resolves

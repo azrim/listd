@@ -9,6 +9,7 @@ import '../providers/shell_state_provider.dart';
 import '../theme/spring.dart';
 import 'capture_sheet.dart';
 import 'command_palette.dart';
+import 'settings_overlay.dart';
 import 'sidebar_drawer.dart';
 import 'top_bar.dart';
 import 'undo_toast.dart';
@@ -92,6 +93,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (event.logicalKey == LogicalKeyboardKey.escape) {
       // Close overlays first; only fall through to the drawer if no
       // overlay was open.
+      if (ref.read(settingsOverlayOpenProvider)) {
+        ref.read(settingsOverlayOpenProvider.notifier).state = false;
+        return KeyEventResult.handled;
+      }
       if (ref.read(commandPaletteOpenProvider)) {
         ref.read(commandPaletteOpenProvider.notifier).state = false;
         return KeyEventResult.handled;
@@ -113,6 +118,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     final isOpen = ref.watch(sidebarDrawerOpenProvider);
     final captureOpen = ref.watch(captureSheetOpenProvider);
     final paletteOpen = ref.watch(commandPaletteOpenProvider);
+    final settingsOpen = ref.watch(settingsOverlayOpenProvider);
 
     return Focus(
       focusNode: _focusNode,
@@ -206,6 +212,17 @@ class _AppShellState extends ConsumerState<AppShell> {
             ),
             const Positioned.fill(child: CaptureSheet()),
           ],
+
+          // P7 settings overlay — owns its own backdrop scrim
+          // (the single allowed blurred backdrop in lib/).
+          if (settingsOpen)
+            Positioned.fill(
+              child: SettingsOverlay(
+                onClose: () =>
+                    ref.read(settingsOverlayOpenProvider.notifier).state =
+                        false,
+              ),
+            ),
         ],
       ),
     );

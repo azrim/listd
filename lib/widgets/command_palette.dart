@@ -54,6 +54,13 @@ class _CommandPaletteState extends ConsumerState<CommandPalette> {
   void _activate(_PaletteItem item) {
     final router = GoRouter.of(context);
     _close();
+    if (item.route == '/settings') {
+      // Settings is an overlay, not a route — open it directly.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(settingsOverlayOpenProvider.notifier).state = true;
+      });
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       router.go(item.route);
     });
