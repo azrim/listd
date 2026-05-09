@@ -114,29 +114,47 @@ lib/
 
 ## Design system (2027 · Indigo Edition)
 
-| Token            | Light       | Dark        | Use                                      |
-| ---------------- | ----------- | ----------- | ---------------------------------------- |
-| `ambient`        | `#F8FAFC`   | `#020617`   | Backplate behind everything              |
-| `canvas`         | `#FFFFFF`   | `#0F172A`   | Page background — 16 px radius "island"  |
-| `panel`          | `#F8FAFC`   | `#0F172A`   | Sidebar drawer, settings drawer          |
-| `card`           | `#FFFFFF`   | `#1E293B`   | Task card — 12 px radius                 |
-| `chip`           | `#F1F5F9`   | `#334155`   | Tag / chip / pill — 999 px radius        |
-| `indigo`         | `#4F46E5`   | `#7376F8`   | Selection, focus ring, primary action    |
-| `indigoSoft`     | `#EEF2FF`   | `#1E1B4B`   | Selected row fill, today date cell       |
-| `amber`          | `#FBBF24`   | `#FCD34D`   | Star fill / star glyph only              |
-| `text-primary`   | `#0F172A`   | `#F8FAFC`   | Titles, body                             |
-| `text-secondary` | `#64748B`   | `#94A3B8`   | Meta, captions                           |
-| `border`         | `#E2E8F0`   | `#334155`   | 1 px hairlines                           |
+### Floating panel architecture
+
+The app shell renders **two separate floating cards** on top of an indigo backplate:
+
+- **Sidebar** — 240 px fixed, 20 px radius, sits on the left with 16 px outer gutters (top / left / bottom).
+- **Canvas** — flexed, 20 px radius, sits on the right with 16 px outer gutters (top / right / bottom).
+- An 8 px gap between the two panels lets the indigo backplate show through.
+- The TopBar (panel toggle + page title + Search·⌘K + avatar) lives **inside** the canvas card, not above the shell.
+
+### Surface stack
+
+| Token            | Light       | Dark        | Use                                                |
+| ---------------- | ----------- | ----------- | -------------------------------------------------- |
+| `ambient`        | `#F8FAFC`   | `#0B1224`   | Backplate behind everything (indigo radial drift)  |
+| `panel`          | `#F8FAFC`   | `#0F172A`   | Sidebar floating card                              |
+| `canvas`         | `#FFFFFF`   | `#1E293B`   | Right-hand floating card (page background)         |
+| `card`           | `#FFFFFF`   | `#334155`   | Expanded task card — 16 px radius                  |
+| `chip` / `hover` | `#F1F5F9`   | `#475569`   | Tag / chip / pill / hover overlay — 999 px radius  |
+| `indigo`         | `#4F46E5`   | `#7376F8`   | Selection, focus ring, primary action              |
+| `indigoSoft`     | `#EEF2FF`   | `#1E1B4B`   | Selected row fill, today date cell                 |
+| `amber`          | `#FBBF24`   | `#FCD34D`   | Star fill / star glyph only                        |
+| `text-primary`   | `#0F172A`   | `#F8FAFC`   | Titles, body                                       |
+| `text-secondary` | `#475569`   | `#CBD5E1`   | Meta, captions, action-rail placeholders           |
+| `border`         | `#E2E8F0`   | `#334155`   | 1 px hairlines (rendered at alpha 0.6–0.7)         |
+
+In dark mode each layer is one slate stop brighter than the layer below it, so the sidebar / canvas / expanded card / chip all read as distinct depths against the indigo backplate.
+
+### Other rules
 
 - **Two faces** — Inter (UI) + Newsreader (display, 3 places only: Today headline, empty states, About).
 - **4 px base grid** — allowed values: 4, 8, 12, 16, 24, 32, 48, 64.
 - **Soft slate-tinted shadows** — `shadowSm` / `shadowMd` / `shadowLg` from the `ListdSurfaces` extension.
-- **Component metrics** — control 36 px, TaskCard 56 px (cozy) / 44 px (compact) → 200–400 px expanded, control radius 12 px, card radius 12 px, panel radius 16 px, chip 999 px, focus ring 2 px indigo. `DensityMode` toggles cozy ↔ compact.
-- **Motion** — one spring with three calibrations: `AppMotion.settle` (220 ms default), `AppMotion.flick` (160 ms light affordances), `AppMotion.breathe` (320 ms heavy surfaces). Reduced motion → 0 ms snap.
+- **Component metrics** — control 36 px, TaskCard 56 px (cozy) / 44 px (compact) collapsed, expands to 200–400 px, control radius 12 px, card radius 16 px, panel radius 20 px, chip 999 px, focus ring 2 px indigo. `DensityMode` toggles cozy ↔ compact.
+- **Motion** — one spring with three calibrations: `AppMotion.settle` (220 ms default), `AppMotion.flick` (160 ms light affordances), `AppMotion.breathe` (320 ms heavy surfaces). Reduced motion → 0 ms snap. The legacy `ListdSpring.standard` is identical to `AppMotion.settle`.
+- **Task card morph** — collapse ↔ expand interpolates fill, border, radius, padding, and shadow on the same controller `t`, so the silhouette never hard-switches between the two states.
+- **Inline edit fields** — transparent fill in every state; only the underline carries the affordance (alpha 0.6 outline at rest, solid `onSurfaceVariant` on hover, 2 px indigo on focus).
 - **Icons** — Phosphor regular (1.5 px stroke).
-- **No glassmorphism** — there is no `BackdropFilter` anywhere; the settings drawer slides in over an opaque slate scrim.
+- **Accent picker** — preview-only. Indigo is the fixed primary; alternates can be previewed in Settings → Appearance but never override the system primary.
+- **No glassmorphism** — there is no `BackdropFilter` anywhere in `lib/`; the settings drawer slides in over an opaque slate scrim.
 
-The full spec lives under `docs/redesign/2027-indigo/` (00–06 plus mockups).
+The full spec lives under `docs/redesign/2027-indigo/` (00–06 plus mockups). Mockups are in `docs/redesign/2027-indigo/mockups/`.
 
 ## Privacy
 
