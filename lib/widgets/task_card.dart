@@ -8,8 +8,15 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/task.dart';
 import '../providers/tasks_provider.dart';
+import '../services/notifications/reminder_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/spring.dart';
+import '../utils/url_detector.dart';
+import 'link_chip.dart';
+import 'repeat_picker_sheet.dart';
+import 'tags_editor_sheet.dart';
+import 'task_action_rail.dart';
+import 'task_steps_editor.dart';
 
 /// Listd 2027 TaskCard.
 ///
@@ -191,6 +198,82 @@ class _TaskCardState extends ConsumerState<TaskCard>
     _update(widget.task.copyWith(isStarred: !widget.task.isStarred));
   }
 
+  void _updateSteps(List<TaskStep> steps) {
+    _update(widget.task.copyWith(steps: steps));
+  }
+
+  Future<void> _pickDue() async {
+    final task = widget.task;
+    final initial = task.due ?? DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+    );
+    if (!mounted) return;
+    if (picked == null) return;
+    _update(task.copyWith(due: picked));
+  }
+
+  Future<void> _pickReminder() async {
+    final task = widget.task;
+    final initial =
+        task.reminder ?? DateTime.now().add(const Duration(hours: 1));
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+    );
+    if (!mounted || date == null) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (!mounted || time == null) return;
+    final reminder = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+    final updated = task.copyWith(reminder: reminder);
+    _update(updated);
+    // Best-effort schedule; ReminderService no-ops on platforms that
+    // don't support local notifications and on past times.
+    unawaited(ref.read(reminderServiceProvider).schedule(updated));
+  }
+
+  Future<void> _pickRepeat() async {
+    final result = await showRepeatPicker(context, initial: widget.task.repeat);
+    if (!mounted || result == null) return;
+    if (result.value == null) {
+      _update(widget.task.copyWith(clearRepeat: true));
+    } else {
+      _update(widget.task.copyWith(repeat: result.value));
+    }
+  }
+
+  Future<void> _editTags() async {
+    final next = await showTagsEditor(context, initial: widget.task.tags);
+    if (!mounted || next == null) return;
+    _update(widget.task.copyWith(tags: next));
+  }
+
+  Future<void> _confirmDelete() async {
+    final taskId = widget.task.id;
+    final title = widget.task.title.isEmpty ? 'task' : '"${widget.task.title}"';
+    final messenger = ScaffoldMessenger.of(context);
+    await ref
+        .read(tasksNotifierProvider(widget.listId).notifier)
+        .deleteTask(taskId);
+    unawaited(ref.read(reminderServiceProvider).cancel(taskId));
+    if (!mounted) return;
+    messenger.showSnackBar(SnackBar(content: Text('Deleted $title')));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -262,159 +345,240 @@ class _TaskCardState extends ConsumerState<TaskCard>
     );
   }
 
+  /// Pulls every URL out of the task's step list — both steps that are
+  /// just a URL (`isUrlOnly`) and steps that mention a URL inline.
+  /// De-duplicates so the same link doesn't render twice.
+  List<String> _stepUrls() {
+    final out = <String>[];
+    for (final step in widget.task.steps) {
+      for (final u in extractUrls(step.title)) {
+        if (!out.contains(u)) out.add(u);
+      }
+    }
+    return out;
+  }
+
   Widget _buildCollapsedRow(ColorScheme scheme, ThemeData theme) {
     final task = widget.task;
-    return SizedBox(
-      height: _collapsedHeight,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            _CardCheckbox(completed: task.isCompleted, onTap: _toggleComplete),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                task.title.isEmpty ? 'Untitled task' : task.title,
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  height: 22 / 15,
-                  fontWeight: FontWeight.w500,
-                  color: task.isCompleted ? scheme.outline : scheme.onSurface,
-                  decoration: task.isCompleted
-                      ? TextDecoration.lineThrough
-                      : null,
-                  decorationColor: scheme.outline,
-                  decorationThickness: 1,
+    final urls = _stepUrls();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: _collapsedHeight,
+            child: Row(
+              children: [
+                _CardCheckbox(
+                  completed: task.isCompleted,
+                  onTap: _toggleComplete,
                 ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    task.title.isEmpty ? 'Untitled task' : task.title,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      height: 22 / 15,
+                      fontWeight: FontWeight.w500,
+                      color: task.isCompleted
+                          ? scheme.outline
+                          : scheme.onSurface,
+                      decoration: task.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
+                      decorationColor: scheme.outline,
+                      decorationThickness: 1,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+                if (task.due != null) ...[
+                  const SizedBox(width: 12),
+                  _MetaChip(label: _formatDate(task.due!), scheme: scheme),
+                ],
+                if (task.steps.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  _MetaChip(
+                    label:
+                        '${task.steps.where((s) => s.isCompleted).length}/${task.steps.length}',
+                    scheme: scheme,
+                    icon: PhosphorIcons.checkSquare(),
+                  ),
+                ],
+                if (task.isStarred) ...[
+                  const SizedBox(width: 8),
+                  Icon(
+                    PhosphorIcons.star(PhosphorIconsStyle.fill),
+                    size: 16,
+                    color: scheme.primary,
+                  ),
+                ],
+              ],
             ),
-            if (task.due != null) ...[
-              const SizedBox(width: 12),
-              _MetaChip(label: _formatDate(task.due!), scheme: scheme),
-            ],
-            if (task.steps.isNotEmpty) ...[
-              const SizedBox(width: 8),
-              _MetaChip(
-                label:
-                    '${task.steps.where((s) => s.isCompleted).length}/${task.steps.length}',
-                scheme: scheme,
-                icon: PhosphorIcons.checkSquare(),
-              ),
-            ],
-            if (task.isStarred) ...[
-              const SizedBox(width: 8),
-              Icon(
-                PhosphorIcons.star(PhosphorIconsStyle.fill),
-                size: 16,
-                color: scheme.primary,
-              ),
-            ],
-          ],
-        ),
+          ),
+          if (urls.isNotEmpty) _buildLinkRail(urls),
+        ],
+      ),
+    );
+  }
+
+  /// Up to three [LinkChip]s rendered under the title row when the
+  /// task has URL steps. Anything past the third is folded into a
+  /// "+N more" overflow chip that just toggles expansion.
+  Widget _buildLinkRail(List<String> urls) {
+    const visible = 3;
+    final shown = urls.take(visible).toList();
+    final overflow = urls.length - shown.length;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(34, 0, 0, 12),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          for (final url in shown) LinkChip(url: url),
+          if (overflow > 0)
+            LinkOverflowChip(count: overflow, onTap: widget.onToggleExpand),
+        ],
       ),
     );
   }
 
   Widget _buildExpandedBody(ColorScheme scheme, ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
-          const SizedBox(height: 12),
-          // Inline editable title — bigger + serif-y feel via Inter 500.
-          TextField(
-            controller: _titleController,
-            onChanged: _onTitleChanged,
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              height: 24 / 18,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.18,
-              color: widget.task.isCompleted
-                  ? scheme.outline
-                  : scheme.onSurface,
-              decoration: widget.task.isCompleted
-                  ? TextDecoration.lineThrough
-                  : null,
-            ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              isDense: true,
-              contentPadding: EdgeInsets.zero,
-              hintText: 'Task title',
-              hintStyle: GoogleFonts.inter(
-                fontSize: 18,
-                height: 24 / 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.18,
-                color: scheme.outline,
+    final task = widget.task;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 520),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
+            const SizedBox(height: 12),
+            Flexible(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 7,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: _titleController,
+                          onChanged: _onTitleChanged,
+                          style: GoogleFonts.inter(
+                            fontSize: 18,
+                            height: 24 / 18,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.18,
+                            color: task.isCompleted
+                                ? scheme.outline
+                                : scheme.onSurface,
+                            decoration: task.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            hintText: 'Task title',
+                            hintStyle: GoogleFonts.inter(
+                              fontSize: 18,
+                              height: 24 / 18,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.18,
+                              color: scheme.outline,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _notesController,
+                          onChanged: _onNotesChanged,
+                          maxLines: 3,
+                          minLines: 1,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            height: 18 / 13,
+                            fontWeight: FontWeight.w400,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            hintText: 'Notes',
+                            hintStyle: GoogleFonts.inter(
+                              fontSize: 13,
+                              height: 18 / 13,
+                              color: scheme.outline,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Steps',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            height: 16 / 11,
+                            fontWeight: FontWeight.w600,
+                            color: scheme.onSurfaceVariant,
+                            letterSpacing: 0.06,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        TaskStepsEditor(
+                          steps: task.steps,
+                          onStepsChanged: _updateSteps,
+                          maxHeight: 220,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            _ActionPill(
+                              icon: task.isCompleted
+                                  ? PhosphorIcons.arrowCounterClockwise()
+                                  : PhosphorIcons.check(),
+                              label: task.isCompleted ? 'Reopen' : 'Complete',
+                              onTap: _toggleComplete,
+                              tinted: !task.isCompleted,
+                            ),
+                            const Spacer(),
+                            _CreatedFooter(updated: task.updated),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 200,
+                    child: TaskActionRail(
+                      task: task,
+                      onToggleStar: _toggleStar,
+                      onPickDue: _pickDue,
+                      onPickReminder: _pickReminder,
+                      onPickRepeat: _pickRepeat,
+                      onEditTags: _editTags,
+                      onDelete: _confirmDelete,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          // Inline editable notes.
-          TextField(
-            controller: _notesController,
-            onChanged: _onNotesChanged,
-            maxLines: null,
-            minLines: 1,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              height: 20 / 14,
-              fontWeight: FontWeight.w400,
-              color: scheme.onSurfaceVariant,
-            ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              isDense: true,
-              contentPadding: EdgeInsets.zero,
-              hintText: 'Notes',
-              hintStyle: GoogleFonts.inter(
-                fontSize: 14,
-                height: 20 / 14,
-                color: scheme.outline,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _ActionPill(
-                icon: widget.task.isStarred
-                    ? PhosphorIcons.star(PhosphorIconsStyle.fill)
-                    : PhosphorIcons.star(),
-                label: widget.task.isStarred ? 'Starred' : 'Star',
-                onTap: _toggleStar,
-                tinted: widget.task.isStarred,
-              ),
-              const SizedBox(width: 8),
-              if (widget.task.due != null)
-                _ActionPill(
-                  icon: PhosphorIcons.calendar(),
-                  label: _formatDate(widget.task.due!),
-                  onTap: () {},
-                ),
-              const Spacer(),
-              _ActionPill(
-                icon: widget.task.isCompleted
-                    ? PhosphorIcons.arrowCounterClockwise()
-                    : PhosphorIcons.check(),
-                label: widget.task.isCompleted ? 'Reopen' : 'Complete',
-                onTap: _toggleComplete,
-                tinted: !widget.task.isCompleted,
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -547,6 +711,42 @@ class _ActionPill extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Tiny footer at the bottom of the expanded body — quiet text that
+/// records when the task was last touched. Uses tabular figures so
+/// timestamps line up across cards in side-by-side comparisons.
+class _CreatedFooter extends StatelessWidget {
+  const _CreatedFooter({required this.updated});
+
+  final DateTime updated;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final now = DateTime.now();
+    final localUpdated = updated.toLocal();
+    final delta = now.difference(localUpdated);
+    final label = delta.inDays > 7
+        ? '${localUpdated.month}/${localUpdated.day}/${localUpdated.year}'
+        : delta.inDays >= 1
+        ? '${delta.inDays}d ago'
+        : delta.inHours >= 1
+        ? '${delta.inHours}h ago'
+        : delta.inMinutes >= 1
+        ? '${delta.inMinutes}m ago'
+        : 'Just now';
+    return Text(
+      'Edited $label',
+      style: GoogleFonts.inter(
+        fontSize: 11,
+        height: 16 / 11,
+        fontWeight: FontWeight.w400,
+        color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+        fontFeatures: const [FontFeature.tabularFigures()],
       ),
     );
   }
