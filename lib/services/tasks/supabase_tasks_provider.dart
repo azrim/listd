@@ -5,13 +5,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/task.dart';
 import '../../models/task_list.dart';
 import '../../models/sync_status.dart';
+import '../sync/task_sync_service.dart' show TaskSyncBackend;
 import '../tasks/task_provider.dart';
 
 /// Supabase-based task provider implementing ITaskProvider.
 ///
 /// Uses Supabase PostgREST client for CRUD operations and
 /// Supabase Auth for user authentication.
-class SupabaseTasksProvider implements ITaskProvider {
+class SupabaseTasksProvider implements ITaskProvider, TaskSyncBackend {
   SupabaseTasksProvider(this._client);
 
   final SupabaseClient _client;
@@ -37,6 +38,7 @@ class SupabaseTasksProvider implements ITaskProvider {
   }
 
   /// Whether a user session currently exists.
+  @override
   bool get isAuthenticated => _client.auth.currentUser != null;
 
   @override
@@ -78,6 +80,7 @@ class SupabaseTasksProvider implements ITaskProvider {
 
   /// Fetches every task owned by the current user, across all lists.
   /// Used by the local-first sync to populate Drift in one round-trip.
+  @override
   Future<List<Task>> getAllTasks() async {
     try {
       final response = await _client
@@ -211,6 +214,7 @@ class SupabaseTasksProvider implements ITaskProvider {
   // ── Task List Operations ──
 
   /// Creates a new task list.
+  @override
   Future<TaskList> createTaskList(TaskList taskList) async {
     try {
       final data = <String, dynamic>{
@@ -237,6 +241,7 @@ class SupabaseTasksProvider implements ITaskProvider {
   }
 
   /// Updates an existing task list.
+  @override
   Future<TaskList> updateTaskList(TaskList taskList) async {
     try {
       final data = <String, dynamic>{
@@ -264,6 +269,7 @@ class SupabaseTasksProvider implements ITaskProvider {
   }
 
   /// Deletes a task list.
+  @override
   Future<void> deleteTaskList(String taskListId) async {
     try {
       await _client

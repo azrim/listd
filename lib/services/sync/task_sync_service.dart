@@ -7,7 +7,25 @@ import '../../data/database/daos/task_list_dao.dart';
 import '../../models/sync_status.dart';
 import '../../models/task.dart';
 import '../../models/task_list.dart';
-import '../tasks/supabase_tasks_provider.dart';
+
+/// Narrow interface the sync service consumes from the remote backend.
+///
+/// `SupabaseTasksProvider` implements this; tests inject a fake without
+/// having to spin up a live Supabase client.
+abstract interface class TaskSyncBackend {
+  bool get isAuthenticated;
+
+  Future<List<TaskList>> getTaskLists();
+  Future<List<Task>> getAllTasks();
+
+  Future<TaskList> createTaskList(TaskList taskList);
+  Future<TaskList> updateTaskList(TaskList taskList);
+  Future<void> deleteTaskList(String taskListId);
+
+  Future<Task> createTask(String taskListId, Task task);
+  Future<Task> updateTask(String taskListId, Task task);
+  Future<void> deleteTask(String taskListId, String taskId);
+}
 
 /// Background sync service for the local-first architecture.
 ///
@@ -25,14 +43,14 @@ class TaskSyncService {
   TaskSyncService({
     required TaskDao taskDao,
     required TaskListDao taskListDao,
-    required SupabaseTasksProvider taskProvider,
+    required TaskSyncBackend taskProvider,
   }) : _taskDao = taskDao,
        _taskListDao = taskListDao,
        _taskProvider = taskProvider;
 
   final TaskDao _taskDao;
   final TaskListDao _taskListDao;
-  final SupabaseTasksProvider _taskProvider;
+  final TaskSyncBackend _taskProvider;
 
   /// Whether a sync cycle is currently in flight. Listenable for the
   /// status pill in the UI.
@@ -47,11 +65,24 @@ class TaskSyncService {
   /// Coalescing timer for [scheduleSync].
   Timer? _debounce;
 
+  /// Set when [scheduleSync] or [syncAll] is invoked while a cycle is
+  /// already in flight. The in-flight cycle's `finally` re-arms the
+  /// debounce so mutations that landed during the cycle still get pushed.
+  bool _pendingResync = false;
+
   /// Performs a full sync cycle: push pending → pull remote.
   ///
-  /// Safe to call concurrently — overlapping calls become no-ops.
+  /// Safe to call concurrently — overlapping calls become no-ops, but
+  /// the in-flight cycle re-schedules itself so mutations that arrived
+  /// during the cycle are picked up on the next pass.
   Future<SyncSummary> syncAll() async {
-    if (isSyncing.value) return const SyncSummary();
+    if (isSyncing.value) {
+      // A cycle is already in flight; flag a follow-up so its finally
+      // block re-arms the debounce. Without this, rows mutated during
+      // an in-flight push would sit pending until the next user action.
+      _pendingResync = true;
+      return const SyncSummary();
+    }
     if (!_taskProvider.isAuthenticated) return const SyncSummary();
 
     isSyncing.value = true;
@@ -71,12 +102,26 @@ class TaskSyncService {
       rethrow;
     } finally {
       isSyncing.value = false;
+      if (_pendingResync) {
+        _pendingResync = false;
+        scheduleSync();
+      }
     }
   }
 
   /// Triggers a sync without awaiting the result. Coalesces rapid bursts
   /// of local mutations into a single sync cycle.
+  ///
+  /// If a cycle is already in flight, the request is recorded so the
+  /// in-flight cycle re-arms a follow-up sync once it completes —
+  /// otherwise the timer would fire mid-cycle and the resulting
+  /// [syncAll] call would early-return with no work done, leaving the
+  /// new mutation pending until the next user action.
   void scheduleSync({Duration delay = const Duration(milliseconds: 250)}) {
+    if (isSyncing.value) {
+      _pendingResync = true;
+      return;
+    }
     _debounce?.cancel();
     _debounce = Timer(delay, () {
       // Errors are intentionally swallowed at this layer; rows stay
@@ -308,7 +353,7 @@ class _PullSummary {
 TaskSyncService taskSyncServiceFromRefs({
   required TaskDao taskDao,
   required TaskListDao taskListDao,
-  required SupabaseTasksProvider taskProvider,
+  required TaskSyncBackend taskProvider,
 }) {
   return TaskSyncService(
     taskDao: taskDao,
