@@ -24,10 +24,22 @@ List<Task> _filterForVirtualList(List<Task> all, String listId) {
   switch (listId) {
     case SpecialListIds.myDay:
       return all.where((t) => t.due != null && sameDay(t.due!)).toList();
+    case SpecialListIds.inbox:
+      // Inbox: open tasks that haven't been filed into a real list.
+      // Mirrors `inboxTasksProvider` from `today_provider.dart`.
+      return all
+          .where(
+            (t) =>
+                !t.isCompleted &&
+                (t.taskListId.isEmpty || t.taskListId == 'inbox'),
+          )
+          .toList();
     case SpecialListIds.important:
-      return all.where((t) => t.isStarred).toList();
+      return all.where((t) => t.isStarred && !t.isCompleted).toList();
     case SpecialListIds.planned:
-      return all.where((t) => t.due != null).toList();
+      return all
+          .where((t) => !t.isCompleted && (t.due != null || t.reminder != null))
+          .toList();
     case SpecialListIds.tasks:
       return all;
     default:
@@ -81,7 +93,7 @@ class TaskListPanel extends ConsumerWidget {
           _buildHeader(context, ref, tasksAsync),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
-            child: _AddTaskInput(listId: listId),
+            child: AddTaskInput(listId: listId),
           ),
           Expanded(
             child: GestureDetector(
@@ -578,16 +590,16 @@ class _QuietIconButton extends StatelessWidget {
 /// bottom that swaps to accent + 2 px on focus. Reads like an underlined
 /// native field — far closer to the rest of the inspector's hairline
 /// vocabulary than the chunky filled rectangle this used to be.
-class _AddTaskInput extends ConsumerStatefulWidget {
+class AddTaskInput extends ConsumerStatefulWidget {
   final String listId;
 
-  const _AddTaskInput({required this.listId});
+  const AddTaskInput({super.key, required this.listId});
 
   @override
-  ConsumerState<_AddTaskInput> createState() => _AddTaskInputState();
+  ConsumerState<AddTaskInput> createState() => _AddTaskInputState();
 }
 
-class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
+class _AddTaskInputState extends ConsumerState<AddTaskInput> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   bool _isLoading = false;

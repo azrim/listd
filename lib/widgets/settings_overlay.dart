@@ -357,28 +357,41 @@ class _AppearanceBody extends ConsumerWidget {
       children: [
         _SectionLabel('Theme'),
         const SizedBox(height: 8),
-        SegmentedButton<ThemeMode>(
-          segments: const [
-            ButtonSegment(value: ThemeMode.light, label: Text('Light')),
-            ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
-            ButtonSegment(value: ThemeMode.system, label: Text('System')),
+        // Per `05_settings_drawer_light.png` — sun / moon Phosphor
+        // icons on the icon segments and plain "System". The whole
+        // strip is a slate-soft tray; the selected segment is a white
+        // / slate-card chip with no Material check overlay.
+        _Segmented<ThemeMode>(
+          value: mode,
+          onChanged: (v) =>
+              ref.read(themeModeProvider.notifier).setThemeMode(v),
+          options: [
+            _SegmentOption(
+              value: ThemeMode.light,
+              label: 'Light',
+              icon: PhosphorIcons.sun(),
+            ),
+            _SegmentOption(
+              value: ThemeMode.dark,
+              label: 'Dark',
+              icon: PhosphorIcons.moon(),
+            ),
+            const _SegmentOption(value: ThemeMode.system, label: 'System'),
           ],
-          selected: {mode},
-          onSelectionChanged: (s) =>
-              ref.read(themeModeProvider.notifier).setThemeMode(s.first),
         ),
         const SizedBox(height: 24),
         _SectionLabel('Density'),
         const SizedBox(height: 8),
-        SegmentedButton<DensityMode>(
-          segments: const [
-            ButtonSegment(value: DensityMode.cozy, label: Text('Cozy')),
-            ButtonSegment(value: DensityMode.compact, label: Text('Compact')),
+        _Segmented<DensityMode>(
+          value: density,
+          onChanged: (v) => ref.read(densityModeProvider.notifier).setMode(v),
+          options: const [
+            _SegmentOption(value: DensityMode.cozy, label: 'Cozy'),
+            _SegmentOption(value: DensityMode.compact, label: 'Compact'),
           ],
-          selected: {density},
-          onSelectionChanged: (s) =>
-              ref.read(densityModeProvider.notifier).setMode(s.first),
         ),
+        const SizedBox(height: 6),
+        _HelperText('Cozy uses 56-pixel task rows; compact drops to 44.'),
         const SizedBox(height: 24),
         _SectionLabel('Text size'),
         const SizedBox(height: 8),
@@ -415,8 +428,9 @@ class _AppearanceBody extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         _HelperText(
-          'Indigo carries selection, focus, and progress across the app. '
-          'Other swatches preview here only.',
+          'Indigo is the system default — alternates apply only to '
+          'selection and primary buttons; functional dots remain '
+          'emerald, amber, and red.',
         ),
         const SizedBox(height: 24),
         _SectionLabel('Backplate'),
@@ -428,10 +442,120 @@ class _AppearanceBody extends ConsumerWidget {
         ),
         const SizedBox(height: 6),
         _HelperText(
-          'When on, the ambient backplate shifts subtly with the time '
-          'of day — warmer in the morning, cooler in the evening.',
+          'Soft corner washes warm in the morning, cool in the evening. '
+          'Disable to keep a static gradient.',
         ),
       ],
+    );
+  }
+}
+
+/// Indigo segmented control — replaces Material's `SegmentedButton`
+/// (which paints an amber Material check icon over selected segments
+/// in the current ColorScheme). Per `05_settings_drawer_light.png`
+/// the strip is a slate-soft tray and the selected segment is a flat
+/// white / slate-card chip with optional Phosphor icon.
+class _SegmentOption<T> {
+  const _SegmentOption({required this.value, required this.label, this.icon});
+
+  final T value;
+  final String label;
+  final IconData? icon;
+}
+
+class _Segmented<T> extends StatelessWidget {
+  const _Segmented({
+    required this.value,
+    required this.onChanged,
+    required this.options,
+  });
+
+  final T value;
+  final ValueChanged<T> onChanged;
+  final List<_SegmentOption<T>> options;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.all(2),
+      child: IntrinsicHeight(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final opt in options)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 1),
+                child: _SegmentChip<T>(
+                  selected: opt.value == value,
+                  label: opt.label,
+                  icon: opt.icon,
+                  onTap: () => onChanged(opt.value),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SegmentChip<T> extends StatelessWidget {
+  const _SegmentChip({
+    required this.selected,
+    required this.label,
+    required this.onTap,
+    this.icon,
+  });
+
+  final bool selected;
+  final String label;
+  final IconData? icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? scheme.surface : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: selected ? scheme.onSurface : scheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                height: 18 / 13,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: selected ? scheme.onSurface : scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -476,7 +600,8 @@ class _AccentSwatchPicker extends StatelessWidget {
   }
 }
 
-/// Backplate drift toggle row — switch + label.
+/// Backplate drift toggle row — indigo checkbox + label per
+/// `05_settings_drawer_light.png` (no Material switch).
 class _DriftToggleRow extends StatelessWidget {
   const _DriftToggleRow({required this.enabled, required this.onChanged});
 
@@ -486,25 +611,50 @@ class _DriftToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'Time-of-day drift',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              height: 18 / 13,
-              fontWeight: FontWeight.w500,
-              color: scheme.onSurface,
+    return InkWell(
+      borderRadius: BorderRadius.circular(6),
+      onTap: () => onChanged(!enabled),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            // 18-px indigo checkbox — slate hairline when off, indigo
+            // fill + white check when on. Matches the Component
+            // overview (10) checkbox treatment.
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: enabled ? scheme.primary : Colors.transparent,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: enabled ? scheme.primary : scheme.outline,
+                  width: 1.5,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: enabled
+                  ? Icon(
+                      PhosphorIcons.check(PhosphorIconsStyle.bold),
+                      size: 12,
+                      color: scheme.onPrimary,
+                    )
+                  : null,
             ),
-          ),
+            const SizedBox(width: 10),
+            Text(
+              'Time-of-day drift',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                height: 18 / 13,
+                fontWeight: FontWeight.w500,
+                color: scheme.onSurface,
+              ),
+            ),
+          ],
         ),
-        Switch(
-          value: enabled,
-          onChanged: onChanged,
-          activeThumbColor: scheme.primary,
-        ),
-      ],
+      ),
     );
   }
 }

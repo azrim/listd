@@ -93,75 +93,83 @@ class _AppShellState extends ConsumerState<AppShell> {
     final paletteOpen = ref.watch(commandPaletteOpenProvider);
     final settingsOpen = ref.watch(settingsOverlayOpenProvider);
 
-    return Focus(
-      focusNode: _focusNode,
-      autofocus: true,
-      onKeyEvent: _onKeyEvent,
-      child: Stack(
-        children: [
-          Row(
-            children: [
-              AnimatedSize(
-                duration: ListdSpring.duration,
-                curve: ListdSpring.curve,
-                alignment: Alignment.centerLeft,
-                child: SizedBox(
-                  width: sidebarOpen ? SidebarDrawer.width : 0,
-                  child: const ClipRect(child: SidebarDrawer()),
+    // Wrap the shell in a Material so descendant Text widgets
+    // inherit a DefaultTextStyle (otherwise Flutter renders the
+    // amber double-underline debug warning over labels like SMART /
+    // LISTS / Search · Ctrl+K).
+    return Material(
+      type: MaterialType.transparency,
+      child: Focus(
+        focusNode: _focusNode,
+        autofocus: true,
+        onKeyEvent: _onKeyEvent,
+        child: Stack(
+          children: [
+            Row(
+              children: [
+                AnimatedSize(
+                  duration: ListdSpring.duration,
+                  curve: ListdSpring.curve,
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: sidebarOpen ? SidebarDrawer.width : 0,
+                    child: const ClipRect(child: SidebarDrawer()),
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      const TopBar(),
+                      Expanded(child: widget.child),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // Bottom-center undo toast — always mounted so the
+            // notifier can show without a route hop.
+            const Positioned.fill(
+              child: IgnorePointer(ignoring: false, child: UndoToast()),
+            ),
+
+            if (paletteOpen) ...[
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () =>
+                      ref.read(commandPaletteOpenProvider.notifier).state =
+                          false,
+                  child: Container(color: Colors.black.withValues(alpha: 0.18)),
                 ),
               ),
-              Expanded(
-                child: Column(
-                  children: [
-                    const TopBar(),
-                    Expanded(child: widget.child),
-                  ],
-                ),
-              ),
+              const Positioned.fill(child: CommandPalette()),
             ],
-          ),
-
-          // Bottom-center undo toast — always mounted so the
-          // notifier can show without a route hop.
-          const Positioned.fill(
-            child: IgnorePointer(ignoring: false, child: UndoToast()),
-          ),
-
-          if (paletteOpen) ...[
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () =>
-                    ref.read(commandPaletteOpenProvider.notifier).state = false,
-                child: Container(color: Colors.black.withValues(alpha: 0.18)),
+            if (captureOpen) ...[
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () =>
+                      ref.read(captureSheetOpenProvider.notifier).state = false,
+                  child: Container(color: Colors.black.withValues(alpha: 0.18)),
+                ),
               ),
-            ),
-            const Positioned.fill(child: CommandPalette()),
+              const Positioned.fill(child: CaptureSheet()),
+            ],
+
+            // 2027 indigo settings drawer — slides in from the right
+            // edge with a flat 40 % slate scrim. No blur anywhere in
+            // the tree (see CI gate in docs/redesign/2027-indigo).
+            if (settingsOpen)
+              Positioned.fill(
+                child: SettingsOverlay(
+                  onClose: () =>
+                      ref.read(settingsOverlayOpenProvider.notifier).state =
+                          false,
+                ),
+              ),
           ],
-          if (captureOpen) ...[
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () =>
-                    ref.read(captureSheetOpenProvider.notifier).state = false,
-                child: Container(color: Colors.black.withValues(alpha: 0.18)),
-              ),
-            ),
-            const Positioned.fill(child: CaptureSheet()),
-          ],
-
-          // 2027 indigo settings drawer — slides in from the right
-          // edge with a flat 40 % slate scrim. No blur anywhere in
-          // the tree (see CI gate in docs/redesign/2027-indigo).
-          if (settingsOpen)
-            Positioned.fill(
-              child: SettingsOverlay(
-                onClose: () =>
-                    ref.read(settingsOverlayOpenProvider.notifier).state =
-                        false,
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }

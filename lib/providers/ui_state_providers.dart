@@ -38,6 +38,7 @@ enum TaskViewMode { list, grid }
 /// Special list IDs for built-in views
 class SpecialListIds {
   static const String myDay = '@myday';
+  static const String inbox = '@inbox';
   static const String important = '@important';
   static const String planned = '@planned';
   static const String tasks = '@tasks';
