@@ -11,6 +11,7 @@ const _kAutoSyncKey = 'listd.autoSync';
 const _kAccentColorKey = 'listd.accentColor';
 const _kFontScaleKey = 'listd.fontScale';
 const _kDensityModeKey = 'listd.densityMode';
+const _kBackplateDriftKey = 'listd.backplateDrift';
 const _kEmailSummariesKey = 'listd.notifications.emailSummaries';
 const _kPushNotificationsKey = 'listd.notifications.pushNotifications';
 const _kDueDateRemindersKey = 'listd.notifications.dueDateReminders';
@@ -111,7 +112,24 @@ class AccentColorNotifier extends StateNotifier<Color> {
   Future<void> _hydrate() async {
     final prefs = await _PrefsCache.instance();
     final raw = prefs.getInt(_kAccentColorKey);
-    if (raw != null) state = Color(raw);
+    if (raw == null) return;
+    final stored = Color(raw);
+    // Migration: any pre-Indigo value (warm flame `#FF6B35`, the
+    // legacy `#FF8A5C` dark-mode flame, etc.) gets clamped to the
+    // closest 2027 swatch. The official 5 are indigo / sky / emerald
+    // / amber / pink. Anything outside this set resets to indigo so
+    // the redesign starts on-brand for users coming from the warm
+    // build.
+    final isOfficial = kAccentSwatches.any(
+      // ignore: deprecated_member_use
+      (c) => c.value == stored.value,
+    );
+    if (isOfficial) {
+      state = stored;
+    } else {
+      state = defaultAccent;
+      unawaited(_persist(defaultAccent));
+    }
   }
 
   void setAccent(Color color) {
@@ -338,4 +356,35 @@ class DensityModeNotifier extends StateNotifier<DensityMode> {
 final densityModeProvider =
     StateNotifierProvider<DensityModeNotifier, DensityMode>(
       (ref) => DensityModeNotifier(),
+    );
+
+/// Notifier for whether the ambient backplate's time-of-day color
+/// drift is enabled. Defaults to `true` so existing installs see the
+/// drift unless they explicitly opt out.
+class BackplateDriftNotifier extends StateNotifier<bool> {
+  BackplateDriftNotifier() : super(true) {
+    _hydrate();
+  }
+
+  Future<void> _hydrate() async {
+    final prefs = await _PrefsCache.instance();
+    final raw = prefs.getBool(_kBackplateDriftKey);
+    if (raw != null) state = raw;
+  }
+
+  void setEnabled(bool enabled) {
+    if (enabled == state) return;
+    state = enabled;
+    unawaited(_persist(enabled));
+  }
+
+  Future<void> _persist(bool enabled) async {
+    final prefs = await _PrefsCache.instance();
+    await prefs.setBool(_kBackplateDriftKey, enabled);
+  }
+}
+
+final backplateDriftProvider =
+    StateNotifierProvider<BackplateDriftNotifier, bool>(
+      (ref) => BackplateDriftNotifier(),
     );

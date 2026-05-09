@@ -1,29 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/overlays_provider.dart';
-import '../providers/shell_state_provider.dart';
-import '../providers/task_lists_provider.dart';
 import 'context_menu.dart';
 
 /// Listd 2027 · Indigo Edition top bar.
 ///
 /// 40 px tall, sits above every screen that renders inside `AppShell`.
 ///
-/// Per `docs/redesign/2027-indigo/03_components.md` §2:
+/// Per mockup `01_today_light.png`:
 ///
-///  * Drawer toggle (8 px from the left edge).
-///  * Active page title (Inter 18 px, weight 600).
-///  * Spacer.
-///  * Avatar (initials chip — 28 × 28).
-///
-/// The legacy "Listd" workspace pill and the duplicate `SyncStatusPill`
-/// have been removed — the title carries the page identity, and the
-/// sync pill lives **once** in the sidebar drawer footer.
+///  * No drawer toggle (the sidebar lives flush against the left edge
+///    full-time on desktop; collapse via Ctrl + \).
+///  * No page-title duplication — each page renders its own headline.
+///  * Right cluster: `Search · ⌘K` pill + 28 px avatar.
 class TopBar extends ConsumerWidget {
   const TopBar({super.key});
 
@@ -31,88 +24,121 @@ class TopBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final isOpen = ref.watch(sidebarDrawerOpenProvider);
     final auth = ref.watch(authNotifierProvider);
     final email = auth is AuthAuthenticated ? auth.session.user.email : null;
-    final title = _pageTitle(context, ref);
 
     return Container(
       height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.transparent,
         border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
       ),
       child: Row(
         children: [
-          IconButton(
-            tooltip: isOpen ? 'Close sidebar' : 'Open sidebar (Ctrl + \\)',
-            icon: Icon(
-              isOpen
-                  ? PhosphorIcons.sidebar(PhosphorIconsStyle.fill)
-                  : PhosphorIcons.sidebar(),
-              size: 18,
-              color: scheme.onSurfaceVariant,
-            ),
-            onPressed: () =>
-                ref.read(sidebarDrawerOpenProvider.notifier).update((v) => !v),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          const Spacer(),
+          _SearchPill(
+            onTap: () =>
+                ref.read(commandPaletteOpenProvider.notifier).state = true,
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              title,
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                height: 24 / 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.18,
-                color: scheme.onSurface,
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           _Avatar(email: email),
         ],
       ),
     );
   }
+}
 
-  /// Derive the active page title from the matched go_router location.
-  /// For `/list/:id`, look the list name up in `taskListsNotifierProvider`.
-  String _pageTitle(BuildContext context, WidgetRef ref) {
-    final state = GoRouterState.of(context);
-    final loc = state.matchedLocation;
-    switch (loc) {
-      case '/today':
-        return 'Today';
-      case '/inbox':
-        return 'Inbox';
-      case '/important':
-        return 'Important';
-      case '/planned':
-        return 'Planned';
-      case '/all':
-        return 'All Tasks';
-      case '/folders':
-        return 'Folders';
-      case '/settings':
-        return 'Settings';
-    }
-    if (loc.startsWith('/list/')) {
-      final id = state.pathParameters['id'] ?? '';
-      final lists = ref.watch(taskListsNotifierProvider).valueOrNull;
-      if (lists != null) {
-        for (final l in lists) {
-          if (l.id == id) return l.title;
-        }
-      }
-      return 'List';
-    }
-    return 'Listd';
+class _SearchPill extends StatefulWidget {
+  const _SearchPill({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_SearchPill> createState() => _SearchPillState();
+}
+
+class _SearchPillState extends State<_SearchPill> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final fg = scheme.onSurfaceVariant;
+    final fill = _hovered
+        ? scheme.surfaceContainerHighest
+        : scheme.surfaceContainerLow;
+
+    return Tooltip(
+      message: 'Search · Ctrl + K',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: Container(
+            height: 28,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: scheme.outlineVariant),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(PhosphorIcons.magnifyingGlass(), size: 14, color: fg),
+                const SizedBox(width: 8),
+                Text(
+                  'Search',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    height: 16 / 13,
+                    fontWeight: FontWeight.w500,
+                    color: fg,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _KeybindChip(keys: const ['Ctrl', 'K']),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small inline keybind chip — used by the search pill, the capture
+/// row, and (eventually) command palette suggestions. Mirrors the
+/// hairline + tabular-figures treatment in mockup `01_today_light.png`.
+class _KeybindChip extends StatelessWidget {
+  const _KeybindChip({required this.keys});
+
+  final List<String> keys;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Text(
+        keys.join('+'),
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          height: 14 / 10,
+          fontWeight: FontWeight.w600,
+          color: scheme.onSurfaceVariant,
+          letterSpacing: 0.04,
+        ),
+      ),
+    );
   }
 }
 
