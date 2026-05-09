@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'providers/theme_provider.dart';
@@ -14,9 +15,13 @@ void main() async {
 
   // Pre-warm SharedPreferences in parallel with Supabase init so the
   // first frame's settings hydrate without an extra disk roundtrip.
+  // Also pre-warm Inter (UI) and Newsreader (display serif) so the
+  // first frame doesn't flash a fallback typeface — particularly
+  // visible on the Today canvas headline which uses Newsreader.
   await Future.wait<void>([
     SupabaseClientService.initialize(),
     SharedPreferences.getInstance().then((_) {}),
+    GoogleFonts.pendingFonts([GoogleFonts.inter(), GoogleFonts.newsreader()]),
   ]);
 
   runApp(
