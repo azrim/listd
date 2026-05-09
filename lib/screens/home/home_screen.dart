@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../config/feature_flags.dart';
 import '../../models/task.dart';
 import '../../models/task_list.dart';
 import '../../providers/task_lists_provider.dart';
@@ -60,8 +61,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // The selected task is resolved against the global task aggregate so the
     // inspector stays in sync with edits regardless of whether we're on a real
-    // list or a synthetic one.
-    final selectedTask = ref.watch(selectedTaskProvider);
+    // list or a synthetic one. Only watched on the legacy 2026 layout — the
+    // 2027 redesign reads `expandedTaskIdProvider` from inside the cards.
+    final selectedTask = FeatureFlags.use2027Cards
+        ? null
+        : ref.watch(selectedTaskProvider);
 
     // Listen for the first non-empty data load and auto-select the first list
     // (no postFrame; ref.listen runs after the build completes).
@@ -120,14 +124,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // Col 3: Inspector — owns its own animation so close has a slide-out.
-          _InspectorSlide(
-            task: selectedTask,
-            listId: selectedListId ?? SpecialListIds.tasks,
-            onClose: () {
-              ref.read(selectedTaskIdProvider.notifier).state = null;
-            },
-          ),
+          // Col 3: Inspector — only mounted on the legacy 2026 layout.
+          // The 2027 redesign expands the task inline inside the card,
+          // so the inspector pane is dropped entirely (the file is kept
+          // for back-compat callers and may be removed in P7).
+          if (!FeatureFlags.use2027Cards)
+            _InspectorSlide(
+              task: selectedTask,
+              listId: selectedListId ?? SpecialListIds.tasks,
+              onClose: () {
+                ref.read(selectedTaskIdProvider.notifier).state = null;
+              },
+            ),
         ],
       ),
     );
