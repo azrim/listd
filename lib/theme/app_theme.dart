@@ -2,32 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
+import 'spring.dart';
 
-/// Listd 2026 theme.
+/// Listd 2027 theme.
 ///
-/// One typeface (Inter), one accent, two surfaces, hairline borders.
-/// All metrics derive from the 4 px base grid:
-///   - control radius: 8 px
-///   - card radius:    12 px
-///   - control height: 32 px (button, input, sync pill)
-///   - row height:     44 px (task tile)
-///   - sidebar item:   36 px
+/// Two faces (Inter + Newsreader), two accents (flame + oat), warm
+/// neutrals, soft shadows, single spring. All metrics derive from the
+/// 4 px base grid.
+///
+/// Component metrics:
+///   - control radius: 12 px
+///   - card radius:    16 px
+///   - panel radius:   20 px
+///   - chip radius:    999 px
+///   - control height: 36 px
+///   - row height:     56 px (TaskCard collapsed)
 class AppTheme {
   AppTheme._();
 
-  static const double controlRadius = 8;
-  static const double cardRadius = 12;
-  static const double controlHeight = 32;
+  static const double controlRadius = 12;
+  static const double cardRadius = 16;
+  static const double panelRadius = 20;
+  static const double sheetRadius = 24;
+  static const double pillRadius = 999;
+  static const double controlHeight = 36;
+  static const double taskCardHeight = 56;
 
   static ThemeData get darkTheme => _buildTheme(AppColors.darkScheme);
   static ThemeData get lightTheme => _buildTheme(AppColors.lightScheme);
 
   static ThemeData _buildTheme(ColorScheme scheme) {
+    final isLight = scheme.brightness == Brightness.light;
+
     return ThemeData(
       useMaterial3: true,
       brightness: scheme.brightness,
       colorScheme: scheme,
-      scaffoldBackgroundColor: scheme.surface,
+      // Scaffold/canvas are transparent so the AppBackplate shows through.
+      scaffoldBackgroundColor: Colors.transparent,
       canvasColor: scheme.surface,
       textTheme: _buildTextTheme(
         scheme.onSurface,
@@ -36,16 +48,16 @@ class AppTheme {
       ),
 
       appBarTheme: AppBarTheme(
-        backgroundColor: scheme.surface,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         foregroundColor: scheme.onSurface,
         titleTextStyle: GoogleFonts.inter(
-          fontSize: 22,
-          height: 28 / 22,
+          fontSize: 18,
+          height: 26 / 18,
           fontWeight: FontWeight.w600,
-          letterSpacing: -0.22,
+          letterSpacing: -0.18,
           color: scheme.onSurface,
         ),
         iconTheme: IconThemeData(color: scheme.onSurface, size: 20),
@@ -57,7 +69,6 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(cardRadius),
-          side: BorderSide(color: scheme.outlineVariant),
         ),
       ),
 
@@ -86,7 +97,10 @@ class AppTheme {
           height: 18 / 13,
           color: scheme.onSurfaceVariant,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(controlRadius),
           borderSide: BorderSide(color: scheme.outlineVariant),
@@ -109,14 +123,12 @@ class AppTheme {
         ),
       ),
 
-      // Buttons — 32 px tall, 12 px horizontal padding, 8 px radius,
-      // body-emphasized text. One primary surface per screen.
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           minimumSize: const Size(0, controlHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
@@ -133,7 +145,7 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           minimumSize: const Size(0, controlHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
@@ -150,7 +162,7 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: scheme.onSurface,
           side: BorderSide(color: scheme.outlineVariant),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           minimumSize: const Size(0, controlHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(controlRadius),
@@ -211,10 +223,10 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         titleTextStyle: GoogleFonts.inter(
-          fontSize: 22,
-          height: 28 / 22,
+          fontSize: 18,
+          height: 26 / 18,
           fontWeight: FontWeight.w600,
-          letterSpacing: -0.22,
+          letterSpacing: -0.18,
           color: scheme.onSurface,
         ),
         contentTextStyle: GoogleFonts.inter(
@@ -223,8 +235,7 @@ class AppTheme {
           color: scheme.onSurfaceVariant,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(cardRadius),
-          side: BorderSide(color: scheme.outlineVariant),
+          borderRadius: BorderRadius.circular(panelRadius),
         ),
       ),
 
@@ -236,18 +247,18 @@ class AppTheme {
       ),
 
       chipTheme: ChipThemeData(
-        backgroundColor: scheme.surfaceContainer,
+        backgroundColor: isLight ? AppColors.oatSoft : AppColors.oatSoftDark,
         labelStyle: GoogleFonts.inter(
           fontSize: 13,
           height: 18 / 13,
           fontWeight: FontWeight.w500,
           color: scheme.onSurfaceVariant,
         ),
-        side: BorderSide(color: scheme.outlineVariant),
+        side: BorderSide.none,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(controlRadius),
+          borderRadius: BorderRadius.circular(pillRadius),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       ),
 
       checkboxTheme: CheckboxThemeData(
@@ -287,7 +298,6 @@ class AppTheme {
       cardColor: scheme.surface,
       hintColor: scheme.outline,
       shadowColor: scheme.shadow,
-      // No coloured splash/highlight — selection is instant + flat.
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       hoverColor: scheme.surfaceContainer,
@@ -303,70 +313,172 @@ class AppTheme {
       ),
 
       extensions: <ThemeExtension<dynamic>>[
-        ListdSurfaces(
-          // Rail and inspector sit on the elevated surface so the list
-          // pane (the page) reads as the bright surface.
-          sidebar: scheme.surfaceContainerLow,
-          detailPanel: scheme.surfaceContainerLow,
-          surfaceTint: scheme.primary,
-        ),
+        _surfacesFor(scheme),
+        ListdMotion.standard,
+        _typographyFor(scheme.onSurface, scheme.onSurfaceVariant),
       ],
     );
   }
 
-  /// Type ramp from the design spec.
+  static ListdSurfaces _surfacesFor(ColorScheme scheme) {
+    final isLight = scheme.brightness == Brightness.light;
+    return ListdSurfaces(
+      ambient: isLight ? AppColors.bgLight : AppColors.bgDeep,
+      canvas: scheme.surface,
+      panel: isLight ? AppColors.bgLightContainerLow : AppColors.bgContainer,
+      card: isLight ? const Color(0xFFFFFFFF) : const Color(0xFF1F1B25),
+      chip: isLight ? AppColors.oatSoft : AppColors.oatSoftDark,
+      sidebar: isLight ? AppColors.bgLightContainerLow : AppColors.bgContainer,
+      detailPanel: isLight
+          ? AppColors.bgLightContainerLow
+          : AppColors.bgContainer,
+      surfaceTint: scheme.primary,
+      shadowSm: isLight
+          ? const BoxShadow(
+              color: Color(0x0A1C1610),
+              blurRadius: 2,
+              offset: Offset(0, 1),
+            )
+          : const BoxShadow(
+              color: Color(0x66000000),
+              blurRadius: 2,
+              offset: Offset(0, 1),
+            ),
+      shadowMd: isLight
+          ? const BoxShadow(
+              color: Color(0x0F1C1610),
+              blurRadius: 20,
+              offset: Offset(0, 6),
+            )
+          : const BoxShadow(
+              color: Color(0x80000000),
+              blurRadius: 20,
+              offset: Offset(0, 6),
+            ),
+      shadowLg: isLight
+          ? const BoxShadow(
+              color: Color(0x1A1C1610),
+              blurRadius: 48,
+              offset: Offset(0, 24),
+            )
+          : const BoxShadow(
+              color: Color(0xB3000000),
+              blurRadius: 48,
+              offset: Offset(0, 24),
+            ),
+    );
+  }
+
+  static ListdTypography _typographyFor(
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    return ListdTypography(
+      // Newsreader is loaded lazily via google_fonts; in P4 it'll be
+      // pre-warmed at boot to avoid layout flash.
+      displaySerif: GoogleFonts.newsreader(
+        fontSize: 36,
+        height: 44 / 36,
+        fontWeight: FontWeight.w500,
+        letterSpacing: -0.72,
+        color: textPrimary,
+      ),
+      h1: GoogleFonts.inter(
+        fontSize: 24,
+        height: 32 / 24,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.48,
+        color: textPrimary,
+      ),
+      h2: GoogleFonts.inter(
+        fontSize: 18,
+        height: 26 / 18,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.18,
+        color: textPrimary,
+      ),
+      body: GoogleFonts.inter(
+        fontSize: 15,
+        height: 22 / 15,
+        fontWeight: FontWeight.w400,
+        color: textPrimary,
+      ),
+      bodyEmphasized: GoogleFonts.inter(
+        fontSize: 15,
+        height: 22 / 15,
+        fontWeight: FontWeight.w500,
+        color: textPrimary,
+      ),
+      meta: GoogleFonts.inter(
+        fontSize: 13,
+        height: 18 / 13,
+        fontWeight: FontWeight.w400,
+        color: textSecondary,
+      ),
+      caption: GoogleFonts.inter(
+        fontSize: 11,
+        height: 16 / 11,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.66,
+        color: textSecondary,
+      ),
+    );
+  }
+
+  /// Type ramp injected into the Material [TextTheme] so widgets that
+  /// rely on `Theme.of(context).textTheme.bodyLarge` (etc.) pick up the
+  /// 2027 metrics without any code changes.
   ///
-  /// | Role            | Size | Line | Weight | Tracking |
-  /// | Display H1      | 32   | 40   | 600    | -0.02 em |
-  /// | Title H2        | 22   | 28   | 600    | -0.01 em |
-  /// | Body            | 15   | 22   | 400    | 0        |
-  /// | Body emphasized | 15   | 22   | 500    | 0        |
-  /// | Meta            | 13   | 18   | 400    | 0        |
-  /// | Caption         | 11   | 16   | 600    | 0.06 em  |
+  /// | Role            | Family    | Size | Line | Weight | Tracking |
+  /// | Display Serif   | Newsreader| 36   | 44   | 500    | -0.02 em |
+  /// | H1              | Inter     | 24   | 32   | 700    | -0.02 em |
+  /// | H2              | Inter     | 18   | 26   | 600    | -0.01 em |
+  /// | Body            | Inter     | 15   | 22   | 400    | 0        |
+  /// | Body emphasized | Inter     | 15   | 22   | 500    | 0        |
+  /// | Meta            | Inter     | 13   | 18   | 400    | 0        |
+  /// | Caption         | Inter     | 11   | 16   | 600    | 0.06 em  |
   static TextTheme _buildTextTheme(
     Color textPrimary,
     Color textSecondary,
     Color textHint,
   ) {
-    TextStyle inter({
-      required double size,
-      required double line,
-      required FontWeight weight,
-      double tracking = 0,
-      Color? color,
-    }) => GoogleFonts.inter(
-      fontSize: size,
-      height: line / size,
-      fontWeight: weight,
-      letterSpacing: tracking * size,
-      color: color ?? textPrimary,
+    final h1 = GoogleFonts.inter(
+      fontSize: 24,
+      height: 32 / 24,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.48,
+      color: textPrimary,
     );
-
-    final h1 = inter(
-      size: 32,
-      line: 40,
-      weight: FontWeight.w600,
-      tracking: -0.02,
+    final h2 = GoogleFonts.inter(
+      fontSize: 18,
+      height: 26 / 18,
+      fontWeight: FontWeight.w600,
+      letterSpacing: -0.18,
+      color: textPrimary,
     );
-    final h2 = inter(
-      size: 22,
-      line: 28,
-      weight: FontWeight.w600,
-      tracking: -0.01,
+    final body = GoogleFonts.inter(
+      fontSize: 15,
+      height: 22 / 15,
+      fontWeight: FontWeight.w400,
+      color: textPrimary,
     );
-    final body = inter(size: 15, line: 22, weight: FontWeight.w400);
-    final bodyEm = inter(size: 15, line: 22, weight: FontWeight.w500);
-    final meta = inter(
-      size: 13,
-      line: 18,
-      weight: FontWeight.w400,
+    final bodyEm = GoogleFonts.inter(
+      fontSize: 15,
+      height: 22 / 15,
+      fontWeight: FontWeight.w500,
+      color: textPrimary,
+    );
+    final meta = GoogleFonts.inter(
+      fontSize: 13,
+      height: 18 / 13,
+      fontWeight: FontWeight.w400,
       color: textSecondary,
     );
-    final caption = inter(
-      size: 11,
-      line: 16,
-      weight: FontWeight.w600,
-      tracking: 0.06,
+    final caption = GoogleFonts.inter(
+      fontSize: 11,
+      height: 16 / 11,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.66,
       color: textHint,
     );
 
@@ -390,29 +502,72 @@ class AppTheme {
   }
 }
 
-/// Listd-specific surface roles that don't have a direct Material 3
-/// equivalent (sidebar tint, inspector tint).
+/// Listd surface roles. Five 2027 surfaces (`ambient` / `canvas` /
+/// `panel` / `card` / `chip`) plus the legacy `sidebar` / `detailPanel`
+/// kept for back-compat with existing 2026 widgets. `shadowSm/Md/Lg`
+/// carry the warm-tinted shadow tokens.
 class ListdSurfaces extends ThemeExtension<ListdSurfaces> {
   const ListdSurfaces({
+    required this.ambient,
+    required this.canvas,
+    required this.panel,
+    required this.card,
+    required this.chip,
     required this.sidebar,
     required this.detailPanel,
     required this.surfaceTint,
+    required this.shadowSm,
+    required this.shadowMd,
+    required this.shadowLg,
   });
 
+  final Color ambient;
+  final Color canvas;
+  final Color panel;
+  final Color card;
+  final Color chip;
+
+  /// Legacy alias — equal to [panel] but kept so 2026 widgets keep
+  /// compiling. Will be removed in P5 when the new sidebar drawer
+  /// lands.
   final Color sidebar;
+
+  /// Legacy alias — equal to [panel] but kept so 2026 widgets keep
+  /// compiling. Will be removed in P3 when the inspector is dropped.
   final Color detailPanel;
+
   final Color surfaceTint;
+
+  final BoxShadow shadowSm;
+  final BoxShadow shadowMd;
+  final BoxShadow shadowLg;
 
   @override
   ListdSurfaces copyWith({
+    Color? ambient,
+    Color? canvas,
+    Color? panel,
+    Color? card,
+    Color? chip,
     Color? sidebar,
     Color? detailPanel,
     Color? surfaceTint,
+    BoxShadow? shadowSm,
+    BoxShadow? shadowMd,
+    BoxShadow? shadowLg,
   }) {
     return ListdSurfaces(
+      ambient: ambient ?? this.ambient,
+      canvas: canvas ?? this.canvas,
+      panel: panel ?? this.panel,
+      card: card ?? this.card,
+      chip: chip ?? this.chip,
       sidebar: sidebar ?? this.sidebar,
       detailPanel: detailPanel ?? this.detailPanel,
       surfaceTint: surfaceTint ?? this.surfaceTint,
+      shadowSm: shadowSm ?? this.shadowSm,
+      shadowMd: shadowMd ?? this.shadowMd,
+      shadowLg: shadowLg ?? this.shadowLg,
     );
   }
 
@@ -420,9 +575,108 @@ class ListdSurfaces extends ThemeExtension<ListdSurfaces> {
   ListdSurfaces lerp(ThemeExtension<ListdSurfaces>? other, double t) {
     if (other is! ListdSurfaces) return this;
     return ListdSurfaces(
+      ambient: Color.lerp(ambient, other.ambient, t)!,
+      canvas: Color.lerp(canvas, other.canvas, t)!,
+      panel: Color.lerp(panel, other.panel, t)!,
+      card: Color.lerp(card, other.card, t)!,
+      chip: Color.lerp(chip, other.chip, t)!,
       sidebar: Color.lerp(sidebar, other.sidebar, t)!,
       detailPanel: Color.lerp(detailPanel, other.detailPanel, t)!,
       surfaceTint: Color.lerp(surfaceTint, other.surfaceTint, t)!,
+      shadowSm: t < 0.5 ? shadowSm : other.shadowSm,
+      shadowMd: t < 0.5 ? shadowMd : other.shadowMd,
+      shadowLg: t < 0.5 ? shadowLg : other.shadowLg,
+    );
+  }
+}
+
+/// Listd 2027 motion tokens. One spring everywhere; carried on the
+/// theme so widgets can access it without importing `spring.dart`
+/// directly. The values mirror [ListdSpring].
+class ListdMotion extends ThemeExtension<ListdMotion> {
+  const ListdMotion({required this.duration, required this.curve});
+
+  /// The single canonical motion token used across the app.
+  static const ListdMotion standard = ListdMotion(
+    duration: ListdSpring.duration,
+    curve: ListdSpring.curve,
+  );
+
+  final Duration duration;
+  final Curve curve;
+
+  @override
+  ListdMotion copyWith({Duration? duration, Curve? curve}) {
+    return ListdMotion(
+      duration: duration ?? this.duration,
+      curve: curve ?? this.curve,
+    );
+  }
+
+  @override
+  ListdMotion lerp(ThemeExtension<ListdMotion>? other, double t) {
+    if (other is! ListdMotion) return this;
+    return ListdMotion(
+      duration: t < 0.5 ? duration : other.duration,
+      curve: t < 0.5 ? curve : other.curve,
+    );
+  }
+}
+
+/// Listd 2027 typography tokens. The Material `TextTheme` carries the
+/// generic ramp; this extension carries the spec-named roles that have
+/// no Material equivalent (notably `displaySerif`).
+class ListdTypography extends ThemeExtension<ListdTypography> {
+  const ListdTypography({
+    required this.displaySerif,
+    required this.h1,
+    required this.h2,
+    required this.body,
+    required this.bodyEmphasized,
+    required this.meta,
+    required this.caption,
+  });
+
+  final TextStyle displaySerif;
+  final TextStyle h1;
+  final TextStyle h2;
+  final TextStyle body;
+  final TextStyle bodyEmphasized;
+  final TextStyle meta;
+  final TextStyle caption;
+
+  @override
+  ListdTypography copyWith({
+    TextStyle? displaySerif,
+    TextStyle? h1,
+    TextStyle? h2,
+    TextStyle? body,
+    TextStyle? bodyEmphasized,
+    TextStyle? meta,
+    TextStyle? caption,
+  }) {
+    return ListdTypography(
+      displaySerif: displaySerif ?? this.displaySerif,
+      h1: h1 ?? this.h1,
+      h2: h2 ?? this.h2,
+      body: body ?? this.body,
+      bodyEmphasized: bodyEmphasized ?? this.bodyEmphasized,
+      meta: meta ?? this.meta,
+      caption: caption ?? this.caption,
+    );
+  }
+
+  @override
+  ListdTypography lerp(ThemeExtension<ListdTypography>? other, double t) {
+    if (other is! ListdTypography) return this;
+    return ListdTypography(
+      displaySerif: TextStyle.lerp(displaySerif, other.displaySerif, t)!,
+      h1: TextStyle.lerp(h1, other.h1, t)!,
+      h2: TextStyle.lerp(h2, other.h2, t)!,
+      body: TextStyle.lerp(body, other.body, t)!,
+      bodyEmphasized: TextStyle.lerp(bodyEmphasized, other.bodyEmphasized, t)!,
+      meta: TextStyle.lerp(meta, other.meta, t)!,
+      caption: TextStyle.lerp(caption, other.caption, t)!,
     );
   }
 }

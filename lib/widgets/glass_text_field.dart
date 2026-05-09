@@ -3,10 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 
-/// Hairline text field — 32 px tall, 8 px radius, 1 px border, 2 px
-/// accent focus ring (no glow). Despite the legacy name, there is no
-/// glass effect; the widget is kept for backward compatibility with
-/// existing call sites and now renders the 2026 input from the spec.
+/// Text field — 36 px tall, 12 px radius, warm fill, 2 px flame focus
+/// ring (no glow). The legacy "Glass" name is kept as an alias only;
+/// internally the field already reads from `Theme.of(context)` so it
+/// picks up the 2027 tokens automatically.
+///
+/// New code should use a plain `TextField` with the global theme.
+// Deprecated — alias only. New code should use TextField with the global theme.
 class GlassTextField extends StatelessWidget {
   const GlassTextField({
     super.key,
@@ -81,8 +84,9 @@ class GlassTextField extends StatelessWidget {
   }
 }
 
-/// In the 2026 system this is identical to [GlassTextField] — focus
-/// state is communicated by the 2 px accent border, not by a glow.
+/// Identical to [GlassTextField] — focus state is communicated by the
+/// 2 px flame border, not by a glow.
+// Deprecated — alias only. New code should use TextField with the global theme.
 class FocusedGlassTextField extends StatelessWidget {
   const FocusedGlassTextField({
     super.key,

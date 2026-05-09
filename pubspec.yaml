@@ -49,6 +49,7 @@ dependencies:
   google_fonts: ^6.1.0
   flutter_animate: ^4.5.0
   shimmer: ^3.0.0
+  phosphor_flutter: ^2.0.0
 
   # External
   url_launcher: ^6.3.0

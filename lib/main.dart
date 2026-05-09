@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
+import 'theme/gradients.dart';
 import 'services/supabase/supabase_client_service.dart'
     show supabaseClientProvider, SupabaseClientService;
 
@@ -51,11 +52,13 @@ class ListdApp extends ConsumerWidget {
       ),
       themeMode: themeMode,
       builder: (context, child) {
-        // Apply the user's selected font scale on top of the platform default.
+        // Apply the user's selected font scale on top of the platform
+        // default, then wrap the entire surface in the 2027 ambient
+        // backplate so every screen sits on the warm radial wash.
         final media = MediaQuery.of(context);
         return MediaQuery(
           data: media.copyWith(textScaler: TextScaler.linear(fontScale)),
-          child: child ?? const SizedBox.shrink(),
+          child: AppBackplate(child: child ?? const SizedBox.shrink()),
         );
       },
       routerConfig: appRouter,
