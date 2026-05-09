@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -12,7 +13,9 @@ import '../services/notifications/reminder_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/spring.dart';
 import '../utils/url_detector.dart';
+import 'context_menu.dart';
 import 'link_chip.dart';
+import 'list_picker_sheet.dart';
 import 'repeat_picker_sheet.dart';
 import 'tags_editor_sheet.dart';
 import 'task_action_rail.dart';
@@ -274,6 +277,95 @@ class _TaskCardState extends ConsumerState<TaskCard>
     messenger.showSnackBar(SnackBar(content: Text('Deleted $title')));
   }
 
+  Future<void> _moveToList() async {
+    final picked = await showListPicker(
+      context,
+      excludeListId: widget.task.taskListId,
+    );
+    if (!mounted || picked == null) return;
+    final notifier = ref.read(tasksNotifierProvider(widget.listId).notifier);
+    await notifier.updateTask(widget.task.copyWith(taskListId: picked.id));
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Moved to ${picked.title}')));
+  }
+
+  Future<void> _copyTitle() async {
+    final urls = _stepUrls();
+    final base = widget.task.title.isEmpty
+        ? '(untitled task)'
+        : widget.task.title;
+    final payload = urls.isNotEmpty ? '$base\n${urls.first}' : base;
+    await Clipboard.setData(ClipboardData(text: payload));
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Copied task to clipboard')));
+  }
+
+  /// Open the right-click menu at [globalPosition]. Built from the
+  /// task's current state so the labels reflect what the action will
+  /// actually do (e.g. "Reopen" vs "Complete").
+  void _showContextMenu(Offset globalPosition) {
+    final task = widget.task;
+    showListdContextMenu(context, globalPosition, [
+      ListdContextMenuItem(
+        icon: task.isCompleted
+            ? PhosphorIcons.arrowCounterClockwise()
+            : PhosphorIcons.check(),
+        label: task.isCompleted ? 'Reopen' : 'Complete',
+        onTap: _toggleComplete,
+      ),
+      ListdContextMenuItem(
+        icon: PhosphorIcons.star(
+          task.isStarred ? PhosphorIconsStyle.fill : PhosphorIconsStyle.regular,
+        ),
+        label: task.isStarred ? 'Unstar' : 'Star',
+        onTap: _toggleStar,
+      ),
+      const ListdContextMenuDivider(),
+      ListdContextMenuItem(
+        icon: PhosphorIcons.calendar(),
+        label: task.due == null ? 'Set due date' : 'Change due date',
+        onTap: _pickDue,
+      ),
+      ListdContextMenuItem(
+        icon: PhosphorIcons.bell(),
+        label: task.reminder == null ? 'Set reminder' : 'Change reminder',
+        onTap: _pickReminder,
+      ),
+      ListdContextMenuItem(
+        icon: PhosphorIcons.repeat(),
+        label: task.repeat == null ? 'Set repeat' : 'Change repeat',
+        onTap: _pickRepeat,
+      ),
+      ListdContextMenuItem(
+        icon: PhosphorIcons.tag(),
+        label: 'Edit tags',
+        onTap: _editTags,
+      ),
+      const ListdContextMenuDivider(),
+      ListdContextMenuItem(
+        icon: PhosphorIcons.arrowsLeftRight(),
+        label: 'Move to list…',
+        onTap: _moveToList,
+      ),
+      ListdContextMenuItem(
+        icon: PhosphorIcons.copy(),
+        label: 'Copy task',
+        onTap: _copyTitle,
+      ),
+      const ListdContextMenuDivider(),
+      ListdContextMenuItem(
+        icon: PhosphorIcons.trash(),
+        label: 'Delete',
+        onTap: _confirmDelete,
+        destructive: true,
+      ),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -319,6 +411,8 @@ class _TaskCardState extends ConsumerState<TaskCard>
                   widget.onToggleExpand();
                   widget.onTap?.call();
                 },
+                onSecondaryTapDown: (details) =>
+                    _showContextMenu(details.globalPosition),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,

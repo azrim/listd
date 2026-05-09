@@ -4,8 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/overlays_provider.dart';
 import '../providers/shell_state_provider.dart';
 import 'app_logo.dart';
+import 'context_menu.dart';
 import 'sync_status_pill.dart';
 
 /// Listd 2027 top bar.
@@ -77,42 +79,86 @@ class TopBar extends ConsumerWidget {
   }
 }
 
-class _Avatar extends StatelessWidget {
+class _Avatar extends ConsumerStatefulWidget {
   const _Avatar({this.email});
 
   final String? email;
 
   @override
+  ConsumerState<_Avatar> createState() => _AvatarState();
+}
+
+class _AvatarState extends ConsumerState<_Avatar> {
+  final GlobalKey _avatarKey = GlobalKey();
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final initials = (email == null || email!.isEmpty)
+    final initials = (widget.email == null || widget.email!.isEmpty)
         ? '?'
-        : email!.substring(0, 1).toUpperCase();
+        : widget.email!.substring(0, 1).toUpperCase();
 
     return Tooltip(
-      message: email ?? 'Not signed in',
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: scheme.primaryContainer,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: scheme.primary.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          initials,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            height: 1.0,
-            fontWeight: FontWeight.w600,
-            color: scheme.primary,
+      message: widget.email ?? 'Not signed in',
+      child: GestureDetector(
+        onTap: _openMenuAtAnchor,
+        onSecondaryTapDown: (details) => _openMenu(details.globalPosition),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Container(
+            key: _avatarKey,
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: scheme.primary.withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              initials,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                height: 1.0,
+                fontWeight: FontWeight.w600,
+                color: scheme.primary,
+              ),
+            ),
           ),
         ),
       ),
     );
+  }
+
+  /// Anchor primary-click menu just below the avatar (its bottom-left
+  /// corner). Right-click already lands at the cursor so we route that
+  /// through `_openMenu` directly.
+  void _openMenuAtAnchor() {
+    final box = _avatarKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final origin = box.localToGlobal(Offset(0, box.size.height + 4));
+    _openMenu(origin);
+  }
+
+  void _openMenu(Offset globalPosition) {
+    showListdContextMenu(context, globalPosition, [
+      ListdContextMenuItem(
+        icon: PhosphorIcons.gear(),
+        label: 'Settings',
+        shortcut: 'Ctrl+,',
+        onTap: () =>
+            ref.read(settingsOverlayOpenProvider.notifier).state = true,
+      ),
+      const ListdContextMenuDivider(),
+      ListdContextMenuItem(
+        icon: PhosphorIcons.signOut(),
+        label: 'Sign out',
+        destructive: true,
+        onTap: () => ref.read(authNotifierProvider.notifier).logout(),
+      ),
+    ]);
   }
 }
