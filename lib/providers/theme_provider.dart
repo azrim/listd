@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../theme/app_density.dart';
+
 const _kThemeModeKey = 'listd.themeMode';
 const _kAutoSyncKey = 'listd.autoSync';
 const _kAccentColorKey = 'listd.accentColor';
 const _kFontScaleKey = 'listd.fontScale';
+const _kDensityModeKey = 'listd.densityMode';
 const _kEmailSummariesKey = 'listd.notifications.emailSummaries';
 const _kPushNotificationsKey = 'listd.notifications.pushNotifications';
 const _kDueDateRemindersKey = 'listd.notifications.dueDateReminders';
@@ -100,9 +103,10 @@ class AccentColorNotifier extends StateNotifier<Color> {
     _hydrate();
   }
 
-  /// Default seed color. Mirrors `AppColors.flame` so the swatches in
-  /// Settings start with the 2027 brand color highlighted.
-  static const Color defaultAccent = Color(0xFFFF6B35);
+  /// Default seed color. Mirrors `AppColors.indigo600` so the swatches
+  /// in Settings start with the 2027 · Indigo Edition brand color
+  /// highlighted.
+  static const Color defaultAccent = Color(0xFF4F46E5);
 
   Future<void> _hydrate() async {
     final prefs = await _PrefsCache.instance();
@@ -291,10 +295,47 @@ final autoSyncProvider = StateNotifierProvider<AutoSyncNotifier, bool>((ref) {
 });
 
 /// The list of accent colors users can pick from in Settings.
+///
+/// Indigo is the system default. Alternates apply only to selection
+/// and primary buttons; functional dots stay emerald / amber / red.
 const List<Color> kAccentSwatches = <Color>[
-  AccentColorNotifier.defaultAccent,
-  Color(0xFF38BDF8),
-  Color(0xFF22C55E),
-  Color(0xFFF59E0B),
-  Color(0xFFEC4899),
+  AccentColorNotifier.defaultAccent, // indigo-600
+  Color(0xFF0EA5E9), // sky-500 (cobalt)
+  Color(0xFF10B981), // emerald-500
+  Color(0xFFF59E0B), // amber-500
+  Color(0xFFEC4899), // pink-500 (fuchsia)
 ];
+
+/// Notifier for the active [DensityMode]. Cozy by default. Persists
+/// across launches. Reads/writes use the same `_PrefsCache` as the
+/// other preference notifiers in this file.
+class DensityModeNotifier extends StateNotifier<DensityMode> {
+  DensityModeNotifier() : super(DensityMode.cozy) {
+    _hydrate();
+  }
+
+  Future<void> _hydrate() async {
+    final prefs = await _PrefsCache.instance();
+    state = DensityMode.fromKey(prefs.getString(_kDensityModeKey));
+  }
+
+  void setMode(DensityMode mode) {
+    if (mode == state) return;
+    state = mode;
+    unawaited(_persist(mode));
+  }
+
+  void toggle() {
+    setMode(state == DensityMode.cozy ? DensityMode.compact : DensityMode.cozy);
+  }
+
+  Future<void> _persist(DensityMode mode) async {
+    final prefs = await _PrefsCache.instance();
+    await prefs.setString(_kDensityModeKey, mode.key);
+  }
+}
+
+final densityModeProvider =
+    StateNotifierProvider<DensityModeNotifier, DensityMode>(
+      (ref) => DensityModeNotifier(),
+    );
