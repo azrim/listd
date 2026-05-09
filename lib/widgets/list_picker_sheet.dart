@@ -153,8 +153,12 @@ class _ListRow extends StatelessWidget {
       child: HoverableSurface(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
-        fillFor: (_, {required hovered, required selected}) =>
-            hovered ? scheme.surfaceContainerHighest : Colors.transparent,
+        fillFor: (_, {required hovered, required selected}) => hovered
+            ? scheme.surfaceContainerHighest
+            // Alpha-0 of the hover RGB so the cross-fade lerps
+            // alpha-only — see HoverableSurface doc-comment for the
+            // lerp-through-black artefact this avoids.
+            : scheme.surfaceContainerHighest.withValues(alpha: 0),
         child: SizedBox(
           height: 44,
           child: Padding(

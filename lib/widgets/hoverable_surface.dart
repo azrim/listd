@@ -33,6 +33,33 @@ import '../theme/app_motion.dart';
 /// hairline mandated by `02_tokens.md` — that is a deliberate
 /// follow-up audited separately so this refactor stays purely a
 /// motion fix.
+///
+/// ### Don't return `Colors.transparent` from [fillFor].
+///
+/// `Colors.transparent` is `Color(0x00000000)` — alpha **and** RGB
+/// are zero. When [AnimatedContainer.color] lerps from that toward
+/// any non-transparent active fill, every intermediate frame
+/// interpolates RGB toward `(0, 0, 0)` as well as alpha. At
+/// t = 0.5 the rendered color is the active RGB ÷ 2 at alpha 128,
+/// which composites onto a light parent surface as a **dark grey
+/// flash** — the classic "Color.lerp through black" artefact.
+/// On low-contrast light-mode chips (~1.05 :1) the dark dip is
+/// visually louder than the chip itself, so the user perceives
+/// hover as "dark briefly appears, then disappears, then accent
+/// arrives" instead of a single smooth cross-fade.
+///
+/// Always return the would-be active color at alpha 0 instead.
+/// e.g.:
+///
+/// ```dart
+/// fillFor: (_, {required hovered, required selected}) => hovered
+///     ? scheme.surfaceContainerHighest
+///     : scheme.surfaceContainerHighest.withValues(alpha: 0),
+/// ```
+///
+/// With the same RGB at both ends, the lerp is alpha-only and every
+/// mid-frame composites to `lerp(parent, active, alpha)` — never
+/// darker than the parent.
 class HoverableSurface extends StatefulWidget {
   const HoverableSurface({
     super.key,

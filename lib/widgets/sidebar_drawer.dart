@@ -296,7 +296,12 @@ class _DrawerItemState extends State<_DrawerItem> {
         fillFor: (_, {required hovered, required selected}) {
           if (selected) return scheme.primaryContainer;
           if (hovered) return scheme.surfaceContainerHighest;
-          return Colors.transparent;
+          // Rest carries the chip RGB at alpha 0 so AnimatedContainer
+          // lerps alpha-only on hover. Returning Colors.transparent
+          // here would lerp through ARGB(0,0,0,0) — its RGB-(0,0,0)
+          // makes mid-frames composite to a dark grey on light
+          // panels (Color.lerp through black artefact).
+          return scheme.surfaceContainerHighest.withValues(alpha: 0);
         },
         child: SizedBox(
           height: 36,
@@ -386,8 +391,12 @@ class _NewListItem extends StatelessWidget {
       child: HoverableSurface(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
-        fillFor: (_, {required hovered, required selected}) =>
-            hovered ? scheme.surfaceContainerHighest : Colors.transparent,
+        fillFor: (_, {required hovered, required selected}) => hovered
+            ? scheme.surfaceContainerHighest
+            // Alpha-0 of the hover RGB so the cross-fade lerps
+            // alpha-only — see _DrawerItem above for the full
+            // explanation of the lerp-through-black artefact.
+            : scheme.surfaceContainerHighest.withValues(alpha: 0),
         builder: (_, {required hovered, required selected}) {
           // Foreground colour rides the same `flick` calibration as
           // the surface fill so the typography "lift" on hover stays

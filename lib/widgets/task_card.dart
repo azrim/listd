@@ -345,7 +345,6 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final surfaces = theme.extension<ListdSurfaces>();
-    final cardBg = surfaces?.card ?? scheme.surface;
 
     final isExpanded = widget.isExpanded;
     final reduced = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
@@ -354,14 +353,23 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
     // Collapsed-state fill: indigo-soft on selection, slate-600 wash
     // on hover (one slate stop above the canvas, so the tint is
-    // actually visible), otherwise transparent.
+    // actually visible), otherwise alpha-0 of canvas. The canvas-RGB
+    // rest carries the same RGB as the expanded state below so the
+    // collapse↔expand morph is a no-op on color when neither hovered
+    // nor selected — keeping the card at canvas brightness through
+    // the entire morph instead of popping up to slate-700 in dark
+    // mode. Same RGB at both endpoints also avoids the
+    // lerp-through-black artefact (Color.lerp from RGB-(0,0,0) of
+    // Colors.transparent toward chip mid-frames composite to a dark
+    // grey on the surface for ~80 ms).
+    final Color cardRest = scheme.surface.withValues(alpha: 0);
     final Color collapsedFill;
     if (widget.isSelected) {
       collapsedFill = scheme.primaryContainer;
     } else if (_hovered) {
       collapsedFill = surfaces?.chip ?? scheme.surfaceContainerHigh;
     } else {
-      collapsedFill = Colors.transparent;
+      collapsedFill = cardRest;
     }
 
     // ── Uniform Border.all in both states.
@@ -379,7 +387,14 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     // selected indigo left bar are pulled out as separate sibling
     // widgets so they don't break the uniformity invariant.
     final BoxDecoration decoration = BoxDecoration(
-      color: isExpanded ? cardBg : collapsedFill,
+      // Expanded uses the same alpha-0 canvas RGB as the collapsed
+      // rest so the card brightness is constant whether collapsed
+      // or expanded — the 1.5 px indigo border + shadowMd carry the
+      // lift instead. Previously this was `cardBg` (= surfaces.card,
+      // slate-700 in dark), which made the expanded card pop one
+      // slate stop above the canvas in dark mode and read as
+      // "brighter when not hovered".
+      color: isExpanded ? cardRest : collapsedFill,
       borderRadius: BorderRadius.circular(isExpanded ? 16 : 0),
       border: Border.all(
         color: isExpanded ? scheme.primary : Colors.transparent,

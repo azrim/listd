@@ -365,8 +365,14 @@ class _PaletteRow extends StatelessWidget {
         onTap: onTap,
         onHover: onHover,
         borderRadius: BorderRadius.circular(8),
-        fillFor: (_, {required hovered, required selected}) =>
-            selected ? scheme.primaryContainer : Colors.transparent,
+        fillFor: (_, {required hovered, required selected}) => selected
+            ? scheme.primaryContainer
+            // Alpha-0 of the indigo-soft RGB so the keyboard-driven
+            // selection cross-fade lerps alpha-only on the indigo
+            // family. Returning Colors.transparent here would lerp
+            // through ARGB(0,0,0,0) and dim each row to a dark grey
+            // mid-frame as the keyboard cursor moves between rows.
+            : scheme.primaryContainer.withValues(alpha: 0),
         child: SizedBox(
           height: 36,
           child: Padding(

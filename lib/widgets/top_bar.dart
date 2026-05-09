@@ -105,8 +105,14 @@ class _PanelToggle extends StatelessWidget {
       child: HoverableSurface(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),
-        fillFor: (_, {required hovered, required selected}) =>
-            hovered ? scheme.surfaceContainerHighest : Colors.transparent,
+        fillFor: (_, {required hovered, required selected}) => hovered
+            ? scheme.surfaceContainerHighest
+            // Alpha-0 of the hover RGB keeps the cross-fade an
+            // alpha-only lerp. Returning Colors.transparent here
+            // would lerp through RGB (0, 0, 0) and flash a dark
+            // grey square on the canvas (~#B8B9BB on white) for
+            // ~80 ms on the way to the chip fill.
+            : scheme.surfaceContainerHighest.withValues(alpha: 0),
         child: SizedBox(
           width: 28,
           height: 28,

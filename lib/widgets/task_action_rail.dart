@@ -171,12 +171,18 @@ class _ActionRow extends StatelessWidget {
         ? scheme.error.withValues(alpha: 0.7)
         : scheme.onSurfaceVariant;
     final hoverFill = scheme.surfaceContainerHighest.withValues(alpha: 0.6);
+    // Alpha-0 of the hover RGB so AnimatedContainer.color lerps
+    // alpha-only on enter/exit. Colors.transparent (RGB 0,0,0)
+    // would mid-frame composite to dark grey on the card surface
+    // and read as a flicker on rapid cursor sweeps across the
+    // 7-row action stack.
+    final restFill = hoverFill.withValues(alpha: 0);
 
     return HoverableSurface(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       fillFor: (_, {required hovered, required selected}) =>
-          hovered ? hoverFill : Colors.transparent,
+          hovered ? hoverFill : restFill,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(
