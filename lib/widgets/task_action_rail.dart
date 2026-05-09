@@ -88,7 +88,11 @@ class TaskActionRail extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.only(top: 4, bottom: 4),
-          child: Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: scheme.outlineVariant.withValues(alpha: 0.4),
+          ),
         ),
         _ActionRow(
           icon: PhosphorIcons.trash(),

@@ -42,7 +42,10 @@ class TopBar extends ConsumerWidget {
                 ref.read(sidebarDrawerOpenProvider.notifier).update((v) => !v),
           ),
           const SizedBox(width: 12),
-          Flexible(
+          // `Expanded` (not `Flexible + Spacer`) so the title soaks up
+          // *all* leftover space, parking the search pill + avatar
+          // flush against the canvas card's right edge.
+          Expanded(
             child: Text(
               title,
               maxLines: 1,
@@ -55,7 +58,6 @@ class TopBar extends ConsumerWidget {
               ),
             ),
           ),
-          const Spacer(),
           _SearchPill(
             onTap: () =>
                 ref.read(commandPaletteOpenProvider.notifier).state = true,

@@ -93,6 +93,11 @@ class _InlineEditFieldState extends State<InlineEditField> {
     final scheme = Theme.of(context).colorScheme;
     final focused = _focusNode.hasFocus;
 
+    // Rest is a barely-there hairline (alpha 0.4 of the `outlineVariant`)
+    // so the editable affordance whispers instead of shouting. Hover
+    // upgrades the underline to a solid 1 px slate. Focus paints a
+    // 2 px indigo bar — the same indigo the rest of the surface
+    // selection / progress / focus ring use.
     Color underlineColor;
     double underlineWidth;
     if (widget.readOnly) {
@@ -102,10 +107,10 @@ class _InlineEditFieldState extends State<InlineEditField> {
       underlineColor = scheme.primary;
       underlineWidth = 2;
     } else if (_hovered) {
-      underlineColor = scheme.onSurfaceVariant;
+      underlineColor = scheme.onSurfaceVariant.withValues(alpha: 0.6);
       underlineWidth = 1;
     } else {
-      underlineColor = scheme.outlineVariant;
+      underlineColor = scheme.outlineVariant.withValues(alpha: 0.4);
       underlineWidth = 1;
     }
 
@@ -155,6 +160,19 @@ class _InlineEditFieldState extends State<InlineEditField> {
             hintText: widget.placeholder,
             hintStyle: defaultPlaceholderStyle,
             isDense: true,
+            // The global `inputDecorationTheme` sets `filled: true` +
+            // `fillColor: scheme.surface` so the floating capture
+            // sheet looks like a Material text field. Inside the
+            // expanded `TaskCard` that fill renders darker than the
+            // card body in dark mode (and lighter than slate-soft
+            // panels in light mode), making every inline field look
+            // like a discrete dark box. Override here so the field
+            // renders transparently on whatever surface it sits on
+            // — only the underline carries the affordance.
+            filled: false,
+            fillColor: Colors.transparent,
+            hoverColor: Colors.transparent,
+            focusColor: Colors.transparent,
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,

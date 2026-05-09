@@ -88,9 +88,13 @@ class AppColors {
   static const Color _lPanel = slate50;
   static const Color _lChip = slate100;
 
-  // Light text + lines.
+  // Light text + lines. `slate-600` instead of `slate-500` so
+  // secondary captions (Today's `May 9 · Week 19`, list-header
+  // `12 tasks` pill, action-rail placeholders like `Add date`) stay
+  // legible on slate-soft sidebars where slate-500 dropped to ~3:1
+  // contrast.
   static const Color _lTextPrimary = slate900;
-  static const Color _lTextSecondary = slate500;
+  static const Color _lTextSecondary = slate600;
   static const Color _lBorder = slate200;
   static const Color _lDivider = slate100;
 
@@ -100,9 +104,12 @@ class AppColors {
   static const Color _dPanel = slate900;
   static const Color _dCard = slate800;
 
-  // Dark text + lines.
+  // Dark text + lines. `slate-300` instead of `slate-400` so the
+  // dark-mode action-rail placeholders (`Add date`, `Add reminder`,
+  // `No repeat`, `Add tags`) read at ~7:1 on the slate-800 card
+  // instead of the ~4.5:1 the previous `slate-400` gave.
   static const Color _dTextPrimary = slate50;
-  static const Color _dTextSecondary = slate400;
+  static const Color _dTextSecondary = slate300;
   static const Color _dBorder = slate700;
   static const Color _dDivider = slate800;
 

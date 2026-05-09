@@ -417,7 +417,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
                         width: 2,
                       ),
                       bottom: BorderSide(
-                        color: scheme.outlineVariant.withValues(alpha: 0.6),
+                        color: scheme.outlineVariant.withValues(alpha: 0.4),
                         width: 1,
                       ),
                     ),
@@ -595,7 +595,11 @@ class _TaskCardState extends ConsumerState<TaskCard>
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: scheme.outlineVariant.withValues(alpha: 0.4),
+            ),
             const SizedBox(height: 12),
             Flexible(
               child: Row(
