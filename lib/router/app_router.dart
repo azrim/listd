@@ -3,11 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/auth_provider.dart';
+import '../screens/all/all_tasks_screen.dart';
 import '../screens/auth/auth_screen.dart';
 import '../screens/auth/callback_screen.dart';
 import '../screens/folders/manage_folders_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/important/important_screen.dart';
+import '../screens/inbox/inbox_screen.dart';
+import '../screens/planned/planned_screen_2027.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/today/today_screen.dart';
 
 /// Provider that forces router refresh when auth changes
 final _authRefreshProvider = Provider<void>((ref) {
@@ -53,9 +58,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'auth-callback',
         builder: (context, state) => const CallbackScreen(),
       ),
+      GoRoute(path: '/', name: 'home', redirect: (_, _) => '/today'),
+      // 2027 P4 — Today is the new default home with calendar strip.
       GoRoute(
-        path: '/',
-        name: 'home',
+        path: '/today',
+        name: 'today',
+        builder: (context, state) => const TodayScreen(),
+      ),
+      GoRoute(
+        path: '/inbox',
+        name: 'inbox',
+        builder: (context, state) => InboxScreen(),
+      ),
+      GoRoute(
+        path: '/important',
+        name: 'important',
+        builder: (context, state) => ImportantScreen(),
+      ),
+      GoRoute(
+        path: '/planned',
+        name: 'planned',
+        builder: (context, state) => PlannedScreen2027(),
+      ),
+      GoRoute(
+        path: '/all',
+        name: 'all',
+        builder: (context, state) => AllTasksScreen(),
+      ),
+      // User-list canvas — same 2-pane HomeScreen but pre-selecting
+      // the requested list. The id is read by HomeScreen on first
+      // build via go_router.
+      GoRoute(
+        path: '/list/:id',
+        name: 'list',
         builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
