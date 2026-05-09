@@ -91,7 +91,7 @@ class TaskActionRail extends StatelessWidget {
           child: Divider(
             height: 1,
             thickness: 1,
-            color: scheme.outlineVariant.withValues(alpha: 0.4),
+            color: scheme.outlineVariant.withValues(alpha: 0.6),
           ),
         ),
         _ActionRow(

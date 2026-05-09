@@ -107,10 +107,17 @@ class _InlineEditFieldState extends State<InlineEditField> {
       underlineColor = scheme.primary;
       underlineWidth = 2;
     } else if (_hovered) {
-      underlineColor = scheme.onSurfaceVariant.withValues(alpha: 0.6);
+      // Hover lifts the underline to full slate-strength so the
+      // editable affordance is unambiguous (was alpha 0.6 → felt
+      // ghostly on dark surfaces).
+      underlineColor = scheme.onSurfaceVariant;
       underlineWidth = 1;
     } else {
-      underlineColor = scheme.outlineVariant.withValues(alpha: 0.4);
+      // Rest is alpha 0.6 of the slate outline — visible enough to
+      // read as "this is editable" but quiet enough not to compete
+      // with the surrounding text. Used to be 0.4; that was below
+      // the perceptual threshold on the slate-700 card.
+      underlineColor = scheme.outlineVariant.withValues(alpha: 0.6);
       underlineWidth = 1;
     }
 

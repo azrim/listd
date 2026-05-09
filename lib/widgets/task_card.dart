@@ -384,61 +384,92 @@ class _TaskCardState extends ConsumerState<TaskCard>
         builder: (context, _) {
           final t = _expand.value.clamp(0.0, 1.0);
 
-          // Collapsed treatment: flat row with hairline divider beneath,
-          // indigo-soft fill + 2 px indigo left bar on selection,
-          // surface-sunken hover. No border, no margin, no rounding —
-          // the row sits flush inside the canvas surface like a
-          // mailbox row (mockup 03_list_view_light.png).
-          if (t == 0) {
-            Color fill;
-            if (widget.isSelected) {
-              fill = scheme.primaryContainer;
-            } else if (_hovered) {
-              fill = scheme.surfaceContainerHighest.withValues(alpha: 0.4);
-            } else {
-              fill = Colors.transparent;
-            }
-            return Material(
-              color: fill,
-              child: InkWell(
-                onTap: () {
-                  widget.onToggleExpand();
-                  widget.onTap?.call();
-                },
-                onSecondaryTapDown: (details) =>
-                    _showContextMenu(details.globalPosition),
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      left: BorderSide(
-                        color: widget.isSelected
-                            ? scheme.primary
-                            : Colors.transparent,
-                        width: 2,
-                      ),
-                      bottom: BorderSide(
-                        color: scheme.outlineVariant.withValues(alpha: 0.4),
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: _buildCollapsedRow(scheme, theme),
-                ),
-              ),
+          // ── Single-Container, single-Border rendering.
+          //
+          // The previous build had two completely different render
+          // paths (one for `t == 0`, one for `t > 0`). Even on the
+          // first frame of the animation the row jumped from
+          // `flush mailbox row` to `padded bordered card with rounded
+          // corners`, and on the last frame of a collapse it snapped
+          // back the other way — that's the "square for a millisec"
+          // the user saw, and it's also why hovering / clicking a
+          // row that had any non-zero `t` looked like the row
+          // suddenly grew an indigo rectangle around it.
+          //
+          // Now everything (fill, border, radius, padding, shadow)
+          // interpolates on the same `t`, so the row morphs
+          // continuously between collapsed-flat and expanded-card
+          // without any discrete switch.
+
+          // Collapsed-state outer fill: indigo-soft on selection,
+          // sunken on hover, otherwise transparent.
+          final Color collapsedFill;
+          if (widget.isSelected) {
+            collapsedFill = scheme.primaryContainer;
+          } else if (_hovered) {
+            collapsedFill = scheme.surfaceContainerHighest.withValues(
+              alpha: 0.4,
             );
+          } else {
+            collapsedFill = Colors.transparent;
           }
 
-          // Expanded: indigo-bordered card with soft elevation, sits
-          // proud of the canvas like an island that the surrounding
-          // rows make room for.
+          final fill = Color.lerp(collapsedFill, cardBg, t)!;
+          final radius = 16.0 * t;
+          final outerPadding = EdgeInsets.lerp(
+            EdgeInsets.zero,
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            t,
+          )!;
+
+          // Border construction. Each side is driven by the same `t`
+          // so the row never flips between two discrete border modes.
+          final primaryFade = scheme.primary.withValues(alpha: t);
+          final leftSide = BorderSide(
+            // Selected rows always carry the indigo bar; on the way
+            // up to the expanded card the bar's width relaxes from
+            // 2 px (mailbox) to 1.5 px (full border).
+            color: widget.isSelected ? scheme.primary : primaryFade,
+            width: widget.isSelected ? (2 - 0.5 * t) : (1.5 * t),
+          );
+          final tbSide = BorderSide(color: primaryFade, width: 1.5 * t);
+          // Bottom blends the collapsed hairline (alpha-0.6 outline)
+          // into the expanded indigo border through the same `t`,
+          // so the row's lower edge never pops between the two.
+          // Alpha 0.6 matches the new InlineEditField rest underline
+          // so every horizontal hairline in the canvas reads at the
+          // same weight.
+          final bottomSide = BorderSide(
+            color: Color.lerp(
+              scheme.outlineVariant.withValues(alpha: 0.6),
+              scheme.primary,
+              t,
+            )!,
+            width: 1 + 0.5 * t,
+          );
+
+          // Shadow lifts continuously as the card rises.
+          final BoxShadow? shadow = t > 0
+              ? BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10 * t),
+                  offset: Offset(0, 4 * t),
+                  blurRadius: 16 * t,
+                )
+              : null;
+
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: outerPadding,
             child: Container(
               decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: scheme.primary, width: 1.5),
-                boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
+                color: fill,
+                borderRadius: BorderRadius.circular(radius),
+                border: Border(
+                  left: leftSide,
+                  top: tbSide,
+                  right: tbSide,
+                  bottom: bottomSide,
+                ),
+                boxShadow: shadow != null ? [shadow] : null,
               ),
               clipBehavior: Clip.antiAlias,
               child: Material(
@@ -455,16 +486,17 @@ class _TaskCardState extends ConsumerState<TaskCard>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildCollapsedRow(scheme, theme),
-                      ClipRect(
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          heightFactor: t,
-                          child: Opacity(
-                            opacity: t,
-                            child: _buildExpandedBody(scheme, theme),
+                      if (t > 0)
+                        ClipRect(
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            heightFactor: t,
+                            child: Opacity(
+                              opacity: t,
+                              child: _buildExpandedBody(scheme, theme),
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -598,7 +630,7 @@ class _TaskCardState extends ConsumerState<TaskCard>
             Divider(
               height: 1,
               thickness: 1,
-              color: scheme.outlineVariant.withValues(alpha: 0.4),
+              color: scheme.outlineVariant.withValues(alpha: 0.6),
             ),
             const SizedBox(height: 12),
             Flexible(

@@ -327,9 +327,13 @@ class AppTheme {
     return ListdSurfaces(
       ambient: isLight ? AppColors.slate50 : AppColors.slate950,
       canvas: scheme.surface,
+      // Dark stack steps: panel (sidebar) slate-900 → canvas slate-800
+      // → card slate-700 → chip slate-600. Each step is one slate
+      // stop brighter so the expanded task card / hovered chips
+      // visibly pop above the canvas surface.
       panel: isLight ? AppColors.slate50 : AppColors.slate900,
-      card: isLight ? const Color(0xFFFFFFFF) : AppColors.slate800,
-      chip: isLight ? AppColors.slate100 : AppColors.slate700,
+      card: isLight ? const Color(0xFFFFFFFF) : AppColors.slate700,
+      chip: isLight ? AppColors.slate100 : AppColors.slate600,
       sidebar: isLight ? AppColors.slate50 : AppColors.slate900,
       detailPanel: isLight ? AppColors.slate50 : AppColors.slate900,
       surfaceTint: scheme.primary,
