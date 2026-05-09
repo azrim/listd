@@ -98,11 +98,16 @@ class AppColors {
   static const Color _lBorder = slate200;
   static const Color _lDivider = slate100;
 
-  // Dark surfaces.
+  // Dark surfaces. Layered so each level reads as a distinct depth
+  // against the indigo backplate (was: panel = canvas = slate900,
+  // which collapsed sidebar + canvas into one wash of slate).
+  // Hierarchy now reads: backplate (slate-950) → sidebar (slate-900)
+  // → canvas (slate-800) → card (slate-700) → chip (slate-600), so
+  // every floating panel + the expanded card pops one step.
   static const Color _dAmbient = slate950;
-  static const Color _dCanvas = slate900;
+  static const Color _dCanvas = slate800;
   static const Color _dPanel = slate900;
-  static const Color _dCard = slate800;
+  static const Color _dCard = slate700;
 
   // Dark text + lines. `slate-300` instead of `slate-400` so the
   // dark-mode action-rail placeholders (`Add date`, `Add reminder`,
@@ -207,7 +212,10 @@ class AppColors {
     surfaceContainerLow: _dPanel,
     surfaceContainer: _dCanvas,
     surfaceContainerHigh: _dCard,
-    surfaceContainerHighest: _dDivider,
+    // `surfaceContainerHighest` is used for hover overlays + chip
+    // backgrounds. Bumping it one stop above `_dCard` so a hover
+    // tint actually reads against a slate-700 / slate-800 surface.
+    surfaceContainerHighest: slate600,
     surfaceDim: _dAmbient,
     surfaceBright: _dCard,
     onSurfaceVariant: _dTextSecondary,
