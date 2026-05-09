@@ -62,6 +62,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final headline = _isToday
         ? 'Today, ${DateFormat('EEE MMM d').format(_selected)}'
         : DateFormat('EEEE, MMM d').format(_selected);
+    final weekNumber = _isoWeekNumber(_selected);
+    final metaLine =
+        '${DateFormat('MMM d').format(_selected)} · Week $weekNumber';
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -90,17 +93,33 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                           _selected = DateTime(now.year, now.month, now.day);
                         });
                       },
-                      child: Text(
-                        headline,
-                        style:
-                            typography?.displaySerif ??
-                            GoogleFonts.inter(
-                              fontSize: 32,
-                              height: 40 / 32,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.64,
-                              color: scheme.onSurface,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            headline,
+                            style:
+                                typography?.displaySerif ??
+                                GoogleFonts.inter(
+                                  fontSize: 32,
+                                  height: 40 / 32,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.64,
+                                  color: scheme.onSurface,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            metaLine,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              height: 18 / 13,
+                              fontWeight: FontWeight.w400,
+                              color: scheme.onSurfaceVariant,
+                              letterSpacing: 0.04,
                             ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -176,6 +195,16 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         );
       },
     );
+  }
+
+  /// ISO 8601 week number for [date] — used in the meta line under
+  /// the Today headline (e.g. `May 9 · Week 19`).
+  int _isoWeekNumber(DateTime date) {
+    // Add 4 days then divide by 7 to land on the ISO week — this is
+    // the standard "Thursday in the same ISO week" trick.
+    final dayOfYear = int.parse(DateFormat('D').format(date));
+    final weekday = date.weekday; // 1 = Mon, 7 = Sun.
+    return ((dayOfYear - weekday + 10) / 7).floor();
   }
 
   List<Task> _filterByDay(List<Task> tasks, DateTime day) {

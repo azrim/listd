@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,18 +12,19 @@ import 'sidebar_drawer.dart';
 import 'top_bar.dart';
 import 'undo_toast.dart';
 
-/// Listd 2027 app shell.
+/// Listd 2027 · Indigo Edition app shell.
 ///
-/// Wraps every screen with:
+/// The mockups (`docs/redesign/2027-indigo/mockups/01_today_light.png`
+/// and friends) show the sidebar permanently docked against the left
+/// edge — no hover-edge detector, no overlay scrim. The canvas sits
+/// to its right and renders its own headline / capture row / cards.
 ///
-///  * `TopBar` (40 px).
-///  * Hover-edge detector on the left 8 px (200 ms dwell opens the
-///    drawer).
-///  * Hidden `SidebarDrawer` overlayed via a `Stack` with a slide-
-///    in transition driven by `ListdSpring.standard`.
-///  * `Ctrl + \` toggles the drawer; `Escape` closes it.
-///  * The wrapped child shifts 32 px to the right when the drawer is
-///    open so the eye doesn't have to fight a covered canvas.
+///  * Sidebar (240 px, always visible on desktop) + canvas (Expanded).
+///  * `Ctrl + \` toggles the sidebar visibility (still useful on
+///    narrow screens) — by default `sidebarDrawerOpenProvider` is
+///    seeded `true` and the canvas shrinks to the available width.
+///  * `Ctrl + K` opens the command palette, `Ctrl + N` the capture
+///    sheet, `Escape` closes the topmost open overlay.
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.child});
 
@@ -36,11 +35,6 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  static const Duration _hoverDwell = Duration(milliseconds: 200);
-  static const double _edgeThreshold = 8;
-  static const double _canvasShift = 32;
-
-  Timer? _hoverTimer;
   final FocusNode _focusNode = FocusNode(skipTraversal: true);
 
   @override
@@ -53,21 +47,8 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   void dispose() {
-    _hoverTimer?.cancel();
     _focusNode.dispose();
     super.dispose();
-  }
-
-  void _scheduleOpen() {
-    _hoverTimer?.cancel();
-    _hoverTimer = Timer(_hoverDwell, () {
-      if (!mounted) return;
-      ref.read(sidebarDrawerOpenProvider.notifier).state = true;
-    });
-  }
-
-  void _cancelOpen() {
-    _hoverTimer?.cancel();
   }
 
   KeyEventResult _onKeyEvent(FocusNode _, KeyEvent event) {
@@ -79,8 +60,6 @@ class _AppShellState extends ConsumerState<AppShell> {
       return KeyEventResult.handled;
     }
     if (isCtrl && event.logicalKey == LogicalKeyboardKey.keyK) {
-      // Toggle the command palette. Closing the capture sheet first
-      // means Ctrl+K is always a one-shot route to a known overlay.
       ref.read(captureSheetOpenProvider.notifier).state = false;
       ref.read(commandPaletteOpenProvider.notifier).update((v) => !v);
       return KeyEventResult.handled;
@@ -91,8 +70,6 @@ class _AppShellState extends ConsumerState<AppShell> {
       return KeyEventResult.handled;
     }
     if (event.logicalKey == LogicalKeyboardKey.escape) {
-      // Close overlays first; only fall through to the drawer if no
-      // overlay was open.
       if (ref.read(settingsOverlayOpenProvider)) {
         ref.read(settingsOverlayOpenProvider.notifier).state = false;
         return KeyEventResult.handled;
@@ -105,17 +82,13 @@ class _AppShellState extends ConsumerState<AppShell> {
         ref.read(captureSheetOpenProvider.notifier).state = false;
         return KeyEventResult.handled;
       }
-      if (ref.read(sidebarDrawerOpenProvider)) {
-        ref.read(sidebarDrawerOpenProvider.notifier).state = false;
-        return KeyEventResult.handled;
-      }
     }
     return KeyEventResult.ignored;
   }
 
   @override
   Widget build(BuildContext context) {
-    final isOpen = ref.watch(sidebarDrawerOpenProvider);
+    final sidebarOpen = ref.watch(sidebarDrawerOpenProvider);
     final captureOpen = ref.watch(captureSheetOpenProvider);
     final paletteOpen = ref.watch(commandPaletteOpenProvider);
     final settingsOpen = ref.watch(settingsOverlayOpenProvider);
@@ -126,62 +99,26 @@ class _AppShellState extends ConsumerState<AppShell> {
       onKeyEvent: _onKeyEvent,
       child: Stack(
         children: [
-          // Main canvas — top bar + child. When the drawer is open we
-          // SHRINK the canvas (right edge stays anchored, left edge
-          // slides in to clear the drawer) instead of translating it
-          // off-screen. That keeps centered content centered in the
-          // visible work area instead of walking off the right edge.
-          AnimatedPositioned(
-            duration: ListdSpring.duration,
-            curve: ListdSpring.curve,
-            left: isOpen ? SidebarDrawer.width + _canvasShift : 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            child: Column(
-              children: [
-                const TopBar(),
-                Expanded(child: widget.child),
-              ],
-            ),
-          ),
-
-          // Hover-edge detector on the left 8 px. Doesn't render
-          // anything visible — just listens for mouse hover and
-          // schedules `sidebarDrawerOpenProvider = true` after 200 ms.
-          if (!isOpen)
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: _edgeThreshold,
-              child: MouseRegion(
-                opaque: false,
-                onEnter: (_) => _scheduleOpen(),
-                onExit: (_) => _cancelOpen(),
+          Row(
+            children: [
+              AnimatedSize(
+                duration: ListdSpring.duration,
+                curve: ListdSpring.curve,
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  width: sidebarOpen ? SidebarDrawer.width : 0,
+                  child: const ClipRect(child: SidebarDrawer()),
+                ),
               ),
-            ),
-
-          // Tap-outside backdrop: closes the drawer when the user
-          // clicks anywhere outside it. Behind the drawer in the
-          // stack so the drawer's own gestures still win.
-          if (isOpen)
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: () =>
-                    ref.read(sidebarDrawerOpenProvider.notifier).state = false,
+              Expanded(
+                child: Column(
+                  children: [
+                    const TopBar(),
+                    Expanded(child: widget.child),
+                  ],
+                ),
               ),
-            ),
-
-          // The drawer itself slides in from -width → 0.
-          AnimatedPositioned(
-            duration: ListdSpring.duration,
-            curve: ListdSpring.curve,
-            top: 0,
-            bottom: 0,
-            left: isOpen ? 0 : -SidebarDrawer.width,
-            child: const SidebarDrawer(),
+            ],
           ),
 
           // Bottom-center undo toast — always mounted so the
@@ -190,8 +127,6 @@ class _AppShellState extends ConsumerState<AppShell> {
             child: IgnorePointer(ignoring: false, child: UndoToast()),
           ),
 
-          // P6 overlays. Backdrop scrim + dialog are mounted only when
-          // open. Backdrop closes on tap.
           if (paletteOpen) ...[
             Positioned.fill(
               child: GestureDetector(

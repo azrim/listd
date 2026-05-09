@@ -79,13 +79,10 @@ class TaskListPanel extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHeader(context, ref, tasksAsync),
-          if (!_isVirtual)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: _AddTaskInput(listId: listId),
-            )
-          else
-            const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
+            child: _AddTaskInput(listId: listId),
+          ),
           Expanded(
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
@@ -136,18 +133,18 @@ class TaskListPanel extends ConsumerWidget {
         .toList();
     final total = tasks?.length ?? 0;
     final completed = tasks?.where((t) => t.isCompleted).length ?? 0;
-    final remaining = total - completed;
-    final caption = _isVirtual ? 'SMART' : 'LIST';
-    final showProgress = total > 0 && completed > 0;
+    final caption = _isVirtual ? 'SMART LIST' : 'LIST';
+    final showProgress = total > 0;
     final progress = total == 0 ? 0.0 : completed / total;
+    final tasksLabel = total == 1 ? '1 task' : '$total tasks';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Caption — sets the kind of list. SMART for virtual buckets
-          // (Today / Inbox / Important / Planned / All Tasks),
+          // Caption — sets the kind of list. SMART LIST for virtual
+          // buckets (Today / Inbox / Important / Planned / All Tasks),
           // LIST for user-created lists.
           Text(
             caption,
@@ -155,52 +152,34 @@ class TaskListPanel extends ConsumerWidget {
               fontSize: 11,
               height: 16 / 11,
               fontWeight: FontWeight.w600,
-              letterSpacing: 0.06,
+              letterSpacing: 0.08,
               color: scheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 4),
-          // H1 22 px / 28 line / 600 weight per indigo type ramp.
+          const SizedBox(height: 6),
+          // H1 24 px / 32 line / 700 weight per indigo type ramp.
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        listName,
-                        style: GoogleFonts.inter(
-                          fontSize: 22,
-                          height: 28 / 22,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.22,
-                          color: scheme.onSurface,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (remaining > 0) ...[
-                      const SizedBox(width: 10),
-                      Text(
-                        '$remaining',
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          height: 22 / 15,
-                          fontWeight: FontWeight.w400,
-                          color: scheme.onSurfaceVariant,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ],
-                  ],
+                child: Text(
+                  listName,
+                  style: GoogleFonts.inter(
+                    fontSize: 24,
+                    height: 32 / 24,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.48,
+                    color: scheme.onSurface,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 12),
+              if (total > 0) _TaskCountChip(label: tasksLabel),
+              const SizedBox(width: 8),
               _QuietIconButton(
-                icon: Icons.refresh,
-                tooltip: 'Refresh',
+                icon: PhosphorIcons.dotsThreeOutline(),
+                tooltip: 'List actions',
                 onPressed: () => _refresh(ref),
               ),
             ],
@@ -208,7 +187,8 @@ class TaskListPanel extends ConsumerWidget {
           if (showProgress) ...[
             const SizedBox(height: 12),
             // Progress bar — 4 px tall hairline track, indigo fill.
-            // Surfaces silently when at least one task is complete.
+            // Always visible once there's at least one task; the bar
+            // fills as tasks are completed.
             ClipRRect(
               borderRadius: BorderRadius.circular(2),
               child: SizedBox(
@@ -500,6 +480,66 @@ class TaskListPanel extends ConsumerWidget {
   }
 }
 
+/// Tabular `12 tasks` chip pinned to the right of the list header.
+/// Indigo-soft fill, indigo-600 fg, tabular figures.
+class _TaskCountChip extends StatelessWidget {
+  const _TaskCountChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          height: 14 / 11,
+          fontWeight: FontWeight.w600,
+          color: scheme.primary,
+          letterSpacing: 0.04,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+    );
+  }
+}
+
+/// `Ctrl+N` keybind chip rendered in the trailing edge of the
+/// capture row. Mirrors the search-pill chip in the top bar.
+class _CtrlNChip extends StatelessWidget {
+  const _CtrlNChip();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Text(
+        'Ctrl+N',
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          height: 14 / 10,
+          fontWeight: FontWeight.w600,
+          color: scheme.onSurfaceVariant,
+          letterSpacing: 0.04,
+        ),
+      ),
+    );
+  }
+}
+
 /// 32×32 quiet icon button — no border, hover fills `surface-sunken`.
 class _QuietIconButton extends StatelessWidget {
   const _QuietIconButton({
@@ -640,67 +680,68 @@ class _AddTaskInputState extends ConsumerState<_AddTaskInput> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      height: AppTheme.controlHeight + 2,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: _focused ? scheme.primary : scheme.outlineVariant,
-              width: _focused ? 2 : 1,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: _focused
+            ? scheme.surfaceContainerLow
+            : scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: _focused ? scheme.primary : scheme.outlineVariant,
+          width: _focused ? 1.5 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: _isLoading
+                ? CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    color: scheme.primary,
+                  )
+                : Icon(
+                    PhosphorIcons.plus(),
+                    size: 16,
+                    color: _focused ? scheme.primary : scheme.onSurfaceVariant,
+                  ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              cursorColor: scheme.primary,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                height: 20 / 14,
+                color: scheme.onSurface,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Add a task',
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 14,
+                  height: 20 / 14,
+                  color: scheme.outline,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onSubmitted: (_) => _addTask(),
+              enabled: !_isLoading,
             ),
           ),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 14,
-              height: 14,
-              child: _isLoading
-                  ? CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      color: scheme.primary,
-                    )
-                  : Icon(
-                      Icons.add,
-                      size: 14,
-                      color: _focused
-                          ? scheme.primary
-                          : scheme.onSurfaceVariant,
-                    ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                cursorColor: scheme.primary,
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  height: 22 / 15,
-                  color: scheme.onSurface,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Add a task',
-                  hintStyle: GoogleFonts.inter(
-                    fontSize: 15,
-                    height: 22 / 15,
-                    color: scheme.outline,
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                onSubmitted: (_) => _addTask(),
-                enabled: !_isLoading,
-              ),
-            ),
-          ],
-        ),
+          const SizedBox(width: 8),
+          const _CtrlNChip(),
+        ],
       ),
     );
   }

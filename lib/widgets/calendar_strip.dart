@@ -2,29 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../theme/app_colors.dart';
-
 /// Listd 2027 · Indigo Edition horizontal date track.
 ///
-/// Replaces the old 7-day "calendar grid" cards with a quieter strip
-/// per `docs/redesign/2027-indigo/03_components.md` §4.
-///
-/// Anatomy:
-///
-/// ```
-/// ··· · · · ●═════● · · · ···
-///     Fri Sat Sun Mon Tue Wed Thu     (today is the indigo capsule)
-/// ```
-///
-///  * Track height: **56 px**
-///  * Each day: 32 px wide, 56 px tall, vertically anchored to a
-///    1 px slate-200 centerline that runs through the track.
-///  * **Today** sits *on* the line as a 32 × 32 indigo-600 capsule
-///    (white text). Other days sit *above* the line, slate text only.
-///  * Past days: slate-400. Future days: slate-700 (`onSurface`).
-///  * Tap any day → scopes the parent screen to that day.
-///  * Density bars are gone — the indigo system carries scope through
-///    type and capsule fill, not segmented bars.
+/// Per `docs/redesign/2027-indigo/mockups/01_today_light.png`: a
+/// flat 7-cell strip stretched edge-to-edge, with DAY-of-week caps
+/// stacked over the DATE number. Today is a solid indigo capsule
+/// wrapping the date glyph; selected (non-today) is indigo-soft.
+/// Cells are separated by sub-pixel hairlines.
 class CalendarStrip extends ConsumerWidget {
   const CalendarStrip({
     super.key,
@@ -45,52 +29,43 @@ class CalendarStrip extends ConsumerWidget {
     // Center today in a 7-day window: today − 3 … today + 3.
     final start = today.subtract(const Duration(days: 3));
     final scheme = Theme.of(context).colorScheme;
-    final centerlineColor = scheme.outlineVariant;
 
     return SizedBox(
-      height: 56,
-      child: Stack(
-        alignment: Alignment.center,
+      height: 64,
+      child: Row(
         children: [
-          // The 1 px centerline sits at the vertical midpoint and runs
-          // edge-to-edge behind the day cells.
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 28,
-            child: Container(height: 1, color: centerlineColor),
-          ),
-          ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            itemCount: 7,
-            itemBuilder: (context, index) {
-              final day = start.add(Duration(days: index));
-              final isToday =
-                  day.year == today.year &&
-                  day.month == today.month &&
-                  day.day == today.day;
-              final isSelected =
-                  day.year == selectedDay.year &&
-                  day.month == selectedDay.month &&
-                  day.day == selectedDay.day;
-              final isPast = day.isBefore(today);
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: _DayCell(
-                  day: day,
-                  isToday: isToday,
-                  isSelected: isSelected,
-                  isPast: isPast,
-                  onTap: () => onDaySelected(day),
-                ),
-              );
-            },
-          ),
+          for (var i = 0; i < 7; i++) ...[
+            Expanded(
+              child: Builder(
+                builder: (context) {
+                  final day = start.add(Duration(days: i));
+                  final isToday = _sameDay(day, today);
+                  final isSelected = _sameDay(day, selectedDay);
+                  final isPast = day.isBefore(today);
+                  return _DayCell(
+                    day: day,
+                    isToday: isToday,
+                    isSelected: isSelected,
+                    isPast: isPast,
+                    onTap: () => onDaySelected(day),
+                  );
+                },
+              ),
+            ),
+            if (i < 6)
+              Container(
+                width: 1,
+                height: 32,
+                color: scheme.outlineVariant.withValues(alpha: 0.6),
+              ),
+          ],
         ],
       ),
     );
   }
+
+  static bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 }
 
 class _DayCell extends StatelessWidget {
@@ -111,61 +86,51 @@ class _DayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final isDark = scheme.brightness == Brightness.dark;
 
-    // Today renders as a 32 × 32 indigo-600 capsule that sits on the
-    // centerline. Selected (non-today) days render as a slate-200
-    // chip behind the day-of-month so the eye can find them.
-    final capsuleFill = isToday
-        ? scheme.primary
-        : isSelected
-        ? scheme.outlineVariant
-        : Colors.transparent;
-    final capsuleFg = isToday
+    // Today's date glyph sits inside a solid indigo capsule.
+    // Selected (non-today) day uses an indigo-soft chip behind the
+    // date so the eye lands there. Other days are plain text.
+    final Color dateFg = isToday
         ? scheme.onPrimary
         : isSelected
-        ? scheme.onSurface
+        ? scheme.primary
         : isPast
-        ? (isDark ? AppColors.slate500 : AppColors.slate400)
+        ? scheme.onSurfaceVariant
         : scheme.onSurface;
+    final Color capsuleFill = isToday
+        ? scheme.primary
+        : isSelected
+        ? scheme.primaryContainer
+        : Colors.transparent;
+    final Color dowFg = isToday
+        ? scheme.primary
+        : isSelected
+        ? scheme.primary
+        : scheme.onSurfaceVariant;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: SizedBox(
-          width: 32,
-          height: 56,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Day-of-week label sits above the centerline. Compact —
-              // no bold, no caps lock, just a quiet two-letter glyph.
-              SizedBox(
-                height: 20,
-                child: Center(
-                  child: Text(
-                    _dowLabel(day.weekday),
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      height: 14 / 11,
-                      fontWeight: FontWeight.w500,
-                      color: isToday || isSelected
-                          ? capsuleFg
-                          : scheme.onSurfaceVariant,
-                    ),
-                  ),
+              Text(
+                _dowLabel(day.weekday),
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  height: 14 / 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.08,
+                  color: dowFg,
                 ),
               ),
-              // Day-of-month sits in a 32 × 32 capsule at the bottom,
-              // centered on the track centerline (the centerline is at
-              // y=28; the capsule is 24–56, so its midpoint lands on
-              // y=40 — the cell vertically anchors the day glyph there
-              // visually because it has only 24 px of bottom space).
+              const SizedBox(height: 6),
               Container(
-                width: 32,
-                height: 32,
+                width: 28,
+                height: 28,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: capsuleFill,
@@ -176,8 +141,10 @@ class _DayCell extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     height: 1.0,
-                    fontWeight: isToday ? FontWeight.w600 : FontWeight.w500,
-                    color: capsuleFg,
+                    fontWeight: isToday || isSelected
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                    color: dateFg,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
@@ -190,9 +157,8 @@ class _DayCell extends StatelessWidget {
   }
 
   static String _dowLabel(int weekday) {
-    // Mon = 1 … Sun = 7. Two letters keeps the cell narrow and the
-    // text readable even at compact font scales.
-    const labels = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+    // Mon = 1 … Sun = 7.
+    const labels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     return labels[weekday - 1];
   }
 }

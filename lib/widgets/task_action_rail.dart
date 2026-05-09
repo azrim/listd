@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/task.dart';
+import '../theme/app_colors.dart';
 
 /// Right-column "metadata rail" inside the expanded `TaskCard`. Shows
 /// one row per editable metadata facet — star, due, reminder, repeat,
@@ -45,6 +46,11 @@ class TaskActionRail extends StatelessWidget {
               : PhosphorIcons.star(),
           label: task.isStarred ? 'Starred' : 'Star',
           tinted: task.isStarred,
+          iconOverride: task.isStarred
+              ? (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.amber300
+                    : AppColors.amber400)
+              : null,
           onTap: onToggleStar,
         ),
         _ActionRow(
@@ -129,6 +135,7 @@ class _ActionRow extends StatefulWidget {
     this.value,
     this.tinted = false,
     this.destructive = false,
+    this.iconOverride,
     required this.onTap,
   });
 
@@ -137,6 +144,7 @@ class _ActionRow extends StatefulWidget {
   final String? value;
   final bool tinted;
   final bool destructive;
+  final Color? iconOverride;
   final VoidCallback onTap;
 
   @override
@@ -173,7 +181,7 @@ class _ActionRowState extends State<_ActionRow> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
               children: [
-                Icon(widget.icon, size: 16, color: fg),
+                Icon(widget.icon, size: 16, color: widget.iconOverride ?? fg),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(

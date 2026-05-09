@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/theme_provider.dart';
 import 'app_colors.dart';
 
 /// Listd 2027 — the surface stack uses solid warm-neutral fills, not
@@ -21,7 +23,7 @@ import 'app_colors.dart';
 ///
 /// Reduced-motion (`MediaQuery.disableAnimations`) freezes the drift to
 /// the value at first build.
-class AppBackplate extends StatefulWidget {
+class AppBackplate extends ConsumerStatefulWidget {
   const AppBackplate({
     super.key,
     required this.child,
@@ -35,10 +37,10 @@ class AppBackplate extends StatefulWidget {
   final DateTime Function()? clock;
 
   @override
-  State<AppBackplate> createState() => _AppBackplateState();
+  ConsumerState<AppBackplate> createState() => _AppBackplateState();
 }
 
-class _AppBackplateState extends State<AppBackplate> {
+class _AppBackplateState extends ConsumerState<AppBackplate> {
   static const Duration _tickInterval = Duration(minutes: 1);
 
   Timer? _timer;
@@ -58,7 +60,8 @@ class _AppBackplateState extends State<AppBackplate> {
     super.didChangeDependencies();
     final reduceMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    if (reduceMotion) {
+    final driftEnabled = ref.read(backplateDriftProvider);
+    if (reduceMotion || !driftEnabled) {
       _timer?.cancel();
       _timer = null;
     } else {
@@ -78,7 +81,19 @@ class _AppBackplateState extends State<AppBackplate> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final stops = AppBackplateStops.forTime(brightness: brightness, at: _now);
+    final driftEnabled = ref.watch(backplateDriftProvider);
+    // When drift is disabled the user wants a static backplate; pin
+    // the stops to the symmetric "noon" position so neither corner
+    // dominates.
+    final at = driftEnabled
+        ? _now
+        : DateTime(_now.year, _now.month, _now.day, 12);
+    // React to drift changes by tearing down the timer if needed.
+    if (!driftEnabled) {
+      _timer?.cancel();
+      _timer = null;
+    }
+    final stops = AppBackplateStops.forTime(brightness: brightness, at: at);
     return ColoredBox(
       color: stops.base,
       child: Stack(

@@ -312,15 +312,9 @@ class _PreviewChip extends StatelessWidget {
   }
 }
 
-/// Spatial reservation for upcoming AI-driven capture suggestions.
-///
-/// Per `docs/redesign/2027-indigo/03_components.md` §9 the capture
-/// sheet reserves vertical room for model-suggested actions (due
-/// dates, list assignment, importance) so that adding them later is
-/// non-breaking. The slot stays hidden until the user has typed at
-/// least four characters, then renders as a quiet panel with a single
-/// caption row. Today no suggestions are produced; the keyboard
-/// hint text alone communicates intent.
+/// `✦ SUGGESTIONS` panel — three keyboard-driven quick actions per
+/// `08_capture_sheet_light.png`. Each row is a label + keybind chip.
+/// Hidden until the user types ≥ 4 characters.
 class _AiSuggestionsSlot extends StatelessWidget {
   const _AiSuggestionsSlot({required this.scheme});
 
@@ -329,23 +323,111 @@ class _AiSuggestionsSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(48, 0, 16, 12),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(20, 0, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(PhosphorIcons.sparkle(), size: 12, color: scheme.outline),
-          const SizedBox(width: 8),
-          Text(
-            'AI suggestions appear here as you type.',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              height: 16 / 11,
-              fontWeight: FontWeight.w500,
-              fontStyle: FontStyle.italic,
-              color: scheme.onSurfaceVariant,
-              letterSpacing: 0.04,
-            ),
+          Row(
+            children: [
+              Icon(PhosphorIcons.sparkle(), size: 12, color: scheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                'SUGGESTIONS',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  height: 14 / 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.08,
+                  color: scheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          _SuggestionRow(
+            scheme: scheme,
+            label: 'Add to today',
+            keys: const ['↩'],
+          ),
+          _SuggestionRow(
+            scheme: scheme,
+            label: 'Add and stay',
+            keys: const ['⌥', '↩'],
+          ),
+          _SuggestionRow(
+            scheme: scheme,
+            label: 'Add and star',
+            keys: const ['⇧', '↩'],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SuggestionRow extends StatelessWidget {
+  const _SuggestionRow({
+    required this.scheme,
+    required this.label,
+    required this.keys,
+  });
+
+  final ColorScheme scheme;
+  final String label;
+  final List<String> keys;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                height: 18 / 13,
+                fontWeight: FontWeight.w500,
+                color: scheme.onSurface,
+              ),
+            ),
+          ),
+          for (var i = 0; i < keys.length; i++) ...[
+            if (i > 0) const SizedBox(width: 4),
+            _KeyChip(label: keys[i], scheme: scheme),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _KeyChip extends StatelessWidget {
+  const _KeyChip({required this.label, required this.scheme});
+
+  final String label;
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          height: 14 / 11,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.04,
+          color: scheme.onSurfaceVariant,
+        ),
       ),
     );
   }

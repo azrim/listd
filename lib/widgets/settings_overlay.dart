@@ -350,6 +350,8 @@ class _AppearanceBody extends ConsumerWidget {
     final mode = ref.watch(themeModeProvider);
     final scale = ref.watch(fontScaleProvider);
     final density = ref.watch(densityModeProvider);
+    final accent = ref.watch(accentColorProvider);
+    final driftEnabled = ref.watch(backplateDriftProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -404,7 +406,128 @@ class _AppearanceBody extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 24),
+        _SectionLabel('Accent'),
+        const SizedBox(height: 8),
+        _AccentSwatchPicker(
+          selected: accent,
+          onPick: (c) => ref.read(accentColorProvider.notifier).setAccent(c),
+        ),
+        const SizedBox(height: 8),
+        _HelperText(
+          'Indigo carries selection, focus, and progress across the app. '
+          'Other swatches preview here only.',
+        ),
+        const SizedBox(height: 24),
+        _SectionLabel('Backplate'),
+        const SizedBox(height: 8),
+        _DriftToggleRow(
+          enabled: driftEnabled,
+          onChanged: (v) =>
+              ref.read(backplateDriftProvider.notifier).setEnabled(v),
+        ),
+        const SizedBox(height: 6),
+        _HelperText(
+          'When on, the ambient backplate shifts subtly with the time '
+          'of day — warmer in the morning, cooler in the evening.',
+        ),
       ],
+    );
+  }
+}
+
+/// 5-swatch accent picker per `05_settings_drawer_light.png`. Each
+/// swatch is a 24 px circle; the selected swatch gets an indigo ring.
+class _AccentSwatchPicker extends StatelessWidget {
+  const _AccentSwatchPicker({required this.selected, required this.onPick});
+
+  final Color selected;
+  final ValueChanged<Color> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        for (final swatch in kAccentSwatches)
+          GestureDetector(
+            onTap: () => onPick(swatch),
+            // ignore: deprecated_member_use
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: swatch,
+                border: Border.all(
+                  // ignore: deprecated_member_use
+                  color: swatch.value == selected.value
+                      ? scheme.onSurface
+                      : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Backplate drift toggle row — switch + label.
+class _DriftToggleRow extends StatelessWidget {
+  const _DriftToggleRow({required this.enabled, required this.onChanged});
+
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'Time-of-day drift',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              height: 18 / 13,
+              fontWeight: FontWeight.w500,
+              color: scheme.onSurface,
+            ),
+          ),
+        ),
+        Switch(
+          value: enabled,
+          onChanged: onChanged,
+          activeThumbColor: scheme.primary,
+        ),
+      ],
+    );
+  }
+}
+
+/// Italic helper text used under Accent + Backplate. Newsreader italic
+/// reads slightly more like an inline note than Inter would.
+class _HelperText extends StatelessWidget {
+  const _HelperText(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Text(
+      text,
+      style: GoogleFonts.newsreader(
+        fontSize: 12,
+        height: 18 / 12,
+        fontWeight: FontWeight.w400,
+        fontStyle: FontStyle.italic,
+        color: scheme.onSurfaceVariant,
+      ),
     );
   }
 }

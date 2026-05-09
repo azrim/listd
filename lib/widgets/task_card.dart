@@ -10,6 +10,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/task.dart';
 import '../providers/tasks_provider.dart';
 import '../services/notifications/reminder_service.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/spring.dart';
 import '../utils/url_detector.dart';
@@ -373,26 +374,6 @@ class _TaskCardState extends ConsumerState<TaskCard>
     final scheme = theme.colorScheme;
     final surfaces = theme.extension<ListdSurfaces>();
     final cardBg = surfaces?.card ?? scheme.surface;
-    final isDark = theme.brightness == Brightness.dark;
-
-    // Dark expanded fill uses the chip-level surface (#26212C) so the
-    // elevated state reads against the card surface. Light mode keeps
-    // the card surface — the spring + shadow already separate the
-    // expanded body from the page.
-    const expandedDarkFill = Color(0xFF26212C);
-
-    Color fill = cardBg;
-    if (widget.isExpanded) {
-      fill = isDark ? expandedDarkFill : cardBg;
-    } else if (widget.isSelected) {
-      // Light: indigo-50 selected fill. Dark: keep the card surface —
-      // a tinted primaryContainer on top of the card reads as muddy.
-      // The 2 px indigo ring carries the selection signal on its own
-      // in dark mode.
-      fill = isDark ? cardBg : scheme.primaryContainer;
-    } else if (_hovered) {
-      fill = Color.alphaBlend(scheme.primary.withValues(alpha: 0.04), cardBg);
-    }
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -402,24 +383,23 @@ class _TaskCardState extends ConsumerState<TaskCard>
         animation: _expand,
         builder: (context, _) {
           final t = _expand.value.clamp(0.0, 1.0);
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
+
+          // Collapsed treatment: flat row with hairline divider beneath,
+          // indigo-soft fill + 2 px indigo left bar on selection,
+          // surface-sunken hover. No border, no margin, no rounding —
+          // the row sits flush inside the canvas surface like a
+          // mailbox row (mockup 03_list_view_light.png).
+          if (t == 0) {
+            Color fill;
+            if (widget.isSelected) {
+              fill = scheme.primaryContainer;
+            } else if (_hovered) {
+              fill = scheme.surfaceContainerHighest.withValues(alpha: 0.4);
+            } else {
+              fill = Colors.transparent;
+            }
+            return Material(
               color: fill,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: widget.isSelected
-                    ? scheme.primary
-                    : scheme.outlineVariant,
-                width: widget.isSelected ? 2 : 1,
-              ),
-              boxShadow: t > 0
-                  ? [surfaces?.shadowSm ?? const BoxShadow()]
-                  : null,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Material(
-              color: Colors.transparent,
               child: InkWell(
                 onTap: () {
                   widget.onToggleExpand();
@@ -427,12 +407,54 @@ class _TaskCardState extends ConsumerState<TaskCard>
                 },
                 onSecondaryTapDown: (details) =>
                     _showContextMenu(details.globalPosition),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildCollapsedRow(scheme, theme),
-                    if (t > 0)
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(
+                        color: widget.isSelected
+                            ? scheme.primary
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                      bottom: BorderSide(
+                        color: scheme.outlineVariant.withValues(alpha: 0.6),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: _buildCollapsedRow(scheme, theme),
+                ),
+              ),
+            );
+          }
+
+          // Expanded: indigo-bordered card with soft elevation, sits
+          // proud of the canvas like an island that the surrounding
+          // rows make room for.
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: scheme.primary, width: 2),
+                boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    widget.onToggleExpand();
+                    widget.onTap?.call();
+                  },
+                  onSecondaryTapDown: (details) =>
+                      _showContextMenu(details.globalPosition),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildCollapsedRow(scheme, theme),
                       ClipRect(
                         child: Align(
                           alignment: Alignment.topLeft,
@@ -443,7 +465,8 @@ class _TaskCardState extends ConsumerState<TaskCard>
                           ),
                         ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -469,8 +492,9 @@ class _TaskCardState extends ConsumerState<TaskCard>
   Widget _buildCollapsedRow(ColorScheme scheme, ThemeData theme) {
     final task = widget.task;
     final urls = _stepUrls();
+    final firstTag = task.tags.isEmpty ? null : task.tags.first;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -504,9 +528,13 @@ class _TaskCardState extends ConsumerState<TaskCard>
                     maxLines: 1,
                   ),
                 ),
+                if (firstTag != null) ...[
+                  const SizedBox(width: 8),
+                  _TagChip(label: firstTag),
+                ],
                 if (task.due != null) ...[
-                  const SizedBox(width: 12),
-                  _MetaChip(label: _formatDate(task.due!), scheme: scheme),
+                  const SizedBox(width: 8),
+                  _DueChip(due: task.due!),
                 ],
                 if (task.steps.isNotEmpty) ...[
                   const SizedBox(width: 8),
@@ -518,11 +546,13 @@ class _TaskCardState extends ConsumerState<TaskCard>
                   ),
                 ],
                 if (task.isStarred) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Icon(
                     PhosphorIcons.star(PhosphorIconsStyle.fill),
                     size: 16,
-                    color: scheme.primary,
+                    color: theme.brightness == Brightness.dark
+                        ? AppColors.amber300
+                        : AppColors.amber400,
                   ),
                 ],
               ],
@@ -670,16 +700,6 @@ class _TaskCardState extends ConsumerState<TaskCard>
       ),
     );
   }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = date.difference(DateTime(now.year, now.month, now.day)).inDays;
-    if (diff == 0) return 'Today';
-    if (diff == 1) return 'Tomorrow';
-    if (diff == -1) return 'Yesterday';
-    if (diff > 0 && diff < 7) return 'In $diff days';
-    return '${date.month}/${date.day}';
-  }
 }
 
 /// 20 px circular checkbox tuned for the 56 px card row. Slightly
@@ -713,6 +733,99 @@ class _CardCheckbox extends StatelessWidget {
         child: completed
             ? Icon(Icons.check, size: 12, color: scheme.onPrimary)
             : null,
+      ),
+    );
+  }
+}
+
+/// `#tag` chip — indigo-soft fill, indigo-600 fg. Sits in the
+/// collapsed row's right meta cluster.
+class _TagChip extends StatelessWidget {
+  const _TagChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '#$label',
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          height: 14 / 11,
+          fontWeight: FontWeight.w500,
+          color: scheme.primary,
+        ),
+      ),
+    );
+  }
+}
+
+/// `due Mon 11` chip — indigo-soft fill, indigo-600 fg.
+class _DueChip extends StatelessWidget {
+  const _DueChip({required this.due});
+
+  final DateTime due;
+
+  String get _label {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final d = DateTime(due.year, due.month, due.day);
+    final diff = d.difference(today).inDays;
+    if (diff == 0) return 'today';
+    if (diff == 1) return 'tomorrow';
+    if (diff == -1) return 'yesterday';
+    if (diff > 1 && diff < 7) {
+      const dows = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      return dows[d.weekday - 1];
+    }
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[d.month - 1]} ${d.day}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(PhosphorIcons.calendar(), size: 11, color: scheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            _label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              height: 14 / 11,
+              fontWeight: FontWeight.w500,
+              color: scheme.primary,
+            ),
+          ),
+        ],
       ),
     );
   }

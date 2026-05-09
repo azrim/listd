@@ -7,6 +7,8 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/task_list.dart';
 import '../providers/shell_state_provider.dart';
 import '../providers/task_lists_provider.dart';
+import '../providers/today_provider.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'context_menu.dart';
 import 'rename_dialog.dart';
@@ -21,11 +23,8 @@ import 'sync_status_pill.dart';
 /// drops three things from the previous warm version:
 ///
 ///  * Workspace / account block at the top — gone.
-///  * Bottom `[Settings] [Sign out]` button row — gone (those actions
-///    moved to the avatar popover in the top bar and the Account pane
-///    in Settings).
-///  * Duplicate `SyncStatusPill` — there is now exactly one, full-
-///    width, in this drawer's footer.
+///  * Bottom `[Settings] [Sign out]` button row — gone.
+///  * Duplicate `SyncStatusPill` — single instance, full-width footer.
 ///
 /// 240 px wide, flush against the left edge with a 1 px hairline
 /// border on the right.
@@ -42,6 +41,13 @@ class SidebarDrawer extends ConsumerWidget {
     final taskListsAsync = ref.watch(taskListsNotifierProvider);
     final currentLocation = GoRouterState.of(context).uri.toString();
 
+    final inboxCount = ref.watch(inboxTasksProvider).valueOrNull?.length ?? 0;
+    final todayCount = ref.watch(todayTasksProvider).valueOrNull?.length ?? 0;
+    final importantCount =
+        ref.watch(importantTasksProvider).valueOrNull?.length ?? 0;
+    final plannedCount =
+        ref.watch(plannedTasksProvider).valueOrNull?.length ?? 0;
+
     return MouseRegion(
       onEnter: (_) => ref.read(sidebarDrawerOpenProvider.notifier).state = true,
       child: Container(
@@ -54,7 +60,7 @@ class SidebarDrawer extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 4),
@@ -63,24 +69,29 @@ class SidebarDrawer extends ConsumerWidget {
                   _DrawerItem(
                     icon: PhosphorIcons.sun(),
                     label: 'Today',
+                    count: todayCount > 0 ? todayCount : null,
                     isSelected: currentLocation == '/today',
                     onTap: () => _navigate(context, ref, '/today'),
                   ),
                   _DrawerItem(
                     icon: PhosphorIcons.tray(),
                     label: 'Inbox',
+                    count: inboxCount > 0 ? inboxCount : null,
                     isSelected: currentLocation == '/inbox',
                     onTap: () => _navigate(context, ref, '/inbox'),
                   ),
                   _DrawerItem(
-                    icon: PhosphorIcons.star(),
+                    icon: PhosphorIcons.star(PhosphorIconsStyle.fill),
+                    iconTint: AppColors.amber400,
                     label: 'Important',
+                    count: importantCount > 0 ? importantCount : null,
                     isSelected: currentLocation == '/important',
                     onTap: () => _navigate(context, ref, '/important'),
                   ),
                   _DrawerItem(
                     icon: PhosphorIcons.calendar(),
                     label: 'Planned',
+                    count: plannedCount > 0 ? plannedCount : null,
                     isSelected: currentLocation == '/planned',
                     onTap: () => _navigate(context, ref, '/planned'),
                   ),
@@ -90,7 +101,7 @@ class SidebarDrawer extends ConsumerWidget {
                     isSelected: currentLocation == '/all',
                     onTap: () => _navigate(context, ref, '/all'),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   _SectionHeader(label: 'LISTS'),
                   taskListsAsync.when(
                     data: (lists) => Column(
@@ -146,8 +157,6 @@ class SidebarDrawer extends ConsumerWidget {
 
   void _navigate(BuildContext context, WidgetRef ref, String path) {
     context.go(path);
-    // Auto-close the drawer once the user navigates so the canvas
-    // takes back the full width.
     ref.read(sidebarDrawerOpenProvider.notifier).state = false;
   }
 
@@ -224,14 +233,14 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
       child: Text(
         label,
         style: GoogleFonts.inter(
           fontSize: 11,
           height: 16 / 11,
           fontWeight: FontWeight.w600,
-          letterSpacing: 0.06,
+          letterSpacing: 0.06 * 11,
           color: scheme.onSurfaceVariant,
         ),
       ),
@@ -245,6 +254,8 @@ class _DrawerItem extends StatefulWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.count,
+    this.iconTint,
     this.onSecondaryTapDown,
   });
 
@@ -253,8 +264,15 @@ class _DrawerItem extends StatefulWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  /// Right-click handler. When non-null, secondary taps surface a
-  /// 2027 context menu instead of being absorbed by the InkWell.
+  /// Optional count badge rendered to the right of the label
+  /// (e.g. `Inbox  3`). Hidden when null or 0.
+  final int? count;
+
+  /// Optional fixed tint for the leading icon — used by **Important**
+  /// to render the star in amber regardless of selection state.
+  final Color? iconTint;
+
+  /// Right-click handler.
   final GestureTapDownCallback? onSecondaryTapDown;
 
   @override
@@ -269,15 +287,19 @@ class _DrawerItemState extends State<_DrawerItem> {
     final scheme = Theme.of(context).colorScheme;
     Color fill;
     Color fg;
+    Color iconColor;
     if (widget.isSelected) {
       fill = scheme.primaryContainer;
       fg = scheme.primary;
+      iconColor = widget.iconTint ?? scheme.primary;
     } else if (_hovered) {
       fill = scheme.surfaceContainerHighest;
       fg = scheme.onSurface;
+      iconColor = widget.iconTint ?? scheme.onSurfaceVariant;
     } else {
       fill = Colors.transparent;
       fg = scheme.onSurface;
+      iconColor = widget.iconTint ?? scheme.onSurfaceVariant;
     }
 
     return MouseRegion(
@@ -298,7 +320,7 @@ class _DrawerItemState extends State<_DrawerItem> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
                   children: [
-                    Icon(widget.icon, size: 18, color: fg),
+                    Icon(widget.icon, size: 18, color: iconColor),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -315,6 +337,11 @@ class _DrawerItemState extends State<_DrawerItem> {
                         maxLines: 1,
                       ),
                     ),
+                    if (widget.count != null && widget.count! > 0)
+                      _CountBadge(
+                        count: widget.count!,
+                        selected: widget.isSelected,
+                      ),
                   ],
                 ),
               ),
@@ -326,9 +353,36 @@ class _DrawerItemState extends State<_DrawerItem> {
   }
 }
 
-/// Hover-revealed "+ New list" affordance pinned to the bottom of
-/// the LISTS section. Sits at the same height as a regular drawer
-/// item, with muted styling at rest.
+/// Tiny tabular count chip rendered to the right of a sidebar row.
+/// Selected state inherits the indigo soft, otherwise renders as a
+/// neutral slate chip per `03_components.md` §3.
+class _CountBadge extends StatelessWidget {
+  const _CountBadge({required this.count, required this.selected});
+
+  final int count;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final fg = selected ? scheme.primary : scheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: Text(
+        '$count',
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          height: 16 / 12,
+          fontWeight: FontWeight.w600,
+          color: fg,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+    );
+  }
+}
+
+/// "+ New list" affordance pinned to the bottom of the LISTS section.
 class _NewListItem extends StatefulWidget {
   const _NewListItem({required this.onTap});
 
