@@ -5,10 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
-import 'theme/app_theme.dart';
-import 'theme/gradients.dart';
 import 'services/supabase/supabase_client_service.dart'
     show supabaseClientProvider, SupabaseClientService;
+import 'theme/app_theme.dart';
+import 'theme/gradients.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,19 +42,19 @@ class ListdApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
-    final accent = ref.watch(accentColorProvider);
     final fontScale = ref.watch(fontScaleProvider);
     final appRouter = ref.watch(appRouterProvider);
 
+    // Per `docs/redesign/2027-indigo/00_overview.md` indigo carries
+    // selection / focus / progress everywhere. The Settings → Accent
+    // picker is preview-only — it never overrides the ColorScheme's
+    // primary. Reading `accentColorProvider` here would re-introduce
+    // the divergence the user reported (cyan / emerald borders).
     return MaterialApp.router(
       title: 'Listd',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme.copyWith(
-        colorScheme: AppTheme.lightTheme.colorScheme.copyWith(primary: accent),
-      ),
-      darkTheme: AppTheme.darkTheme.copyWith(
-        colorScheme: AppTheme.darkTheme.colorScheme.copyWith(primary: accent),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       builder: (context, child) {
         // Apply the user's selected font scale on top of the platform

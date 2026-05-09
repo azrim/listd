@@ -46,17 +46,19 @@ class EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Hairline circle around the icon — per `07_empty_state_light.png`
-            // an empty state reads as a "small absence" not a banner.
+            // Slate-soft filled disc behind the icon — per
+            // `07_empty_state_light.png` and `10_components_overview.png`
+            // empty states read as a "small absence" anchored by a
+            // muted disc, not a hairline ring.
             Container(
-              width: 56,
-              height: 56,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: scheme.outlineVariant, width: 1),
+                color: scheme.surfaceContainerHighest,
               ),
               alignment: Alignment.center,
-              child: Icon(icon, size: 24, color: scheme.outline),
+              child: Icon(icon, size: 22, color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             Text(

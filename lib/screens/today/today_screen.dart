@@ -11,17 +11,20 @@ import '../../theme/app_theme.dart';
 import '../../widgets/calendar_strip.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/task_card.dart';
+import '../../widgets/task_list_panel.dart';
 
-/// Listd 2027 Today canvas.
+/// Listd 2027 · Indigo Today canvas.
 ///
-/// Single-canvas layout (no sidebar / no inspector). The canvas itself
-/// is a 20 px-radius rounded card sitting on the ambient backplate
-/// (max content width 720 px, centered with 24 px ambient margin on
-/// each side). It holds, in order:
+/// Per `docs/redesign/2027-indigo/mockups/01_today_light.png` the
+/// canvas sits directly on the indigo backplate — no outer card or
+/// shadow. Layout, top-to-bottom:
 ///
-///   * Newsreader display headline ("Today, Wed Jan 21").
-///   * 7-day calendar strip (today − 1 to today + 5).
-///   * Today's TaskCard list.
+///   * Newsreader display headline ("Today, Sat May 9").
+///   * Slate meta line ("May 9 · Week 19").
+///   * 7-day calendar strip — selected day is a solid indigo capsule
+///     with stacked DOW / DATE.
+///   * Capture row ("+ Add a task" + Ctrl + N keybind chip).
+///   * Task rows (TaskCard list).
 ///
 /// Tasks come from `todayTasksProvider` (smart bucket per UX plan §1).
 /// Selecting a different day on the strip filters the list to tasks
@@ -41,6 +44,19 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     super.initState();
     final now = DateTime.now();
     _selected = DateTime(now.year, now.month, now.day);
+
+    // Mirror Today onto the active list provider so Ctrl + N capture
+    // (which dispatches into the selected list's `tasksNotifierProvider`)
+    // lands tasks in the right bucket. We still resolve the actual
+    // target list inside `AddTaskInput` for virtual buckets.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final current = ref.read(selectedTaskListIdProvider);
+      if (current != SpecialListIds.myDay) {
+        ref.read(selectedTaskListIdProvider.notifier).state =
+            SpecialListIds.myDay;
+      }
+    });
   }
 
   bool get _isToday {
@@ -54,8 +70,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final surfaces = theme.extension<ListdSurfaces>();
-    final cardBg = surfaces?.card ?? scheme.surface;
     final typography = theme.extension<ListdTypography>();
 
     final todayAsync = ref.watch(todayTasksProvider);
@@ -66,109 +80,96 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final metaLine =
         '${DateFormat('MMM d').format(_selected)} · Week $weekNumber';
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720 + 48),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Container(
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: scheme.outlineVariant, width: 1),
-                boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
-              ),
-              clipBehavior: Clip.antiAlias,
+    return Material(
+      type: MaterialType.canvas,
+      color: scheme.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Headline + meta line — Newsreader display, slate meta.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(40, 32, 40, 4),
+            child: GestureDetector(
+              onTap: () {
+                final now = DateTime.now();
+                setState(() {
+                  _selected = DateTime(now.year, now.month, now.day);
+                });
+              },
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                    child: GestureDetector(
-                      onTap: () {
-                        final now = DateTime.now();
-                        setState(() {
-                          _selected = DateTime(now.year, now.month, now.day);
-                        });
-                      },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            headline,
-                            style:
-                                typography?.displaySerif ??
-                                GoogleFonts.inter(
-                                  fontSize: 32,
-                                  height: 40 / 32,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: -0.64,
-                                  color: scheme.onSurface,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            metaLine,
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              height: 18 / 13,
-                              fontWeight: FontWeight.w400,
-                              color: scheme.onSurfaceVariant,
-                              letterSpacing: 0.04,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: CalendarStrip(
-                      selectedDay: _selected,
-                      onDaySelected: (d) => setState(() => _selected = d),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: scheme.outlineVariant,
-                  ),
-                  Expanded(
-                    child: todayAsync.when(
-                      loading: () => const Center(
-                        child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 1.5),
+                  Text(
+                    headline,
+                    style:
+                        typography?.displaySerif ??
+                        GoogleFonts.newsreader(
+                          fontSize: 36,
+                          height: 44 / 36,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.72,
+                          color: scheme.onSurface,
                         ),
-                      ),
-                      error: (e, _) => Center(
-                        child: Text(
-                          'Couldn\'t load Today: $e',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: scheme.error,
-                          ),
-                        ),
-                      ),
-                      data: (tasks) {
-                        final filtered = _isToday
-                            ? tasks
-                            : _filterByDay(tasks, _selected);
-                        if (filtered.isEmpty) {
-                          return _EmptyState(isToday: _isToday);
-                        }
-                        return _buildList(filtered);
-                      },
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    metaLine,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      height: 18 / 13,
+                      fontWeight: FontWeight.w400,
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-        ),
+          // Calendar strip — full-width on the canvas, bleeds the
+          // indigo today capsule per mockup.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(40, 16, 40, 16),
+            child: CalendarStrip(
+              selectedDay: _selected,
+              onDaySelected: (d) => setState(() => _selected = d),
+            ),
+          ),
+          // Capture row — same `AddTaskInput` widget as the list panel
+          // so the Ctrl + N keybind chip + hairline border treatment
+          // stays consistent across canvases.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(40, 0, 40, 12),
+            child: AddTaskInput(listId: SpecialListIds.myDay),
+          ),
+          Expanded(
+            child: todayAsync.when(
+              loading: () => const Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                ),
+              ),
+              error: (e, _) => Center(
+                child: Text(
+                  'Couldn\'t load Today: $e',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.error,
+                  ),
+                ),
+              ),
+              data: (tasks) {
+                final filtered = _isToday
+                    ? tasks
+                    : _filterByDay(tasks, _selected);
+                if (filtered.isEmpty) {
+                  return _EmptyState(isToday: _isToday);
+                }
+                return _buildList(filtered);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -177,7 +178,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final expandedId = ref.watch(expandedTaskIdProvider);
     final selectedTaskId = ref.watch(selectedTaskIdProvider);
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         final task = tasks[index];
