@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -86,13 +85,11 @@ class TaskCard extends ConsumerStatefulWidget {
   ConsumerState<TaskCard> createState() => _TaskCardState();
 }
 
-class _TaskCardState extends ConsumerState<TaskCard>
-    with SingleTickerProviderStateMixin {
+class _TaskCardState extends ConsumerState<TaskCard> {
   static const double _collapsedHeight = 56;
   static const Duration _titleDebounce = Duration(milliseconds: 300);
   static const Duration _notesDebounce = Duration(milliseconds: 600);
 
-  late final AnimationController _expand;
   late final TextEditingController _titleController;
   late final TextEditingController _notesController;
   Timer? _titleTimer;
@@ -102,12 +99,6 @@ class _TaskCardState extends ConsumerState<TaskCard>
   @override
   void initState() {
     super.initState();
-    _expand = AnimationController(
-      vsync: this,
-      duration: ListdSpring.duration,
-      reverseDuration: ListdSpring.duration,
-      value: widget.isExpanded ? 1.0 : 0.0,
-    );
     _titleController = TextEditingController(text: widget.task.title);
     _notesController = TextEditingController(text: widget.task.notes);
   }
@@ -128,29 +119,11 @@ class _TaskCardState extends ConsumerState<TaskCard>
       _notesController.text = widget.task.notes;
     }
 
-    if (widget.isExpanded != old.isExpanded) {
-      _animateExpand(widget.isExpanded);
-      if (!widget.isExpanded) {
-        // Hard flush on collapse — never persist mid-debounce edits.
-        _flushTitle();
-        _flushNotes();
-      }
+    if (widget.isExpanded != old.isExpanded && !widget.isExpanded) {
+      // Hard flush on collapse — never persist mid-debounce edits.
+      _flushTitle();
+      _flushNotes();
     }
-  }
-
-  void _animateExpand(bool expanded) {
-    final reduced = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    if (reduced) {
-      _expand.value = expanded ? 1.0 : 0.0;
-      return;
-    }
-    final spring = SpringSimulation(
-      ListdSpring.standard,
-      _expand.value,
-      expanded ? 1.0 : 0.0,
-      0,
-    );
-    _expand.animateWith(spring);
   }
 
   @override
@@ -161,7 +134,6 @@ class _TaskCardState extends ConsumerState<TaskCard>
     _notesTimer?.cancel();
     _titleController.dispose();
     _notesController.dispose();
-    _expand.dispose();
     super.dispose();
   }
 
@@ -375,135 +347,103 @@ class _TaskCardState extends ConsumerState<TaskCard>
     final surfaces = theme.extension<ListdSurfaces>();
     final cardBg = surfaces?.card ?? scheme.surface;
 
+    final isExpanded = widget.isExpanded;
+    final reduced = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final duration = reduced ? Duration.zero : ListdSpring.duration;
+    const curve = Curves.easeOutCubic;
+
+    // Collapsed-state fill: indigo-soft on selection, sunken on hover,
+    // otherwise transparent.
+    final Color collapsedFill;
+    if (widget.isSelected) {
+      collapsedFill = scheme.primaryContainer;
+    } else if (_hovered) {
+      collapsedFill = scheme.surfaceContainerHighest.withValues(alpha: 0.4);
+    } else {
+      collapsedFill = Colors.transparent;
+    }
+
+    // ── Two BoxDecorations with matching shape (4-sided Border + radius)
+    // so AnimatedContainer can lerp between them frame-perfectly. The
+    // collapsed shape is "round-radius 0, transparent top/right, indigo
+    // left bar (when selected), hairline bottom"; the expanded shape is
+    // "round-radius 16, indigo on all four sides". `Border.lerp` walks
+    // each side, so the silhouette morphs continuously — no
+    // square-for-a-millisec, no indigo rectangle on hover for a
+    // collapsed row.
+    final BoxDecoration decoration = isExpanded
+        ? BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: scheme.primary, width: 1.5),
+            boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
+          )
+        : BoxDecoration(
+            color: collapsedFill,
+            borderRadius: BorderRadius.zero,
+            border: Border(
+              left: BorderSide(
+                color: widget.isSelected ? scheme.primary : Colors.transparent,
+                width: 2,
+              ),
+              top: const BorderSide(color: Colors.transparent, width: 0),
+              right: const BorderSide(color: Colors.transparent, width: 0),
+              bottom: BorderSide(
+                color: scheme.outlineVariant.withValues(alpha: 0.6),
+                width: 1,
+              ),
+            ),
+          );
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       cursor: SystemMouseCursors.click,
-      child: AnimatedBuilder(
-        animation: _expand,
-        builder: (context, _) {
-          final t = _expand.value.clamp(0.0, 1.0);
-
-          // ── Single-Container, single-Border rendering.
-          //
-          // The previous build had two completely different render
-          // paths (one for `t == 0`, one for `t > 0`). Even on the
-          // first frame of the animation the row jumped from
-          // `flush mailbox row` to `padded bordered card with rounded
-          // corners`, and on the last frame of a collapse it snapped
-          // back the other way — that's the "square for a millisec"
-          // the user saw, and it's also why hovering / clicking a
-          // row that had any non-zero `t` looked like the row
-          // suddenly grew an indigo rectangle around it.
-          //
-          // Now everything (fill, border, radius, padding, shadow)
-          // interpolates on the same `t`, so the row morphs
-          // continuously between collapsed-flat and expanded-card
-          // without any discrete switch.
-
-          // Collapsed-state outer fill: indigo-soft on selection,
-          // sunken on hover, otherwise transparent.
-          final Color collapsedFill;
-          if (widget.isSelected) {
-            collapsedFill = scheme.primaryContainer;
-          } else if (_hovered) {
-            collapsedFill = scheme.surfaceContainerHighest.withValues(
-              alpha: 0.4,
-            );
-          } else {
-            collapsedFill = Colors.transparent;
-          }
-
-          final fill = Color.lerp(collapsedFill, cardBg, t)!;
-          final radius = 16.0 * t;
-          final outerPadding = EdgeInsets.lerp(
-            EdgeInsets.zero,
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            t,
-          )!;
-
-          // Border construction. Each side is driven by the same `t`
-          // so the row never flips between two discrete border modes.
-          final primaryFade = scheme.primary.withValues(alpha: t);
-          final leftSide = BorderSide(
-            // Selected rows always carry the indigo bar; on the way
-            // up to the expanded card the bar's width relaxes from
-            // 2 px (mailbox) to 1.5 px (full border).
-            color: widget.isSelected ? scheme.primary : primaryFade,
-            width: widget.isSelected ? (2 - 0.5 * t) : (1.5 * t),
-          );
-          final tbSide = BorderSide(color: primaryFade, width: 1.5 * t);
-          // Bottom blends the collapsed hairline (alpha-0.6 outline)
-          // into the expanded indigo border through the same `t`,
-          // so the row's lower edge never pops between the two.
-          // Alpha 0.6 matches the new InlineEditField rest underline
-          // so every horizontal hairline in the canvas reads at the
-          // same weight.
-          final bottomSide = BorderSide(
-            color: Color.lerp(
-              scheme.outlineVariant.withValues(alpha: 0.6),
-              scheme.primary,
-              t,
-            )!,
-            width: 1 + 0.5 * t,
-          );
-
-          // Shadow lifts continuously as the card rises.
-          final BoxShadow? shadow = t > 0
-              ? BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10 * t),
-                  offset: Offset(0, 4 * t),
-                  blurRadius: 16 * t,
-                )
-              : null;
-
-          return Padding(
-            padding: outerPadding,
-            child: Container(
-              decoration: BoxDecoration(
-                color: fill,
-                borderRadius: BorderRadius.circular(radius),
-                border: Border(
-                  left: leftSide,
-                  top: tbSide,
-                  right: tbSide,
-                  bottom: bottomSide,
-                ),
-                boxShadow: shadow != null ? [shadow] : null,
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    widget.onToggleExpand();
-                    widget.onTap?.call();
-                  },
-                  onSecondaryTapDown: (details) =>
-                      _showContextMenu(details.globalPosition),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildCollapsedRow(scheme, theme),
-                      if (t > 0)
-                        ClipRect(
-                          child: Align(
-                            alignment: Alignment.topLeft,
-                            heightFactor: t,
-                            child: Opacity(
-                              opacity: t,
-                              child: _buildExpandedBody(scheme, theme),
-                            ),
-                          ),
-                        ),
-                    ],
+      child: AnimatedPadding(
+        duration: duration,
+        curve: curve,
+        padding: isExpanded
+            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+            : EdgeInsets.zero,
+        child: AnimatedContainer(
+          duration: duration,
+          curve: curve,
+          decoration: decoration,
+          clipBehavior: Clip.antiAlias,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                widget.onToggleExpand();
+                widget.onTap?.call();
+              },
+              onSecondaryTapDown: (details) =>
+                  _showContextMenu(details.globalPosition),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildCollapsedRow(scheme, theme),
+                  // AnimatedSize handles the body's height transition
+                  // through Flutter's official layout machinery — so
+                  // ListView.builder always gets correct intrinsic
+                  // heights, even mid-transition. Switching to a
+                  // zero-height SizedBox when collapsed (instead of
+                  // omitting the child) keeps the AnimatedSize
+                  // anchored across the collapse.
+                  AnimatedSize(
+                    duration: duration,
+                    curve: curve,
+                    alignment: Alignment.topLeft,
+                    child: isExpanded
+                        ? _buildExpandedBody(scheme, theme)
+                        : const SizedBox(width: double.infinity),
                   ),
-                ),
+                ],
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -547,13 +487,18 @@ class _TaskCardState extends ConsumerState<TaskCard>
                       fontSize: 15,
                       height: 22 / 15,
                       fontWeight: FontWeight.w500,
+                      // Completed titles step down one tier (slate-600
+                      // light / slate-300 dark) instead of dropping all
+                      // the way to `scheme.outline` — which painted
+                      // them at the same weight as the hairline border
+                      // and made them illegible on the slate-700 card.
                       color: task.isCompleted
-                          ? scheme.outline
+                          ? scheme.onSurfaceVariant
                           : scheme.onSurface,
                       decoration: task.isCompleted
                           ? TextDecoration.lineThrough
                           : null,
-                      decorationColor: scheme.outline,
+                      decorationColor: scheme.onSurfaceVariant,
                       decorationThickness: 1,
                     ),
                     overflow: TextOverflow.ellipsis,
