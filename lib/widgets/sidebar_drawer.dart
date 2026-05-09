@@ -139,12 +139,10 @@ class SidebarDrawer extends ConsumerWidget {
                       icon: PhosphorIcons.gear(),
                       label: 'Settings',
                       onTap: () {
-                        ref
-                            .read(sidebarDrawerOpenProvider.notifier)
-                            .state = false;
-                        ref
-                            .read(settingsOverlayOpenProvider.notifier)
-                            .state = true;
+                        ref.read(sidebarDrawerOpenProvider.notifier).state =
+                            false;
+                        ref.read(settingsOverlayOpenProvider.notifier).state =
+                            true;
                       },
                     ),
                   ),

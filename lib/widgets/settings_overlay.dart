@@ -67,9 +67,7 @@ class _SettingsOverlayState extends ConsumerState<SettingsOverlay> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: scheme.outlineVariant, width: 1),
-                boxShadow: [
-                  surfaces?.shadowMd ?? const BoxShadow(),
-                ],
+                boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
@@ -396,8 +394,7 @@ class _AccountBody extends ConsumerWidget {
             backgroundColor: scheme.errorContainer,
             foregroundColor: scheme.onErrorContainer,
           ),
-          onPressed: () =>
-              ref.read(authNotifierProvider.notifier).logout(),
+          onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
           child: const Text('Sign out'),
         ),
       ],

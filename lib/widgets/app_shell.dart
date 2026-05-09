@@ -218,9 +218,9 @@ class _AppShellState extends ConsumerState<AppShell> {
           if (settingsOpen)
             Positioned.fill(
               child: SettingsOverlay(
-                onClose: () => ref
-                    .read(settingsOverlayOpenProvider.notifier)
-                    .state = false,
+                onClose: () =>
+                    ref.read(settingsOverlayOpenProvider.notifier).state =
+                        false,
               ),
             ),
         ],
