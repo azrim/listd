@@ -140,8 +140,14 @@ class _AppShellState extends ConsumerState<AppShell> {
                             boxShadow: [
                               surfaces?.shadowSm ?? const BoxShadow(),
                             ],
+                            // Sub-1 px optical hairline against the
+                            // indigo backplate. Solid `outlineVariant`
+                            // reads too hard / framed; alpha 0.5
+                            // reads as a gentle edge.
                             border: Border.all(
-                              color: scheme.outlineVariant,
+                              color: scheme.outlineVariant.withValues(
+                                alpha: 0.5,
+                              ),
                               width: 1,
                             ),
                           ),
@@ -168,7 +174,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [surfaces?.shadowSm ?? const BoxShadow()],
                           border: Border.all(
-                            color: scheme.outlineVariant,
+                            color: scheme.outlineVariant.withValues(alpha: 0.5),
                             width: 1,
                           ),
                         ),
