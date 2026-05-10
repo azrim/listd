@@ -10,6 +10,7 @@ import '../../providers/ui_state_providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/calendar_strip.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/kbd_chip.dart';
 import '../../widgets/task_card.dart';
 import '../../widgets/task_list_panel.dart';
 
@@ -233,9 +234,16 @@ class _EmptyState extends StatelessWidget {
       child: EmptyState(
         icon: PhosphorIcons.sun(),
         headline: isToday ? 'A clear day.' : 'Nothing here.',
-        body: isToday
-            ? 'Capture something with Ctrl + N — or just enjoy it.'
-            : 'Nothing scheduled for this day.',
+        body: isToday ? null : 'Nothing scheduled for this day.',
+        bodySpans: isToday
+            ? const [
+                'Capture something with',
+                KbdChip('Ctrl'),
+                '+',
+                KbdChip('N'),
+                '— or just enjoy it.',
+              ]
+            : null,
       ),
     );
   }

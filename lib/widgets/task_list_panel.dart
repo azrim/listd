@@ -14,6 +14,7 @@ import '../providers/ui_state_providers.dart';
 import '../theme/app_theme.dart';
 import 'context_menu.dart';
 import 'empty_state.dart';
+import 'kbd_chip.dart';
 import 'task_card.dart';
 
 /// Filter the aggregate task stream into the slice that belongs to a virtual
@@ -521,30 +522,75 @@ class TaskListPanel extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final spec = _emptySpecFor(listId);
     return Padding(
       padding: const EdgeInsets.all(48),
       child: EmptyState(
-        icon: PhosphorIcons.checkSquare(),
-        headline: _emptyHeadline(),
-        body: _isVirtual
-            ? null
-            : 'Capture your first task with the input above.',
+        icon: spec.icon,
+        headline: spec.headline,
+        body: spec.body,
+        bodySpans: spec.bodySpans,
       ),
     );
   }
 
-  String _emptyHeadline() {
-    switch (listId) {
+  /// Per-bucket empty-state copy + icon, sourced from the mockups.
+  ///
+  /// Inbox specifically mirrors `mockups/raw/07_empty_state_light.html`:
+  /// inbox / tray icon, "Inbox is clear." Newsreader headline, and an
+  /// italic body that interleaves text with `KbdChip`s — `Ctrl + N to
+  /// add the next thing.`. Today / Important / Planned / All Tasks
+  /// reuse the same kbd-chip pattern for consistency, since the mockup
+  /// treats kbd as the canonical shortcut affordance.
+  _EmptySpec _emptySpecFor(String id) {
+    switch (id) {
+      case SpecialListIds.inbox:
+        return _EmptySpec(
+          icon: PhosphorIcons.tray(),
+          headline: 'Inbox is clear.',
+          bodySpans: const [
+            KbdChip('Ctrl'),
+            '+',
+            KbdChip('N'),
+            'to add the next thing.',
+          ],
+        );
       case SpecialListIds.myDay:
-        return 'A clear day.';
+        return _EmptySpec(
+          icon: PhosphorIcons.sun(),
+          headline: 'A clear day.',
+          bodySpans: const [
+            'Capture something with',
+            KbdChip('Ctrl'),
+            '+',
+            KbdChip('N'),
+            '— or just enjoy it.',
+          ],
+        );
       case SpecialListIds.important:
-        return 'No starred tasks yet.';
+        return _EmptySpec(
+          icon: PhosphorIcons.star(),
+          headline: 'No starred tasks yet.',
+          body: 'Star a task to flag it for follow-up.',
+        );
       case SpecialListIds.planned:
-        return 'Nothing scheduled.';
+        return _EmptySpec(
+          icon: PhosphorIcons.calendarBlank(),
+          headline: 'Nothing scheduled.',
+          body: 'Tasks with a date or reminder land here.',
+        );
       case SpecialListIds.tasks:
-        return 'No tasks anywhere.';
+        return _EmptySpec(
+          icon: PhosphorIcons.listChecks(),
+          headline: 'No tasks anywhere.',
+          body: 'Capture your first task to get started.',
+        );
       default:
-        return 'Nothing here yet.';
+        return _EmptySpec(
+          icon: PhosphorIcons.bookmarkSimple(),
+          headline: 'Nothing here yet.',
+          body: 'Capture your first task with the input above.',
+        );
     }
   }
 }
@@ -580,33 +626,19 @@ class _TaskCountChip extends StatelessWidget {
   }
 }
 
-/// `Ctrl+N` keybind chip rendered in the trailing edge of the
-/// capture row. Mirrors the search-pill chip in the top bar.
-class _CtrlNChip extends StatelessWidget {
-  const _CtrlNChip();
+/// Internal payload for [TaskListPanel._emptySpecFor].
+class _EmptySpec {
+  const _EmptySpec({
+    required this.icon,
+    required this.headline,
+    this.body,
+    this.bodySpans,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Text(
-        'Ctrl+N',
-        style: GoogleFonts.inter(
-          fontSize: 10,
-          height: 14 / 10,
-          fontWeight: FontWeight.w600,
-          color: scheme.onSurfaceVariant,
-          letterSpacing: 0.04,
-        ),
-      ),
-    );
-  }
+  final IconData icon;
+  final String headline;
+  final String? body;
+  final List<Object>? bodySpans;
 }
 
 /// 32×32 quiet icon button — no border, hover fills `surface-sunken`.
@@ -807,7 +839,7 @@ class _AddTaskInputState extends ConsumerState<AddTaskInput> {
             ),
           ),
           const SizedBox(width: 8),
-          const _CtrlNChip(),
+          const KbdChipRow(['Ctrl', 'N']),
         ],
       ),
     );
