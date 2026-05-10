@@ -23,7 +23,9 @@ class SyncStatusPill extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(syncStateProvider);
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final surfaces = theme.extension<ListdSurfaces>();
 
     final (label, dotColor) = _statusFor(state, scheme);
     final canSync = !state.isSyncing;
@@ -31,7 +33,14 @@ class SyncStatusPill extends ConsumerWidget {
     return Tooltip(
       message: _tooltipFor(state),
       child: Material(
-        color: scheme.surface,
+        // Lift one stop above the panel surface the pill sits on so
+        // it has visible separation. In light: white card on slate-50
+        // panel (silhouette unchanged, but the bumped outlineVariant
+        // from slate-100 → slate-200 gives the border real contrast).
+        // In dark: slate-700 card on slate-900 panel — was slate-800
+        // on slate-900 (one stop) and now pops a full stop above the
+        // flattened panel/canvas, matching `02_today_dark.png`.
+        color: surfaces?.card ?? scheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(AppTheme.controlRadius),
         child: InkWell(
           onTap: canSync

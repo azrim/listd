@@ -243,8 +243,14 @@ class AppTheme {
 
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: scheme.primary,
-        linearTrackColor: scheme.surfaceContainer,
-        circularTrackColor: scheme.surfaceContainer,
+        // `surfaceContainer` resolves to the panel/canvas slate-900
+        // surface in dark mode — a track painted with that color is
+        // invisible against the canvas it sits on. Use
+        // `outlineVariant` so the inactive segment of progress bars
+        // (list-header progress, sync indicator, etc.) reads at
+        // hairline-strength against any panel/canvas surface.
+        linearTrackColor: scheme.outlineVariant,
+        circularTrackColor: scheme.outlineVariant,
         linearMinHeight: 2,
       ),
 
@@ -302,7 +308,12 @@ class AppTheme {
       shadowColor: scheme.shadow,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
-      hoverColor: scheme.surfaceContainer,
+      // `surfaceContainer` is now panel-colored in dark mode — the
+      // default Material hover overlay would be invisible. Most
+      // app-level hover paths override this via
+      // `HoverableSurface.fillFor`, but we keep the global default
+      // visible as a fallback (one stop above panel = card token).
+      hoverColor: scheme.surfaceContainerHigh,
       visualDensity: VisualDensity.standard,
 
       pageTransitionsTheme: const PageTransitionsTheme(

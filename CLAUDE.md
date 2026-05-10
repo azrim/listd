@@ -110,12 +110,18 @@ The app shell renders **two separate floating cards** on the indigo backplate:
 | ----------- | ----------- | ----------- | -------------------------------------------------- |
 | `ambient`   | `#F8FAFC`   | `#0B1224`   | Backplate (indigo radial drift)                    |
 | `panel`     | `#F8FAFC`   | `#0F172A`   | Sidebar floating card                              |
-| `canvas`    | `#FFFFFF`   | `#1E293B`   | Right-hand floating card (page background)        |
+| `canvas`    | `#FFFFFF`   | `#0F172A`   | Right-hand floating card (page background)         |
 | `card`      | `#FFFFFF`   | `#334155`   | Expanded task card — 16 px radius                  |
 | `chip`      | `#F1F5F9`   | `#475569`   | Tag / chip / pill / hover overlay — 999 px radius  |
 
-In dark mode each layer is one slate stop brighter than the one below it,
-so sidebar / canvas / expanded card / chip all read as distinct depths.
+Per `mockups/png/02_today_dark.png`, **`panel ≡ canvas` in BOTH modes** —
+the sidebar and the right-hand canvas are the same surface, and a 1 px
+`outlineVariant` hairline + the floating-card shadow do all the
+separation. Dark mode collapses to four stops (ambient → panel = canvas
+→ card → chip); the expanded task card's bordered-card silhouette is
+carried by the 1.5 px indigo border + `shadowMd`, not a brightness step
+over the canvas it sits on. The sync pill lifts onto `surfaces.card` so
+it pops one stop above the panel/canvas it lives on.
 
 ## Color tokens
 
@@ -128,7 +134,14 @@ so sidebar / canvas / expanded card / chip all read as distinct depths.
 | `text-secondary`   | `#475569`   | `#CBD5E1`   | Meta, captions, action-rail placeholders  |
 | `text-tertiary`    | `#94A3B8`   | `#64748B`   | Disabled, italic placeholders             |
 | `border`           | `#E2E8F0`   | `#334155`   | 1 px hairlines (alpha 0.6–0.7 in use)     |
-| `divider`          | `#F1F5F9`   | `#1E293B`   | List separators (alpha 0.6 in use)        |
+| `divider`          | `#E2E8F0`   | `#334155`   | `outlineVariant` — panel edge + sync pill |
+
+`outlineVariant` is the hairline token — light `slate-200`, dark
+`slate-700`. It must contrast against whatever surface it sits on
+(panel in the sidebar, panel/canvas in the main area). Bumped one stop
+brighter than the original `slate-100` / `slate-800` so the panel
+edges, sync-pill border, and dialog seams remain visible after the
+dark stack flattened to `panel == canvas == slate-900`.
 
 | Functional | Light       | Dark        | Use                                |
 | ---------- | ----------- | ----------- | ---------------------------------- |

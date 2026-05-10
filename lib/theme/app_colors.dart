@@ -96,16 +96,21 @@ class AppColors {
   static const Color _lTextPrimary = slate900;
   static const Color _lTextSecondary = slate600;
   static const Color _lBorder = slate200;
-  static const Color _lDivider = slate100;
+  // Hairline / outlineVariant — bumped from slate-100 (one stop
+  // above slate-50 panel, blended into invisibility) to slate-200
+  // so panel edges + sync-pill borders + dialog seams actually
+  // contrast against the slate-50 panel they sit on.
+  static const Color _lDivider = slate200;
 
-  // Dark surfaces. Layered so each level reads as a distinct depth
-  // against the indigo backplate (was: panel = canvas = slate900,
-  // which collapsed sidebar + canvas into one wash of slate).
-  // Hierarchy now reads: backplate (slate-950) → sidebar (slate-900)
-  // → canvas (slate-800) → card (slate-700) → chip (slate-600), so
-  // every floating panel + the expanded card pops one step.
+  // Dark surfaces. Per `mockups/png/02_today_dark.png`, the sidebar
+  // panel and the right-hand task canvas are the same dark slate —
+  // hairlines around each floating panel + the expanded task card's
+  // 1.5 px indigo border do all the separation, not a brightness
+  // step. Stack: backplate (slate-950) → panel ≡ canvas (slate-900)
+  // → card (slate-700, hover overlay surface) → chip (slate-600,
+  // chip / pill / hover fills).
   static const Color _dAmbient = slate950;
-  static const Color _dCanvas = slate800;
+  static const Color _dCanvas = slate900;
   static const Color _dPanel = slate900;
   static const Color _dCard = slate700;
 
@@ -116,7 +121,11 @@ class AppColors {
   static const Color _dTextPrimary = slate50;
   static const Color _dTextSecondary = slate300;
   static const Color _dBorder = slate700;
-  static const Color _dDivider = slate800;
+  // Hairline / outlineVariant — bumped from slate-800 (which is
+  // identical to the new flattened canvas, leaving no contrast)
+  // to slate-700 so panel edges, sync-pill borders, and dialog
+  // seams remain visible against the slate-900 panel/canvas.
+  static const Color _dDivider = slate700;
 
   // ─────────────────────────────────────────────────────────
   //  AMBIENT BACKPLATE STOPS
