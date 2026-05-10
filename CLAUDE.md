@@ -111,15 +111,15 @@ The app shell renders **two separate floating cards** on the indigo backplate:
 | `ambient`   | `#F8FAFC`   | `#0B1224`   | Backplate (indigo radial drift)                    |
 | `panel`     | `#F8FAFC`   | `#0F172A`   | Sidebar floating card                              |
 | `canvas`    | `#FFFFFF`   | `#0F172A`   | Right-hand floating card (page background)         |
-| `card`      | `#FFFFFF`   | `#334155`   | Expanded task card — 16 px radius                  |
-| `chip`      | `#F1F5F9`   | `#475569`   | Tag / chip / pill / hover overlay — 999 px radius  |
+| `card`      | `#FFFFFF`   | `#1E293B`   | Expanded task card — 14 px radius                  |
+| `chip`      | `#F1F5F9`   | `#334155`   | Tag / chip / pill / hover overlay — 999 px radius  |
 
 Per `mockups/png/02_today_dark.png`, **`panel ≡ canvas` in BOTH modes** —
 the sidebar and the right-hand canvas are the same surface, and a 1 px
 `outlineVariant` hairline + the floating-card shadow do all the
 separation. Dark mode collapses to four stops (ambient → panel = canvas
 → card → chip); the expanded task card's bordered-card silhouette is
-carried by the 1.5 px indigo border + `shadowMd`, not a brightness step
+carried by the 2 px indigo border + `shadowMd`, not a brightness step
 over the canvas it sits on. The sync pill lifts onto `surfaces.card` so
 it pops one stop above the panel/canvas it lives on.
 
@@ -136,12 +136,10 @@ it pops one stop above the panel/canvas it lives on.
 | `border`           | `#E2E8F0`   | `#334155`   | 1 px hairlines (alpha 0.6–0.7 in use)     |
 | `divider`          | `#F1F5F9`   | `#1E293B`   | `outlineVariant` — topbar bottom, row dividers |
 
-`outlineVariant` is the hairline token — light `slate-200`, dark
-`slate-700`. It must contrast against whatever surface it sits on
-(panel in the sidebar, panel/canvas in the main area). Bumped one stop
-brighter than the original `slate-100` / `slate-800` so the panel
-edges, sync-pill border, and dialog seams remain visible after the
-dark stack flattened to `panel == canvas == slate-900`.
+`outlineVariant` maps to `divider` — light `slate-100`, dark `slate-800`.
+`outline` maps to `border` — light `slate-200`, dark `slate-700`.
+Structural borders (panels, overlays, cards) use `outline` (border);
+row separators and hairlines use `outlineVariant` (divider).
 
 | Functional | Light       | Dark        | Use                                |
 | ---------- | ----------- | ----------- | ---------------------------------- |
