@@ -97,7 +97,7 @@ class _ContextMenuOverlay extends StatefulWidget {
 }
 
 class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
-  static const double _menuWidth = 220;
+  static const double _menuWidth = 240;
   static const double _viewportPadding = 8;
 
   final FocusNode _focusNode = FocusNode();
@@ -217,8 +217,8 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
               child: Container(
                 decoration: BoxDecoration(
                   color: surfaces?.panel ?? scheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: scheme.outlineVariant, width: 1),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: scheme.outline, width: 1),
                   boxShadow: [
                     surfaces?.shadowLg ??
                         BoxShadow(
@@ -228,7 +228,7 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
                         ),
                   ],
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -236,11 +236,8 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
                     for (var i = 0; i < widget.items.length; i++)
                       if (widget.items[i] is ListdContextMenuDivider)
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Container(
-                            height: 1,
-                            color: scheme.outlineVariant,
-                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Container(height: 1, color: scheme.outline),
                         )
                       else if (widget.items[i] is ListdContextMenuHeader)
                         Padding(
@@ -325,9 +322,9 @@ class _ContextMenuRow extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: disabled ? null : onTap,
         child: Container(
-          height: 36,
+          height: 32,
           padding: const EdgeInsets.symmetric(horizontal: 10),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
+          margin: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
             color: fill,
             borderRadius: BorderRadius.circular(8),

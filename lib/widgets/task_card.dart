@@ -450,7 +450,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                   // Bound the splash to the rounded shape so the
                   // hover overlay can't bleed past the indigo border
                   // when the card is expanded.
-                  borderRadius: BorderRadius.circular(isExpanded ? 16 : 0),
+                  borderRadius: BorderRadius.circular(isExpanded ? 14 : 0),
                   // The collapsed card's hover fill is driven
                   // explicitly by `_hovered → collapsedFill = chip`
                   // on the AnimatedContainer above. Letting InkWell

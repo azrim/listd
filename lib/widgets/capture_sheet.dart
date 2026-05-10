@@ -97,17 +97,17 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
 
     return Center(
       child: SizedBox(
-        width: 520,
+        width: 640,
         child: Padding(
-          padding: const EdgeInsets.only(top: 80),
+          padding: const EdgeInsets.only(top: 96),
           child: Material(
             color: cardBg,
             elevation: 0,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: scheme.outlineVariant, width: 1),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: scheme.outline, width: 1),
                 boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
               ),
               child: Column(
@@ -115,7 +115,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                     child: Row(
                       children: [
                         Icon(
@@ -140,8 +140,8 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                                 controller: _controller,
                                 focusNode: _focusNode,
                                 style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  height: 22 / 16,
+                                  fontSize: 18,
+                                  height: 24 / 18,
                                   fontWeight: FontWeight.w500,
                                   color: scheme.onSurface,
                                 ),
@@ -149,8 +149,8 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                                   hintText:
                                       'Capture a task — try "tomorrow at 3 #errands !"',
                                   hintStyle: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    height: 22 / 16,
+                                    fontSize: 18,
+                                    height: 24 / 18,
                                     color: scheme.onSurfaceVariant,
                                   ),
                                   border: InputBorder.none,

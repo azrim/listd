@@ -136,10 +136,10 @@ class _SettingsOverlayState extends ConsumerState<SettingsOverlay>
                           Expanded(
                             child: SingleChildScrollView(
                               padding: const EdgeInsets.fromLTRB(
-                                20,
-                                20,
-                                20,
+                                32,
                                 24,
+                                32,
+                                32,
                               ),
                               child: _CategoryBody(category: _selected),
                             ),
@@ -198,9 +198,9 @@ class _Rail extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return SizedBox(
-      width: 160,
+      width: 168,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -294,16 +294,16 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 12, 14),
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 16),
       child: Row(
         children: [
           Text(
             title,
             style: GoogleFonts.inter(
-              fontSize: 18,
-              height: 24 / 18,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.18,
+              fontSize: 20,
+              height: 28 / 20,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.20,
               color: scheme.onSurface,
             ),
           ),

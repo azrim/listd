@@ -73,12 +73,12 @@ class SheetShell extends StatelessWidget {
           child: Material(
             color: cardBg,
             elevation: 0,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             child: Container(
               constraints: BoxConstraints(maxHeight: maxHeight),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: scheme.outlineVariant, width: 1),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: scheme.outline, width: 1),
                 boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
               ),
               child: Column(
