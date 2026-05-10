@@ -566,7 +566,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                   completed: task.isCompleted,
                   onTap: _toggleComplete,
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     task.title.isEmpty ? 'Untitled task' : task.title,
@@ -794,13 +794,17 @@ class _CardCheckbox extends StatelessWidget {
           shape: BoxShape.circle,
           color: completed ? scheme.primary : Colors.transparent,
           border: Border.all(
-            color: completed ? scheme.primary : scheme.outline,
+            color: completed ? scheme.primary : AppColors.slate300,
             width: 1.5,
           ),
         ),
         alignment: Alignment.center,
         child: completed
-            ? Icon(Icons.check, size: 12, color: scheme.onPrimary)
+            ? Icon(
+                PhosphorIcons.check(PhosphorIconsStyle.bold),
+                size: 12,
+                color: scheme.onPrimary,
+              )
             : null,
       ),
     );

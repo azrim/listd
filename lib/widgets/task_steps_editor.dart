@@ -322,7 +322,11 @@ class _StepCheckbox extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: completed
-            ? Icon(Icons.check, size: 11, color: scheme.onPrimary)
+            ? Icon(
+                PhosphorIcons.check(PhosphorIconsStyle.bold),
+                size: 11,
+                color: scheme.onPrimary,
+              )
             : null,
       ),
     );

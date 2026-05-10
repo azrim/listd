@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../providers/sync_provider.dart';
 import '../theme/app_colors.dart';
@@ -90,7 +91,11 @@ class SyncStatusPill extends ConsumerWidget {
                 ),
                 if (!state.isSyncing) ...[
                   const SizedBox(width: 8),
-                  Icon(Icons.sync, size: 14, color: scheme.onSurfaceVariant),
+                  Icon(
+                    PhosphorIcons.arrowsClockwise(),
+                    size: 14,
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ],
               ],
             ),

@@ -315,7 +315,7 @@ class TaskListPanel extends ConsumerWidget {
   ) {
     showListdContextMenu(context, globalPosition, [
       ListdContextMenuItem(
-        icon: Icons.add,
+        icon: PhosphorIcons.plus(),
         label: 'New task',
         onTap: () => _quickCreateTask(context, ref),
       ),
