@@ -361,7 +361,7 @@ class _DayCell extends StatelessWidget {
     return HoverableSurface(
       onTap: onTap,
       selected: isSelected,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       // Today badge is a 1 px indigo hairline; rest fill stays in
       // the chip family at alpha 0 so the cross-fade is alpha-only.
       border: isToday && !isSelected

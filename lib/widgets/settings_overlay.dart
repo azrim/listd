@@ -252,7 +252,7 @@ class _RailItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: selected ? scheme.primaryContainer : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
@@ -522,7 +522,7 @@ class _SegmentChip<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
@@ -531,7 +531,7 @@ class _SegmentChip<T> extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected ? scheme.surface : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -701,8 +701,8 @@ class _AccountBody extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
             color: scheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: scheme.outlineVariant, width: 1),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: scheme.outline, width: 1),
           ),
           child: Row(
             children: [

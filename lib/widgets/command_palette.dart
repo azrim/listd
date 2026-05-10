@@ -364,7 +364,7 @@ class _PaletteRow extends StatelessWidget {
         selected: selected,
         onTap: onTap,
         onHover: onHover,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         fillFor: (_, {required hovered, required selected}) => selected
             ? scheme.primaryContainer
             // Alpha-0 of the indigo-soft RGB so the keyboard-driven

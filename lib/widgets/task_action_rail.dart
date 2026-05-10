@@ -180,7 +180,7 @@ class _ActionRow extends StatelessWidget {
 
     return HoverableSurface(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       fillFor: (_, {required hovered, required selected}) =>
           hovered ? hoverFill : restFill,
       child: Padding(

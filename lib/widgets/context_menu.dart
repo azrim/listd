@@ -327,7 +327,7 @@ class _ContextMenuRow extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
             color: fill,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             children: [
