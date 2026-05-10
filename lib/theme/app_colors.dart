@@ -112,7 +112,7 @@ class AppColors {
   static const Color _dAmbient = slate950;
   static const Color _dCanvas = slate900;
   static const Color _dPanel = slate900;
-  static const Color _dCard = slate700;
+  static const Color _dCard = slate800;
 
   // Dark text + lines. `slate-300` instead of `slate-400` so the
   // dark-mode action-rail placeholders (`Add date`, `Add reminder`,
@@ -224,7 +224,7 @@ class AppColors {
     // `surfaceContainerHighest` is used for hover overlays + chip
     // backgrounds. Bumping it one stop above `_dCard` so a hover
     // tint actually reads against a slate-700 / slate-800 surface.
-    surfaceContainerHighest: slate600,
+    surfaceContainerHighest: slate700,
     surfaceDim: _dAmbient,
     surfaceBright: _dCard,
     onSurfaceVariant: _dTextSecondary,

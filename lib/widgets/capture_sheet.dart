@@ -185,7 +185,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                   // when AI lands.
                   if (_controller.text.trim().length >= 4)
                     _AiSuggestionsSlot(scheme: scheme),
-                  Container(height: 1, color: scheme.outlineVariant),
+                  Container(height: 1, color: scheme.outline),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 12, 10),
                     child: Row(

@@ -110,7 +110,7 @@ class _SettingsOverlayState extends ConsumerState<SettingsOverlay>
                 decoration: BoxDecoration(
                   color: cardBg,
                   border: Border(
-                    left: BorderSide(color: scheme.outlineVariant, width: 1),
+                    left: BorderSide(color: scheme.outline, width: 1),
                   ),
                   boxShadow: [surfaces?.shadowMd ?? const BoxShadow()],
                 ),
@@ -123,7 +123,7 @@ class _SettingsOverlayState extends ConsumerState<SettingsOverlay>
                     VerticalDivider(
                       width: 1,
                       thickness: 1,
-                      color: scheme.outlineVariant,
+                      color: scheme.outline,
                     ),
                     Expanded(
                       child: Column(
@@ -132,7 +132,7 @@ class _SettingsOverlayState extends ConsumerState<SettingsOverlay>
                             title: _selected.label,
                             onClose: widget.onClose,
                           ),
-                          Container(height: 1, color: scheme.outlineVariant),
+                          Container(height: 1, color: scheme.outline),
                           Expanded(
                             child: SingleChildScrollView(
                               padding: const EdgeInsets.fromLTRB(

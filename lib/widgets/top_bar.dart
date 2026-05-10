@@ -55,6 +55,7 @@ class TopBar extends ConsumerWidget {
                 fontSize: 14,
                 height: 20 / 14,
                 fontWeight: FontWeight.w600,
+                letterSpacing: -0.14,
                 color: scheme.onSurface,
               ),
             ),

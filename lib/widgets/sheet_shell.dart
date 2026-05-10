@@ -106,10 +106,10 @@ class SheetShell extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Container(height: 1, color: scheme.outlineVariant),
+                  Container(height: 1, color: scheme.outline),
                   Flexible(child: body),
                   if (footer != null) ...[
-                    Container(height: 1, color: scheme.outlineVariant),
+                    Container(height: 1, color: scheme.outline),
                     footer!,
                   ],
                 ],
