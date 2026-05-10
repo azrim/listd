@@ -26,10 +26,14 @@ class KbdChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // No `alignment` and no explicit `width` — a Container with
+    // `alignment` set expands to fill its incoming constraints, which
+    // would blow each chip out to the parent Wrap's full maxWidth and
+    // stack them vertically. Sizing is driven entirely by the child
+    // Text + padding + border. Total height = 16 (Text) + 4 (padding)
+    // + 2 (border) = 22 px — matches `<kbd>` in the mockups.
     return Container(
-      height: 22,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(6),
