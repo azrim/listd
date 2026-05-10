@@ -159,7 +159,7 @@ appears in only three places: Today headline, empty states, About quote.
 
 | Role            | Family     | Size | Line | Weight | Tracking |
 | --------------- | ---------- | ---- | ---- | ------ | -------- |
-| Display Serif   | Newsreader | 36   | 44   | 500    | -0.02 em |
+| Display Serif   | Newsreader | 40   | 48   | 500    | -0.02 em |
 | H1              | Inter      | 24   | 32   | 700    | -0.02 em |
 | H2              | Inter      | 18   | 26   | 600    | -0.01 em |
 | Body            | Inter      | 15   | 22   | 400    | 0        |

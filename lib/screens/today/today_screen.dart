@@ -87,8 +87,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Headline + meta line — Newsreader display, slate meta.
+          // Mockup `.page` padding is 32 px top, 48 px horizontal.
           Padding(
-            padding: const EdgeInsets.fromLTRB(40, 32, 40, 4),
+            padding: const EdgeInsets.fromLTRB(48, 32, 48, 4),
             child: GestureDetector(
               onTap: () {
                 final now = DateTime.now();
@@ -104,10 +105,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     style:
                         typography?.displaySerif ??
                         GoogleFonts.newsreader(
-                          fontSize: 36,
-                          height: 44 / 36,
+                          fontSize: 40,
+                          height: 48 / 40,
                           fontWeight: FontWeight.w500,
-                          letterSpacing: -0.72,
+                          letterSpacing: -0.80,
                           color: scheme.onSurface,
                         ),
                   ),
@@ -127,8 +128,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           ),
           // Calendar strip — full-width on the canvas, bleeds the
           // indigo today capsule per mockup.
+          // Calendar strip — mockup `margin-bottom: 24px` is
+          // handled inside CalendarStrip's own bottom padding.
           Padding(
-            padding: const EdgeInsets.fromLTRB(40, 16, 40, 16),
+            padding: const EdgeInsets.symmetric(horizontal: 48),
             child: CalendarStrip(
               selectedDay: _selected,
               onDaySelected: (d) => setState(() => _selected = d),
@@ -138,7 +141,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           // so the Ctrl + N keybind chip + hairline border treatment
           // stays consistent across canvases.
           Padding(
-            padding: const EdgeInsets.fromLTRB(40, 0, 40, 12),
+            padding: const EdgeInsets.fromLTRB(48, 0, 48, 16),
             child: AddTaskInput(listId: SpecialListIds.myDay),
           ),
           Expanded(
@@ -178,7 +181,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final expandedId = ref.watch(expandedTaskIdProvider);
     final selectedTaskId = ref.watch(selectedTaskIdProvider);
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      padding: const EdgeInsets.fromLTRB(32, 4, 32, 24),
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         final task = tasks[index];

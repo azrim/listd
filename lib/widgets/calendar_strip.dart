@@ -4,11 +4,17 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// Listd 2027 · Indigo Edition horizontal date track.
 ///
-/// Per `docs/redesign/2027-indigo/mockups/01_today_light.png`: a
-/// flat 7-cell strip stretched edge-to-edge, with DAY-of-week caps
-/// stacked over the DATE number. Today is a solid indigo capsule
-/// wrapping the date glyph; selected (non-today) is indigo-soft.
-/// Cells are separated by sub-pixel hairlines.
+/// Per confirmed mockup `mockups/raw/01_today_light.html` + `_tokens.css`:
+///
+///  * 7 fixed-width 56 × 56 px cells, each showing stacked DOW label
+///    + day number.
+///  * A horizontal hairline runs across the full track width at the
+///    vertical midpoint (y ≈ 28 px from the cell top).
+///  * Today's cell is a full-size 56 × 56 accent-filled pill
+///    (`borderRadius: 999`) wrapping **both** the DOW label and the
+///    day number in `onPrimary` color, offset −4 px upward.
+///  * Past days render at 50 % opacity.
+///  * No vertical separators between cells.
 class CalendarStrip extends ConsumerWidget {
   const CalendarStrip({
     super.key,
@@ -16,50 +22,54 @@ class CalendarStrip extends ConsumerWidget {
     required this.onDaySelected,
   });
 
-  /// The day currently highlighted in the strip. Compared by year /
-  /// month / day; time component is ignored.
   final DateTime selectedDay;
-
   final ValueChanged<DateTime> onDaySelected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    // Center today in a 7-day window: today − 3 … today + 3.
     final start = today.subtract(const Duration(days: 3));
     final scheme = Theme.of(context).colorScheme;
 
-    return SizedBox(
-      height: 64,
-      child: Row(
-        children: [
-          for (var i = 0; i < 7; i++) ...[
-            Expanded(
-              child: Builder(
-                builder: (context) {
-                  final day = start.add(Duration(days: i));
-                  final isToday = _sameDay(day, today);
-                  final isSelected = _sameDay(day, selectedDay);
-                  final isPast = day.isBefore(today);
-                  return _DayCell(
-                    day: day,
-                    isToday: isToday,
-                    isSelected: isSelected,
-                    isPast: isPast,
-                    onTap: () => onDaySelected(day),
-                  );
-                },
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 16),
+      child: SizedBox(
+        height: 60,
+        child: Stack(
+          children: [
+            // Horizontal through-line at the vertical midpoint of the
+            // 56 px cells (y = 28 px from cell top). The cell top sits
+            // at y = 0 inside this SizedBox (today's −4 px offset
+            // overflows upward via Transform).
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 28,
+              child: Divider(
+                height: 1,
+                thickness: 1,
+                color: scheme.outlineVariant,
               ),
             ),
-            if (i < 6)
-              Container(
-                width: 1,
-                height: 32,
-                color: scheme.outlineVariant.withValues(alpha: 0.6),
-              ),
+            // Date cells.
+            Row(
+              children: [
+                for (var i = 0; i < 7; i++)
+                  _DayCell(
+                    day: start.add(Duration(days: i)),
+                    isToday: _sameDay(start.add(Duration(days: i)), today),
+                    isSelected: _sameDay(
+                      start.add(Duration(days: i)),
+                      selectedDay,
+                    ),
+                    isPast: start.add(Duration(days: i)).isBefore(today),
+                    onTap: () => onDaySelected(start.add(Duration(days: i))),
+                  ),
+              ],
+            ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -87,77 +97,69 @@ class _DayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    // Today's date glyph sits inside a solid indigo capsule.
-    // Selected (non-today) day uses an indigo-soft chip behind the
-    // date so the eye lands there. Other days are plain text.
-    final Color dateFg = isToday
+    // DOW label color.
+    final Color dowFg = isToday ? scheme.onPrimary : scheme.onSurfaceVariant;
+
+    // Day number color.
+    final Color numFg = isToday
         ? scheme.onPrimary
         : isSelected
         ? scheme.primary
-        : isPast
-        ? scheme.onSurfaceVariant
         : scheme.onSurface;
-    final Color capsuleFill = isToday
-        ? scheme.primary
-        : isSelected
-        ? scheme.primaryContainer
-        : Colors.transparent;
-    final Color dowFg = isToday
-        ? scheme.primary
-        : isSelected
-        ? scheme.primary
-        : scheme.onSurfaceVariant;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                _dowLabel(day.weekday),
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  height: 14 / 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.08,
-                  color: dowFg,
-                ),
+    // Cell background — only today gets the accent fill.
+    final Color cellBg = isToday ? scheme.primary : Colors.transparent;
+
+    Widget cell = GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: cellBg,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        // Today's cell shifts up 4 px per mockup `margin-top: -4px`.
+        transform: isToday ? Matrix4.translationValues(0, -4, 0) : null,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _dowLabel(day.weekday),
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                height: 16 / 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.44,
+                color: dowFg,
               ),
-              const SizedBox(height: 6),
-              Container(
-                width: 28,
-                height: 28,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: capsuleFill,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  '${day.day}',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    height: 1.0,
-                    fontWeight: isToday || isSelected
-                        ? FontWeight.w700
-                        : FontWeight.w500,
-                    color: dateFg,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${day.day}',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                height: 1.0,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.32,
+                color: numFg,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+
+    // Past days at 50 % opacity per mockup `.date-cell.is-past`.
+    if (isPast) {
+      cell = Opacity(opacity: 0.5, child: cell);
+    }
+
+    return cell;
   }
 
   static String _dowLabel(int weekday) {
-    // Mon = 1 … Sun = 7.
     const labels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     return labels[weekday - 1];
   }

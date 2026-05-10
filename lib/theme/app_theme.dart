@@ -394,10 +394,10 @@ class AppTheme {
       // Newsreader is loaded lazily via google_fonts; in P4 it'll be
       // pre-warmed at boot to avoid layout flash.
       displaySerif: GoogleFonts.newsreader(
-        fontSize: 36,
-        height: 44 / 36,
+        fontSize: 40,
+        height: 48 / 40,
         fontWeight: FontWeight.w500,
-        letterSpacing: -0.72,
+        letterSpacing: -0.80,
         color: textPrimary,
       ),
       h1: GoogleFonts.inter(
