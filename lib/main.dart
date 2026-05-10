@@ -52,6 +52,13 @@ class ListdApp extends ConsumerWidget {
     // the divergence the user reported (cyan / emerald borders).
     return MaterialApp.router(
       title: 'Listd',
+      // Top-level ScaffoldMessenger so toast/snackbar presentation lives
+      // above every route. Without this, a snackbar fired after an
+      // awaited mutation that spans a navigation crashes with
+      // "_scaffolds.isNotEmpty" because the captured per-route
+      // messenger's Scaffold is gone. This key is the canonical
+      // surface for any post-await user feedback.
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -70,3 +77,10 @@ class ListdApp extends ConsumerWidget {
     );
   }
 }
+
+/// Top-level ScaffoldMessenger key — see [ListdApp.build] above for
+/// why this exists. Use `rootScaffoldMessengerKey.currentState` for
+/// any toast that fires after an `await` that could span a route
+/// change. In-route synchronous toasts can keep using
+/// `ScaffoldMessenger.of(context)` for locality.
+final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();

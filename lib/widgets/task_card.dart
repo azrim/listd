@@ -13,6 +13,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/spring.dart';
 import '../utils/url_detector.dart';
+import 'confirm_destructive_dialog.dart';
 import 'context_menu.dart';
 import 'due_picker_sheet.dart';
 import 'inline_edit_field.dart';
@@ -23,6 +24,7 @@ import 'repeat_picker_sheet.dart';
 import 'tags_editor_sheet.dart';
 import 'task_action_rail.dart';
 import 'task_steps_editor.dart';
+import 'undo_toast.dart';
 
 /// Listd 2027 TaskCard.
 ///
@@ -230,15 +232,44 @@ class _TaskCardState extends ConsumerState<TaskCard> {
   }
 
   Future<void> _confirmDelete() async {
+    // Confirmation gate. The 2027 spec calls delete a destructive
+    // action; per the components-overview mock the Delete button is
+    // rendered in `error` red. We surface the confirmation through
+    // the same SheetShell language every other modal in the app uses.
+    final confirmed = await showConfirmDestructiveDialog(
+      context,
+      title: 'Delete this task?',
+      body: widget.task.title.isEmpty ? '(untitled task)' : widget.task.title,
+      confirmLabel: 'Delete',
+    );
+    if (!confirmed || !mounted) return;
+
     final taskId = widget.task.id;
-    final title = widget.task.title.isEmpty ? 'task' : '"${widget.task.title}"';
-    final messenger = ScaffoldMessenger.of(context);
+    final toastTitle = widget.task.title.isEmpty
+        ? 'task'
+        : '"${widget.task.title}"';
     await ref
         .read(tasksNotifierProvider(widget.listId).notifier)
         .deleteTask(taskId);
     unawaited(ref.read(reminderServiceProvider).cancel(taskId));
-    if (!mounted) return;
-    messenger.showSnackBar(SnackBar(content: Text('Deleted $title')));
+
+    // Route the toast through `undoToastProvider` instead of a raw
+    // `ScaffoldMessenger.showSnackBar`. The toast is mounted as a
+    // Positioned widget inside `AppShell` (route-independent), so it
+    // can't crash when an awaited mutation spans a route hop — which
+    // is exactly the bug `task_card.dart:241` used to throw.
+    // `onUndo` is a no-op for v1: real undelete needs a
+    // `clearDeletedAt` API on TaskDao that doesn't exist yet, so the
+    // toast presents only the post-delete acknowledgement.
+    ref
+        .read(undoToastProvider.notifier)
+        .show(
+          UndoToastPayload(
+            message: 'Deleted $toastTitle',
+            onUndo: () async {},
+            showUndoButton: false,
+          ),
+        );
   }
 
   Future<void> _moveToList() async {

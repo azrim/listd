@@ -19,11 +19,19 @@ class UndoToastPayload {
     required this.message,
     required this.onUndo,
     this.duration = const Duration(seconds: 6),
+    this.showUndoButton = true,
   });
 
   final String message;
   final FutureOr<void> Function() onUndo;
   final Duration duration;
+
+  /// When false, the toast renders the message + dismiss button only,
+  /// no Undo TextButton. Used for delete-task in v1 because real
+  /// undelete needs `clearDeletedAt` on TaskDao which doesn't exist
+  /// yet — the toast still acknowledges the delete, just without
+  /// promising a reversal we can't deliver.
+  final bool showUndoButton;
 }
 
 class UndoToastNotifier extends StateNotifier<UndoToastPayload?> {
@@ -105,19 +113,23 @@ class UndoToast extends ConsumerWidget {
                     color: scheme.onSurface,
                   ),
                 ),
-                const SizedBox(width: 16),
-                TextButton(
-                  onPressed: () => ref.read(undoToastProvider.notifier).undo(),
-                  style: TextButton.styleFrom(
-                    foregroundColor: scheme.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 0,
+                if (payload.showUndoButton) ...[
+                  const SizedBox(width: 16),
+                  TextButton(
+                    onPressed: () =>
+                        ref.read(undoToastProvider.notifier).undo(),
+                    style: TextButton.styleFrom(
+                      foregroundColor: scheme.primary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 0,
+                      ),
+                      minimumSize: const Size(0, 28),
                     ),
-                    minimumSize: const Size(0, 28),
+                    child: const Text('Undo'),
                   ),
-                  child: const Text('Undo'),
-                ),
+                ],
+                const SizedBox(width: 8),
                 IconButton(
                   tooltip: 'Dismiss',
                   icon: Icon(PhosphorIcons.x(), size: 14),
