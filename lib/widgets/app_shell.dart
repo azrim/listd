@@ -146,9 +146,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                             // the panel reads as a defined island,
                             // soft enough that it doesn't frame.
                             border: Border.all(
-                              color: scheme.outlineVariant.withValues(
-                                alpha: 0.7,
-                              ),
+                              color: scheme.outline.withValues(alpha: 0.7),
                               width: 1,
                             ),
                           ),
@@ -160,7 +158,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
                   // 8 px gutter between the two panels — backplate
                   // shows through here.
-                  SizedBox(width: sidebarOpen ? 16 : 0),
+                  SizedBox(width: sidebarOpen ? 12 : 0),
 
                   // Canvas: white floating panel with 20 px corners,
                   // soft shadow, and the top bar living inside it
@@ -175,7 +173,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [surfaces?.shadowSm ?? const BoxShadow()],
                           border: Border.all(
-                            color: scheme.outlineVariant.withValues(alpha: 0.7),
+                            color: scheme.outline.withValues(alpha: 0.7),
                             width: 1,
                           ),
                         ),

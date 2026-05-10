@@ -94,7 +94,7 @@ class TaskListPanel extends ConsumerWidget {
         children: [
           _buildHeader(context, ref, tasksAsync),
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
+            padding: const EdgeInsets.fromLTRB(48, 4, 48, 12),
             child: AddTaskInput(listId: listId),
           ),
           Expanded(
@@ -158,7 +158,7 @@ class TaskListPanel extends ConsumerWidget {
     final tasksLabel = total == 1 ? '1 task' : '$total tasks';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      padding: const EdgeInsets.fromLTRB(48, 32, 48, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -171,7 +171,7 @@ class TaskListPanel extends ConsumerWidget {
               fontSize: 11,
               height: 16 / 11,
               fontWeight: FontWeight.w600,
-              letterSpacing: 0.08,
+              letterSpacing: 0.06 * 11,
               color: scheme.onSurfaceVariant,
             ),
           ),
@@ -184,10 +184,10 @@ class TaskListPanel extends ConsumerWidget {
                 child: Text(
                   listName,
                   style: GoogleFonts.inter(
-                    fontSize: 24,
-                    height: 32 / 24,
+                    fontSize: 22,
+                    height: 30 / 22,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: -0.48,
+                    letterSpacing: -0.44,
                     color: scheme.onSurface,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -210,15 +210,18 @@ class TaskListPanel extends ConsumerWidget {
             // Progress bar — 4 px tall hairline track, indigo fill.
             // Always visible once there's at least one task; the bar
             // fills as tasks are completed.
-            ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: SizedBox(
-                height: 4,
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: scheme.outlineVariant,
-                  valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
-                  minHeight: 4,
+            SizedBox(
+              width: 240,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: SizedBox(
+                  height: 4,
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: scheme.outlineVariant,
+                    valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
+                    minHeight: 4,
+                  ),
                 ),
               ),
             ),
@@ -748,16 +751,14 @@ class _AddTaskInputState extends ConsumerState<AddTaskInput> {
     final scheme = Theme.of(context).colorScheme;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 120),
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: _focused
-            ? scheme.surfaceContainerLow
-            : scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: _focused ? scheme.surfaceContainerLow : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: _focused ? scheme.primary : scheme.outlineVariant,
-          width: _focused ? 1.5 : 1,
+          color: _focused ? scheme.primary : scheme.outline,
+          width: _focused ? 2 : 1,
         ),
       ),
       child: Row(

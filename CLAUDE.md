@@ -96,7 +96,7 @@ The app shell renders **two separate floating cards** on the indigo backplate:
 
 - **Sidebar** — 240 px fixed, 20 px radius, 16 px outer gutters on top / left / bottom.
 - **Canvas** — flexed, 20 px radius, 16 px outer gutters on top / right / bottom.
-- 8 px gap between the two panels (backplate shows through).
+- 12 px gap between the two panels (backplate shows through).
 - TopBar lives **inside** the canvas card (panel toggle + page title +
   Search·⌘K pill + avatar — title uses `Expanded` so search + avatar sit
   flush against the canvas edge).
@@ -131,10 +131,10 @@ it pops one stop above the panel/canvas it lives on.
 | `indigoSoft`       | `#EEF2FF`   | `#1E1B4B`   | Selected row fill, today date cell        |
 | `amber`            | `#FBBF24`   | `#FCD34D`   | Star fill / star glyph only               |
 | `text-primary`     | `#0F172A`   | `#F8FAFC`   | Titles, body                              |
-| `text-secondary`   | `#475569`   | `#CBD5E1`   | Meta, captions, action-rail placeholders  |
+| `text-secondary`   | `#64748B`   | `#94A3B8`   | Meta, captions, action-rail placeholders  |
 | `text-tertiary`    | `#94A3B8`   | `#64748B`   | Disabled, italic placeholders             |
 | `border`           | `#E2E8F0`   | `#334155`   | 1 px hairlines (alpha 0.6–0.7 in use)     |
-| `divider`          | `#E2E8F0`   | `#334155`   | `outlineVariant` — panel edge + sync pill |
+| `divider`          | `#F1F5F9`   | `#1E293B`   | `outlineVariant` — topbar bottom, row dividers |
 
 `outlineVariant` is the hairline token — light `slate-200`, dark
 `slate-700`. It must contrast against whatever surface it sits on
@@ -160,7 +160,7 @@ appears in only three places: Today headline, empty states, About quote.
 | Role            | Family     | Size | Line | Weight | Tracking |
 | --------------- | ---------- | ---- | ---- | ------ | -------- |
 | Display Serif   | Newsreader | 40   | 48   | 500    | -0.02 em |
-| H1              | Inter      | 24   | 32   | 700    | -0.02 em |
+| H1              | Inter      | 22   | 30   | 700    | -0.02 em |
 | H2              | Inter      | 18   | 26   | 600    | -0.01 em |
 | Body            | Inter      | 15   | 22   | 400    | 0        |
 | Body emphasized | Inter      | 15   | 22   | 500    | 0        |
@@ -171,15 +171,15 @@ appears in only three places: Today headline, empty states, About quote.
 
 - Control height (button, input, sync pill): **36 px**.
 - TaskCard collapsed: **56 px** (cozy) / **44 px** (compact). Expanded: **200–400 px**.
-- Sidebar width: **240 px** fixed. TopBar height: **44 px**.
-- Control radius: **12 px**.
-- Card radius: **16 px** (fully expanded; collapsed task row is flush so no radius).
+- Sidebar width: **240 px** fixed. TopBar height: **40 px**.
+- Control radius: **10 px**.
+- Card radius: **14 px** (fully expanded; collapsed task row is flush so no radius).
 - Panel / canvas radius: **20 px**.
 - Chip / pill radius: **999 px**.
 - Settings overlay: **560 × 640 px**.
 - Border: 1 px on `border` / `divider` (rendered at alpha 0.6–0.7).
 - Selected row: indigo-soft fill + 2 px indigo left bar (mailbox style).
-- Expanded card: 1.5 px indigo border on all 4 sides + soft `shadowMd`.
+- Expanded card: 2 px indigo border on all 4 sides + soft `shadowMd`.
 - Focus ring: 2 px indigo (used by inline edit fields when focused).
 
 ## Task card morph

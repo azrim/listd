@@ -94,13 +94,13 @@ class AppColors {
   // legible on slate-soft sidebars where slate-500 dropped to ~3:1
   // contrast.
   static const Color _lTextPrimary = slate900;
-  static const Color _lTextSecondary = slate600;
+  static const Color _lTextSecondary = slate500;
   static const Color _lBorder = slate200;
   // Hairline / outlineVariant — bumped from slate-100 (one stop
   // above slate-50 panel, blended into invisibility) to slate-200
   // so panel edges + sync-pill borders + dialog seams actually
   // contrast against the slate-50 panel they sit on.
-  static const Color _lDivider = slate200;
+  static const Color _lDivider = slate100;
 
   // Dark surfaces. Per `mockups/png/02_today_dark.png`, the sidebar
   // panel and the right-hand task canvas are the same dark slate —
@@ -119,13 +119,13 @@ class AppColors {
   // `No repeat`, `Add tags`) read at ~7:1 on the slate-800 card
   // instead of the ~4.5:1 the previous `slate-400` gave.
   static const Color _dTextPrimary = slate50;
-  static const Color _dTextSecondary = slate300;
+  static const Color _dTextSecondary = slate400;
   static const Color _dBorder = slate700;
   // Hairline / outlineVariant — bumped from slate-800 (which is
   // identical to the new flattened canvas, leaving no contrast)
   // to slate-700 so panel edges, sync-pill borders, and dialog
   // seams remain visible against the slate-900 panel/canvas.
-  static const Color _dDivider = slate700;
+  static const Color _dDivider = slate800;
 
   // ─────────────────────────────────────────────────────────
   //  AMBIENT BACKPLATE STOPS

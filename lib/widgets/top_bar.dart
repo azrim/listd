@@ -30,8 +30,8 @@ class TopBar extends ConsumerWidget {
     final title = _pageTitle(context, ref);
 
     return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 40,
+      padding: const EdgeInsets.fromLTRB(12, 0, 16, 0),
       decoration: BoxDecoration(
         color: Colors.transparent,
         border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
@@ -137,17 +137,15 @@ class _SearchPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final fg = scheme.onSurfaceVariant;
+    final fg = scheme.outline;
 
     return Tooltip(
       message: 'Search · Ctrl + K',
       child: HoverableSurface(
         onTap: onTap,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: scheme.outlineVariant),
-        fillFor: (_, {required hovered, required selected}) => hovered
-            ? scheme.surfaceContainerHighest
-            : scheme.surfaceContainerLow,
+        fillFor: (_, {required hovered, required selected}) =>
+            hovered ? scheme.surfaceContainerHighest : Colors.transparent,
         child: SizedBox(
           height: 28,
           child: Padding(
@@ -158,51 +156,17 @@ class _SearchPill extends StatelessWidget {
                 Icon(PhosphorIcons.magnifyingGlass(), size: 14, color: fg),
                 const SizedBox(width: 8),
                 Text(
-                  'Search',
+                  'Search · Ctrl+K',
                   style: GoogleFonts.inter(
-                    fontSize: 13,
-                    height: 16 / 13,
+                    fontSize: 12,
+                    height: 16 / 12,
                     fontWeight: FontWeight.w500,
                     color: fg,
                   ),
                 ),
-                const SizedBox(width: 8),
-                _KeybindChip(keys: const ['Ctrl', 'K']),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Small inline keybind chip — used by the search pill, the capture
-/// row, and (eventually) command palette suggestions. Mirrors the
-/// hairline + tabular-figures treatment in mockup `01_today_light.png`.
-class _KeybindChip extends StatelessWidget {
-  const _KeybindChip({required this.keys});
-
-  final List<String> keys;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Text(
-        keys.join('+'),
-        style: GoogleFonts.inter(
-          fontSize: 10,
-          height: 14 / 10,
-          fontWeight: FontWeight.w600,
-          color: scheme.onSurfaceVariant,
-          letterSpacing: 0.04,
         ),
       ),
     );

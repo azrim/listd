@@ -235,7 +235,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
       child: Text(
         label,
         style: GoogleFonts.inter(
@@ -287,7 +287,7 @@ class _DrawerItemState extends State<_DrawerItem> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
       child: HoverableSurface(
         selected: widget.isSelected,
         onTap: widget.onTap,
@@ -348,9 +348,9 @@ class _DrawerItemState extends State<_DrawerItem> {
   }
 }
 
-/// Tiny tabular count chip rendered to the right of a sidebar row.
-/// Selected state inherits the indigo soft, otherwise renders as a
-/// neutral slate chip per `03_components.md` §3.
+/// Sidebar count pill — chip background, pill radius, 20 px tall.
+/// Per mockup: `height:20px; padding:0 8px; font-size:11px;`
+/// background `var(--chip)`, rounded pill.
 class _CountBadge extends StatelessWidget {
   const _CountBadge({required this.count, required this.selected});
 
@@ -361,14 +361,21 @@ class _CountBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final fg = selected ? scheme.primary : scheme.onSurfaceVariant;
-    return Padding(
-      padding: const EdgeInsets.only(left: 8),
+    final bg = selected ? scheme.primaryContainer : scheme.surfaceContainerHigh;
+    return Container(
+      height: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      alignment: Alignment.center,
       child: Text(
         '$count',
         style: GoogleFonts.inter(
-          fontSize: 12,
-          height: 16 / 12,
-          fontWeight: FontWeight.w600,
+          fontSize: 11,
+          height: 16 / 11,
+          fontWeight: FontWeight.w500,
           color: fg,
           fontFeatures: const [FontFeature.tabularFigures()],
         ),
@@ -387,15 +394,12 @@ class _NewListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
       child: HoverableSurface(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         fillFor: (_, {required hovered, required selected}) => hovered
             ? scheme.surfaceContainerHighest
-            // Alpha-0 of the hover RGB so the cross-fade lerps
-            // alpha-only — see _DrawerItem above for the full
-            // explanation of the lerp-through-black artefact.
             : scheme.surfaceContainerHighest.withValues(alpha: 0),
         builder: (_, {required hovered, required selected}) {
           // Foreground colour rides the same `flick` calibration as

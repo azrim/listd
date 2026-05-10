@@ -416,10 +416,10 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       // slate stop above the canvas in dark mode and read as
       // "brighter when not hovered".
       color: isExpanded ? cardRest : collapsedFill,
-      borderRadius: BorderRadius.circular(isExpanded ? 16 : 0),
+      borderRadius: BorderRadius.circular(isExpanded ? 14 : 0),
       border: Border.all(
         color: isExpanded ? scheme.primary : Colors.transparent,
-        width: isExpanded ? 1.5 : 0,
+        width: isExpanded ? 2 : 0,
       ),
       boxShadow: isExpanded
           ? [surfaces?.shadowMd ?? const BoxShadow()]
