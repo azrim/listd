@@ -422,7 +422,7 @@ class TaskListPanel extends ConsumerWidget {
           backgroundColor: surfaces?.panel ?? scheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: scheme.outlineVariant, width: 1),
+            side: BorderSide(color: scheme.outline, width: 1),
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 380),
