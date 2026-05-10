@@ -6,7 +6,9 @@ import 'package:uuid/uuid.dart';
 
 import '../models/task.dart';
 import '../models/task_list.dart';
+import '../models/task_sort_mode.dart';
 import '../providers/task_lists_provider.dart';
+import '../providers/task_sort_provider.dart';
 import '../providers/tasks_provider.dart';
 import '../providers/ui_state_providers.dart';
 import '../theme/app_theme.dart';
@@ -98,7 +100,12 @@ class TaskListPanel extends ConsumerWidget {
           Expanded(
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
-              onSecondaryTapDown: (details) =>
+              // `Up` so the gesture arena resolves before the
+              // callback fires — with `Down` the parent and any
+              // `InkWell` underneath co-fire on the same event,
+              // double-mounting context menus when right-clicking a
+              // TaskCard. See `HoverableSurface.onSecondaryTapUp`.
+              onSecondaryTapUp: (details) =>
                   _showEmptyAreaMenu(context, ref, details.globalPosition),
               child: tasksAsync.when(
                 data: (tasks) =>
@@ -189,10 +196,12 @@ class TaskListPanel extends ConsumerWidget {
               const SizedBox(width: 12),
               if (total > 0) _TaskCountChip(label: tasksLabel),
               const SizedBox(width: 8),
-              _QuietIconButton(
-                icon: PhosphorIcons.dotsThreeOutline(),
-                tooltip: 'List actions',
-                onPressed: () => _refresh(ref),
+              Builder(
+                builder: (btnCtx) => _QuietIconButton(
+                  icon: PhosphorIcons.dotsThreeOutline(),
+                  tooltip: 'List actions',
+                  onPressed: () => _showHeaderMenu(btnCtx, ref),
+                ),
               ),
             ],
           ),
@@ -232,6 +241,15 @@ class TaskListPanel extends ConsumerWidget {
     }
 
     final scheme = Theme.of(context).colorScheme;
+    final mode = ref.watch(taskSortModeProvider);
+    // Apply the chosen sort mode, then sink completed tasks to the
+    // bottom regardless of mode — completion-to-bottom always wins
+    // over the chosen sort key. Smart buckets already filter
+    // completed tasks out so this rule is a no-op there.
+    mainTasks.sort((a, b) {
+      if (a.isCompleted != b.isCompleted) return a.isCompleted ? 1 : -1;
+      return Task.compareBy(a, b, mode);
+    });
 
     // 2027 — render TaskCard islands. No separators (cards are their
     // own surface) and tap toggles inline expand instead of mounting
@@ -297,6 +315,42 @@ class TaskListPanel extends ConsumerWidget {
         icon: Icons.add,
         label: 'New task',
         onTap: () => _quickCreateTask(context, ref),
+      ),
+    ]);
+  }
+
+  /// Show the ⋯ overflow menu — a flat list of the five sort modes
+  /// (current mode marked with a check) followed by a refresh row.
+  /// Real submenu rendering isn't supported by `ListdContextMenu`
+  /// today; flattening the modes into the same menu keeps the v1
+  /// scope bounded.
+  void _showHeaderMenu(BuildContext context, WidgetRef ref) {
+    final box = context.findRenderObject() as RenderBox?;
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox?;
+    if (box == null || overlay == null) return;
+    final origin = box.localToGlobal(Offset.zero);
+    final anchor = Offset(
+      origin.dx + box.size.width / 2,
+      origin.dy + box.size.height,
+    );
+
+    final current = ref.read(taskSortModeProvider);
+    showListdContextMenu(context, anchor, [
+      ListdContextMenuHeader(label: 'SORT BY'),
+      for (final mode in TaskSortMode.values)
+        ListdContextMenuItem(
+          icon: current == mode
+              ? PhosphorIcons.check()
+              : PhosphorIcons.dotOutline(),
+          label: mode.label,
+          onTap: () => ref.read(taskSortModeProvider.notifier).setMode(mode),
+        ),
+      const ListdContextMenuDivider(),
+      ListdContextMenuItem(
+        icon: PhosphorIcons.arrowsClockwise(),
+        label: 'Refresh',
+        onTap: () => _refresh(ref),
       ),
     ]);
   }

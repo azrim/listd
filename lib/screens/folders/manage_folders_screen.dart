@@ -153,7 +153,7 @@ class ManageFoldersScreen extends ConsumerWidget {
                 ref.read(selectedTaskListIdProvider.notifier).state = list.id;
                 Navigator.of(context).maybePop();
               },
-              onSecondaryTapDown: (details) => _showFolderContextMenu(
+              onSecondaryTapUp: (details) => _showFolderContextMenu(
                 context,
                 ref,
                 details.globalPosition,
@@ -290,7 +290,7 @@ class _FolderCard extends StatelessWidget {
     required this.title,
     required this.activeTaskCount,
     required this.onTap,
-    this.onSecondaryTapDown,
+    this.onSecondaryTapUp,
   });
 
   final Color accent;
@@ -298,7 +298,7 @@ class _FolderCard extends StatelessWidget {
   final String title;
   final int activeTaskCount;
   final VoidCallback onTap;
-  final GestureTapDownCallback? onSecondaryTapDown;
+  final GestureTapUpCallback? onSecondaryTapUp;
 
   @override
   Widget build(BuildContext context) {
@@ -307,7 +307,7 @@ class _FolderCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        onSecondaryTapDown: onSecondaryTapDown,
+        onSecondaryTapUp: onSecondaryTapUp,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(

@@ -114,13 +114,12 @@ class SidebarDrawer extends ConsumerWidget {
                             isSelected: currentLocation == '/list/${l.id}',
                             onTap: () =>
                                 _navigate(context, ref, '/list/${l.id}'),
-                            onSecondaryTapDown: (details) =>
-                                _showListContextMenu(
-                                  context,
-                                  ref,
-                                  details.globalPosition,
-                                  l,
-                                ),
+                            onSecondaryTapUp: (details) => _showListContextMenu(
+                              context,
+                              ref,
+                              details.globalPosition,
+                              l,
+                            ),
                           ),
                         _NewListItem(onTap: () => _createList(context, ref)),
                       ],
@@ -259,7 +258,7 @@ class _DrawerItem extends StatefulWidget {
     required this.onTap,
     this.count,
     this.iconTint,
-    this.onSecondaryTapDown,
+    this.onSecondaryTapUp,
   });
 
   final IconData icon;
@@ -275,8 +274,9 @@ class _DrawerItem extends StatefulWidget {
   /// to render the star in amber regardless of selection state.
   final Color? iconTint;
 
-  /// Right-click handler.
-  final GestureTapDownCallback? onSecondaryTapDown;
+  /// Right-click handler. See `HoverableSurface.onSecondaryTapUp`
+  /// for why this is `Up` and not `Down`.
+  final GestureTapUpCallback? onSecondaryTapUp;
 
   @override
   State<_DrawerItem> createState() => _DrawerItemState();
@@ -291,7 +291,7 @@ class _DrawerItemState extends State<_DrawerItem> {
       child: HoverableSurface(
         selected: widget.isSelected,
         onTap: widget.onTap,
-        onSecondaryTapDown: widget.onSecondaryTapDown,
+        onSecondaryTapUp: widget.onSecondaryTapUp,
         borderRadius: BorderRadius.circular(10),
         fillFor: (_, {required hovered, required selected}) {
           if (selected) return scheme.primaryContainer;

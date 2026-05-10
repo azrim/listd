@@ -67,7 +67,7 @@ class HoverableSurface extends StatefulWidget {
     this.child,
     this.builder,
     this.onTap,
-    this.onSecondaryTapDown,
+    this.onSecondaryTapUp,
     this.onHover,
     this.borderRadius = const BorderRadius.all(Radius.circular(10)),
     this.border,
@@ -111,7 +111,19 @@ class HoverableSurface extends StatefulWidget {
   builder;
 
   final VoidCallback? onTap;
-  final ValueChanged<TapDownDetails>? onSecondaryTapDown;
+
+  /// Right-click handler.
+  ///
+  /// Switched from `onSecondaryTapDown` to `onSecondaryTapUp` so the
+  /// gesture arena resolves before any handler fires. With `TapDown`
+  /// every recognizer the pointer hit-tested true on (parent
+  /// `GestureDetector` + this `InkWell`) co-fires on the same event,
+  /// which double-mounts context menus when the parent uses
+  /// `HitTestBehavior.translucent` (e.g. the empty-area menu in
+  /// `task_list_panel.dart`). `TapUp` waits for the arena, so the
+  /// inner `InkWell` wins for clicks on a row and the outer parent
+  /// wins for clicks on empty space.
+  final ValueChanged<TapUpDetails>? onSecondaryTapUp;
 
   /// Optional callback fired on `MouseRegion.onEnter`. The command
   /// palette uses it to keep its keyboard cursor in sync with the
@@ -183,7 +195,7 @@ class _HoverableSurfaceState extends State<HoverableSurface> {
           borderRadius: widget.borderRadius,
           child: InkWell(
             onTap: widget.onTap,
-            onSecondaryTapDown: widget.onSecondaryTapDown,
+            onSecondaryTapUp: widget.onSecondaryTapUp,
             borderRadius: widget.borderRadius,
             // We drive the visible hover fill from the
             // `AnimatedContainer` above. The `InkWell` would

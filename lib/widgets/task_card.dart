@@ -14,9 +14,11 @@ import '../theme/app_theme.dart';
 import '../theme/spring.dart';
 import '../utils/url_detector.dart';
 import 'context_menu.dart';
+import 'due_picker_sheet.dart';
 import 'inline_edit_field.dart';
 import 'link_chip.dart';
 import 'list_picker_sheet.dart';
+import 'reminder_picker_sheet.dart';
 import 'repeat_picker_sheet.dart';
 import 'tags_editor_sheet.dart';
 import 'task_action_rail.dart';
@@ -181,46 +183,34 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
   Future<void> _pickDue() async {
     final task = widget.task;
-    final initial = task.due ?? DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-    );
-    if (!mounted) return;
-    if (picked == null) return;
-    _update(task.copyWith(due: picked));
+    final result = await showDueDatePicker(context, initial: task.due);
+    if (!mounted || result == null) return;
+    if (result.value == null) {
+      _update(task.copyWith(clearDue: true));
+    } else {
+      _update(task.copyWith(due: result.value));
+    }
   }
 
   Future<void> _pickReminder() async {
     final task = widget.task;
-    final initial =
-        task.reminder ?? DateTime.now().add(const Duration(hours: 1));
-    final date = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+    final result = await showReminderPicker(
+      context,
+      initial: task.reminder,
+      taskDue: task.due,
     );
-    if (!mounted || date == null) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(initial),
-    );
-    if (!mounted || time == null) return;
-    final reminder = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
-    final updated = task.copyWith(reminder: reminder);
-    _update(updated);
-    // Best-effort schedule; ReminderService no-ops on platforms that
-    // don't support local notifications and on past times.
-    unawaited(ref.read(reminderServiceProvider).schedule(updated));
+    if (!mounted || result == null) return;
+    if (result.value == null) {
+      final cleared = task.copyWith(clearReminder: true);
+      _update(cleared);
+      unawaited(ref.read(reminderServiceProvider).cancel(task.id));
+    } else {
+      final updated = task.copyWith(reminder: result.value);
+      _update(updated);
+      // Best-effort schedule; ReminderService no-ops on platforms that
+      // don't support local notifications and on past times.
+      unawaited(ref.read(reminderServiceProvider).schedule(updated));
+    }
   }
 
   Future<void> _pickRepeat() async {
@@ -448,7 +438,17 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     widget.onToggleExpand();
                     widget.onTap?.call();
                   },
-                  onSecondaryTapDown: (details) =>
+                  // Use TapUp instead of TapDown so the gesture
+                  // arena resolves the parent’s empty-area
+                  // GestureDetector vs this InkWell before either
+                  // fires. Right-clicking on a TaskCard would
+                  // otherwise trigger BOTH the card menu (this
+                  // callback) and the empty-area “New task” menu
+                  // (`task_list_panel.dart`'s GestureDetector with
+                  // HitTestBehavior.translucent), since `TapDown`
+                  // skips the arena and runs every recognizer the
+                  // pointer hit-tested.
+                  onSecondaryTapUp: (details) =>
                       _showContextMenu(details.globalPosition),
                   child: Stack(
                     children: [

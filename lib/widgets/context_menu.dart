@@ -38,6 +38,15 @@ class ListdContextMenuDivider {
   const ListdContextMenuDivider();
 }
 
+/// Caption row inside a [ListdContextMenu] — used as a section
+/// label when several rows belong together (e.g. a `Sort by` block).
+/// Renders a non-interactive 11 px / 600 weight / 0.06 em uppercase
+/// label in `onSurfaceVariant`.
+class ListdContextMenuHeader {
+  const ListdContextMenuHeader({required this.label});
+  final String label;
+}
+
 /// Pop the Listd 2027 context menu at [globalPosition].
 ///
 /// Mounts an opaque modal route so the first click outside dismisses
@@ -175,6 +184,7 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
     final estimatedHeight =
         widget.items.fold<double>(8, (sum, item) {
           if (item is ListdContextMenuDivider) return sum + 9;
+          if (item is ListdContextMenuHeader) return sum + 28;
           return sum + 36;
         }) +
         8;
@@ -230,6 +240,21 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
                           child: Container(
                             height: 1,
                             color: scheme.outlineVariant,
+                          ),
+                        )
+                      else if (widget.items[i] is ListdContextMenuHeader)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+                          child: Text(
+                            (widget.items[i] as ListdContextMenuHeader).label
+                                .toUpperCase(),
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              height: 16 / 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.06,
+                              color: scheme.onSurfaceVariant,
+                            ),
                           ),
                         )
                       else

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'sync_status.dart';
+import 'task_sort_mode.dart';
 
 /// Repeat type for recurring tasks.
 enum RepeatType { daily, weekly, monthly, yearly, custom }
@@ -349,6 +350,45 @@ class Task {
 
   static bool _listEqualsSteps(List<TaskStep>? a, List<TaskStep>? b) {
     return _listEquals(a, b);
+  }
+
+  /// Stable comparator for the user-pickable task sort modes.
+  ///
+  /// Each mode falls back to `position` for ties so the ordering is
+  /// deterministic even when the primary key collides (two tasks with
+  /// the same due date, two starred tasks, etc.). Callers that want
+  /// completed tasks at the bottom apply that as a separate preceding
+  /// rule — this method just orders within the active and completed
+  /// buckets.
+  static int compareBy(Task a, Task b, TaskSortMode mode) {
+    int byPosition() => a.position.compareTo(b.position);
+    switch (mode) {
+      case TaskSortMode.manual:
+        return byPosition();
+      case TaskSortMode.dueDate:
+        if (a.due != null && b.due != null) {
+          final c = a.due!.compareTo(b.due!);
+          if (c != 0) return c;
+        } else if (a.due != null) {
+          return -1;
+        } else if (b.due != null) {
+          return 1;
+        }
+        return byPosition();
+      case TaskSortMode.dateAdded:
+        // Newest first — `updated` is the best proxy for creation
+        // order Listd has on the model today.
+        final c = b.updated.compareTo(a.updated);
+        if (c != 0) return c;
+        return byPosition();
+      case TaskSortMode.alphabetical:
+        final c = a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        if (c != 0) return c;
+        return byPosition();
+      case TaskSortMode.starredFirst:
+        if (a.isStarred != b.isStarred) return a.isStarred ? -1 : 1;
+        return byPosition();
+    }
   }
 
   @override

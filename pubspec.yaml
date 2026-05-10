@@ -66,6 +66,9 @@ dev_dependencies:
   riverpod_generator: ^2.6.3
   custom_lint: ^0.7.0
   riverpod_lint: ^2.6.3
+  # Used in tests to swap the SharedPreferencesAsync store for an
+  # in-memory one (see test/providers/task_sort_provider_test.dart).
+  shared_preferences_platform_interface: ^2.4.0
 
 flutter:
   uses-material-design: true
